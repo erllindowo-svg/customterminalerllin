@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "erllan.sem-barra",
+  "name": "Sem barra (Noctalia)",
+  "version": "1.0.0",
+  "author": "erllan",
+  "description": "Opção de barra vazia: retira a barra do Omarchy e mantém o restante do shell (notificações, lock, polkit, OSD, menus, papel de parede). A barra visível é a do Noctalia.",
+  "kinds": ["bar"],
+  "entryPoints": { "bar": "Bar.qml" }
+}

@@ -1,0 +1,159 @@
+#!/bin/bash
+# Terminal Soviético — central de operações do workspace 1.
+#
+# Compõe o workspace 1 com aplicações reais e interativas (foot):
+#
+#   ┌──────────────────────────────┬──────────────────┐
+#   │ btop          soviet-ops-btop│ fastfetch        │
+#   │ (instrumento principal)      │ soviet-ops-fetch │
+#   │                              ├──────────────────┤
+#   ├──────────────────────────────┤ relógio/contexto │
+#   │ shell         soviet-ops-shell│ soviet-ops-clock │
+#   └──────────────────────────────┴──────────────────┘
+#
+# Arquitetura adaptada do Hypr-Dashboard (github.com/ivanimmanuel-dev/Hypr-Dashboard,
+# MIT): abrir cada painel, esperar a janela mapear e usar preselect do dwindle
+# para posicionar o próximo. Diferenças: foot em vez de kitty, sem GLava/tty-clock,
+# cada painel tem app-id próprio, a execução é idempotente (só abre o que falta),
+# protegida por lock, e janelas do usuário no workspace 1 nunca são tocadas.
+#
+# Uso: soviet-ops            compõe/restaura a central e vai para o workspace 1
+#      soviet-ops --login    igual, chamado pelo autostart (não rouba o foco depois)
+# Regras de janela: ~/.config/hypr/hyprland.lua (bloco "Terminal Soviético").
+
+set -uo pipefail
+
+# Preferências (config/terminal-soviet.conf, instalado por install.sh).
+TS_CONF="${TS_CONF:-${XDG_CONFIG_HOME:-$HOME/.config}/terminal-soviet/terminal-soviet.conf}"
+# shellcheck source=/dev/null
+[[ -r $TS_CONF ]] && source "$TS_CONF"
+SELF_DIR=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)   # bin/ instalado ou do checkout
+WS="${HIDDEN_WORKSPACE:-1}"
+BTOP_CONF="$HOME/.config/btop/soviet-ops.conf"
+LOCK="${XDG_RUNTIME_DIR:-/run/user/$UID}/soviet-ops.lock"
+LOG_TAG=soviet-ops
+
+log() { logger -t "$LOG_TAG" -- "$*" 2>/dev/null; printf '%s\n' "$*" >&2; }
+
+for dep in foot btop fastfetch hyprctl jq uwsm-app; do
+  command -v "$dep" >/dev/null || { log "dependência ausente: $dep"; exit 1; }
+done
+
+exec 9>"$LOCK"
+flock -n 9 || { log "outra composição em andamento; saindo"; exit 0; }
+
+dsp() { hyprctl dispatch "$1" >/dev/null 2>&1; }
+
+addr_of() {
+  hyprctl clients -j | jq -r --arg c "$1" '[.[] | select(.class == $c)][0].address // empty'
+}
+
+wait_for() {  # wait_for <app-id> -> imprime endereço; 10 s de limite
+  local i a
+  for (( i = 0; i < 100; i++ )); do
+    a=$(addr_of "$1"); [[ -n $a ]] && { echo "$a"; return 0; }
+    sleep 0.1
+  done
+  log "tempo esgotado esperando $1"
+  return 1
+}
+
+focus_addr() { dsp "hl.dsp.focus({ window = \"address:$1\" })"; }
+
+launch() {  # launch <app-id> <título> [opções do foot...] [comando...]
+  local id=$1 title=$2; shift 2
+  setsid -f uwsm-app -- foot --app-id="$id" --title="$title" --working-directory="$HOME" --override=pad=8x6 "$@" >/dev/null 2>&1 9>&-
+}
+
+open_panel() {  # open_panel <nome>
+  case $1 in
+    # btop em corpo 8: com cpu+gpu+mem+net+proc ele exige >= 36 linhas.
+    btop)  launch soviet-ops-btop  "СТАНЦИЯ // MONITORAMENTO" \
+             --override="font=JetBrainsMono Nerd Font:size=8" btop --config "$BTOP_CONF" ;;
+    # Informações gerais + arte "globe" (D.H., 1991). Corpo 7,5 para caberem
+    # as ~40 linhas (info + globo) na coluna direita. Ver soviet-ops-fetch.
+    fetch) launch soviet-ops-fetch "СТАНЦИЯ // SISTEMA" \
+             --override="font=JetBrainsMono Nerd Font:size=7.5" "$SELF_DIR/soviet-ops-fetch" ;;
+    clock) launch soviet-ops-clock "СТАНЦИЯ // HORA E CONTEXTO" "$SELF_DIR/soviet-ops-clock" ;;
+    shell) launch soviet-ops-shell "СТАНЦИЯ // TERMINAL" ;;
+  esac
+}
+
+panels=(btop fetch clock shell)
+missing=()
+for p in "${panels[@]}"; do
+  [[ -z $(addr_of "soviet-ops-$p") ]] && missing+=("$p")
+done
+
+if (( ${#missing[@]} == 0 )); then
+  [[ ${1:-} == --login ]] || dsp "hl.dsp.focus({ workspace = \"$WS\" })"
+  exit 0
+fi
+
+dsp "hl.dsp.focus({ workspace = \"$WS\" })"
+sleep 0.2
+
+others=$(hyprctl clients -j | jq --argjson ws "$WS" '[.[] | select(.workspace.id == $ws and (.class | startswith("soviet-ops-") | not))] | length')
+layout=$(hyprctl activeworkspace -j | jq -r '.tiledLayout // "dwindle"')
+[[ $layout != dwindle ]] && log "workspace $WS usa layout '$layout'; a grade exige dwindle (alterne com o toggle de layout do Omarchy)"
+
+# Proporções da grade: coluna esquerda 62 %, btop 72 % da altura; à direita o
+# painel de sistema (info + globo) fica com 72 % e o relógio com o resto.
+apply_proportions() {
+  local mw mh a
+  read -r mw mh < <(hyprctl -j monitors | jq -r '[.[] | select(.focused)][0] | "\((.width / .scale) | floor) \((.height / .scale) | floor)"')
+  [[ -n ${mw:-} ]] || return 0
+  a=$(addr_of soviet-ops-btop)
+  [[ -n $a ]] && { focus_addr "$a"; dsp "hl.dsp.window.resize({ x = $(( mw * 62 / 100 )), y = $(( mh * 72 / 100 )), relative = false })"; }
+  a=$(addr_of soviet-ops-fetch)
+  [[ -n $a ]] && { focus_addr "$a"; dsp "hl.dsp.window.resize({ x = $(( mw * 38 / 100 )), y = $(( mh * 72 / 100 )), relative = false })"; }
+}
+
+# Vizinho de referência e direção do preselect para recolocar um painel no
+# lugar original da grade (primeira opção cujo vizinho existir).
+anchor_for() {
+  case $1 in
+    btop)  echo "shell u fetch l" ;;
+    fetch) echo "clock u btop r" ;;
+    shell) echo "btop d clock l" ;;
+    clock) echo "fetch d shell r" ;;
+  esac
+}
+
+if (( ${#missing[@]} < ${#panels[@]} || others > 0 )) || [[ $layout != dwindle ]]; then
+  # Restauração parcial (ou workspace com janelas do usuário): só reabre o que
+  # falta; a regra de janela o manda para o workspace 1 sem mexer no resto.
+  # Com só os painéis no workspace e layout dwindle, cada um volta à sua posição.
+  for p in "${missing[@]}"; do
+    if (( others == 0 )) && [[ $layout == dwindle ]]; then
+      read -r n1 d1 n2 d2 <<< "$(anchor_for "$p")"
+      for pair in "$n1 $d1" "$n2 $d2"; do
+        a=$(addr_of "soviet-ops-${pair% *}")
+        if [[ -n $a ]]; then
+          focus_addr "$a"; dsp "hl.dsp.layout(\"preselect ${pair#* }\")"; break
+        fi
+      done
+    fi
+    open_panel "$p"; wait_for "soviet-ops-$p" >/dev/null
+  done
+  if (( others == 0 )) && [[ $layout == dwindle ]]; then
+    sleep 0.2; apply_proportions
+    focus_addr "$(addr_of soviet-ops-shell)"
+  fi
+  log "restaurados: ${missing[*]}"
+  exit 0
+fi
+
+# Composição completa num workspace 1 vazio.
+open_panel btop;  a_btop=$(wait_for soviet-ops-btop)   || exit 1
+focus_addr "$a_btop"; dsp 'hl.dsp.layout("preselect r")'
+open_panel fetch; a_fetch=$(wait_for soviet-ops-fetch) || exit 1
+focus_addr "$a_btop"; dsp 'hl.dsp.layout("preselect d")'
+open_panel shell; wait_for soviet-ops-shell >/dev/null || exit 1
+focus_addr "$a_fetch"; dsp 'hl.dsp.layout("preselect d")'
+open_panel clock; wait_for soviet-ops-clock >/dev/null || exit 1
+sleep 0.2
+
+apply_proportions
+focus_addr "$(addr_of soviet-ops-shell)"
+log "central de operações composta no workspace $WS"

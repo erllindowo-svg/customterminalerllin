@@ -1,0 +1,6 @@
+### P5 troca de modos de cores
+10 trocas (cores alternar + sinal ao painel): 233 ms no total, excluídas as pausas de 0,5 s
+CPU do painel soviet-ops-fetch (redesenhos) nas 10 trocas: 20 ms
+render 89x25 modo tema: 30 ms por desenho (média de 5)
+render 89x25 modo originais: 39 ms por desenho (média de 5)
+índice da coleção (516 artes) reconstruído em 118 ms (só quando a coleção muda)

@@ -1,0 +1,67 @@
+-- Terminal Soviético — módulo Hyprland (Lua, Omarchy 4).
+--
+-- GERADO por install.sh a partir de hypr/terminal_soviet.lua.in e de
+-- config/terminal-soviet.conf. Não edite aqui: edite o repositório e rode
+-- ./install.sh. Carregado por ~/.config/hypr/hyprland.lua (bloco marcado
+-- "terminal-soviet"), depois dos padrões do Omarchy e dos arquivos do usuário.
+
+local soviet_bin = os.getenv("HOME") .. "/.local/bin/"
+
+-- ---------------------------------------------------------------- autostart
+-- Central de operações no workspace @HIDDEN_WORKSPACE@ ao entrar na sessão. Roda
+-- uma vez por sessão (evento hyprland.start); reloads não reabrem. Noctalia e a
+-- sincronia da barra sobem como serviços systemd do usuário.
+o.exec_on_start(soviet_bin .. "soviet-ops --login")
+
+-- ---------------------------------------------------------------- janelas
+-- Painéis da central: sempre no workspace da central, opacos.
+o.window("^soviet-ops-(btop|fetch|clock|shell)$", { workspace = "@HIDDEN_WORKSPACE@ silent" })
+o.window("^soviet-ops-(btop|fetch|clock)$", { tag = "-default-opacity", opacity = "1 1" })
+
+-- Inspeção flutuante (soviet-inspect): centralizada no workspace atual.
+o.window("^soviet-inspect$", {
+  float = true,
+  center = true,
+  size = { "monitor_w*0.78", "monitor_h*0.80" },
+  tag = "-default-opacity",
+  opacity = "1 1",
+})
+
+-- Ilustração interativa (soviet-arte interativo): menu + arttime original.
+o.window("^soviet-arte$", {
+  float = true,
+  center = true,
+  size = { "monitor_w*0.70", "monitor_h*0.82" },
+  tag = "-default-opacity",
+  opacity = "1 1",
+})
+
+-- ---------------------------------------------------------------- atalhos
+o.bind("@KEY_INSPECT@", "Soviet inspect (toggle)", soviet_bin .. "soviet-inspect")
+o.bind("@KEY_OPS@", "Soviet ops station", soviet_bin .. "soviet-ops")
+o.bind("@KEY_ARTE@", "Soviet ilustração (arttime)", soviet_bin .. "soviet-arte interativo")
+
+-- A barra do Omarchy é substituída pela do Noctalia (bar.id = erllan.sem-barra).
+-- Os painéis que eram ancorados nela passam a abrir as abas equivalentes do
+-- control center do Noctalia.
+local function noctalia_panel(keys, description, tab)
+  hl.unbind(keys)
+  o.bind(keys, description, "noctalia msg panel-toggle control-center " .. tab)
+end
+noctalia_panel("SUPER + CTRL + A", "Audio", "audio")             -- era omarchy.audio
+noctalia_panel("SUPER + CTRL + B", "Bluetooth", "bluetooth")     -- era omarchy.bluetooth
+noctalia_panel("SUPER + CTRL + W", "Network", "network")         -- era omarchy.network
+noctalia_panel("SUPER + CTRL + D", "Display", "monitor")         -- era omarchy.monitor
+noctalia_panel("SUPER + CTRL + P", "Power", "power")             -- era omarchy.power
+noctalia_panel("SUPER + CTRL + ALT + D", "Calendar", "calendar") -- era omarchy.clock
+
+-- "Bar panel 1-9" abriam o N-ésimo widget da barra antiga; sem equivalente no
+-- Noctalia, ficam desligados.
+for panel = 1, 9 do
+  hl.unbind("SUPER + CTRL + code:" .. tostring(panel + 9))
+end
+
+-- Era "Toggle top bar" (barra Omarchy): agora alterna a barra do Noctalia
+-- manualmente; a próxima troca de workspace restaura o estado automático.
+hl.unbind("SUPER + SHIFT + SPACE")
+o.bind("SUPER + SHIFT + SPACE", "Toggle bar (manual)", "noctalia msg bar-toggle @BAR_NAME@")

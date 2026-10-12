@@ -1,0 +1,51 @@
+#!/bin/bash
+# Terminal Soviético — painel de inspeção flutuante (btop) sob demanda.
+#
+# Um único mecanismo para o atalho SUPER+M e o botão de inspeção da barra do
+# Noctalia (~/.config/noctalia/20-barra.toml, widget "inspecao"):
+#   * fechado                         -> abre no workspace atual, centralizado
+#   * aberto no workspace atual       -> fecha
+#   * aberto em outro workspace       -> traz para o workspace atual e foca
+# Nunca troca de workspace, nunca abre uma segunda janela e só atua sobre o
+# app-id "soviet-inspect" (a central do workspace 1 usa soviet-ops-*).
+# Float/centro/tamanho: regra de janela em ~/.config/hypr/hyprland.lua.
+
+set -uo pipefail
+
+APP_ID="soviet-inspect"
+TITLE="ИНСПЕКЦИЯ // INSPEÇÃO"
+CONF="$HOME/.config/btop/soviet-inspect.conf"
+LOCK="${XDG_RUNTIME_DIR:-/run/user/$UID}/soviet-inspect.lock"
+
+exec 9>"$LOCK"
+flock -n 9 || exit 0   # acionamentos repetidos enquanto a janela ainda abre
+
+dsp() { hyprctl dispatch "$1" >/dev/null 2>&1; }
+
+read -r addr win_ws pid < <(hyprctl clients -j | jq -r --arg c "$APP_ID" \
+  '[.[] | select(.class == $c)][0] | select(. != null) | "\(.address) \(.workspace.name) \(.pid)"')
+cur_ws=$(hyprctl activeworkspace -j | jq -r '.name')
+
+if [[ -n ${addr:-} ]]; then
+  if [[ $win_ws == "$cur_ws" ]]; then
+    # Fecha pelo compositor; se não houver resposta, encerra o foot do painel.
+    dsp "hl.dsp.window.close({ window = \"address:$addr\" })" \
+      || kill -TERM "$pid" 2>/dev/null
+  else
+    dsp "hl.dsp.window.move({ workspace = \"$cur_ws\", window = \"address:$addr\", follow = false })"
+    dsp "hl.dsp.focus({ window = \"address:$addr\" })"
+  fi
+  exit 0
+fi
+
+# Processo já subindo (janela ainda não mapeada): não duplicar.
+pgrep -u "$USER" -f -- "foot .*--app-id=$APP_ID( |$)" >/dev/null && exit 0
+
+setsid -f uwsm-app -- foot --app-id="$APP_ID" --title="$TITLE" --override=pad=8x6 \
+  btop --config "$CONF" >/dev/null 2>&1 9>&-
+
+# Segura o lock até a janela mapear (máx. 3 s) para absorver cliques repetidos.
+for (( i = 0; i < 30; i++ )); do
+  hyprctl clients -j | jq -e --arg c "$APP_ID" 'any(.[]; .class == $c)' >/dev/null && break
+  sleep 0.1
+done

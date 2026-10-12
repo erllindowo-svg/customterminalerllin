@@ -1,0 +1,5 @@
+# Condições
+data: 2026-10-12T17:28:48-03:00   uptime: up 1 hour, 44 minutes   workspace ativo: 2
+CPU: AMD Ryzen 5 1600 Six-Core Processor (12 threads)   RAM: 15893 MB
+monitores: HDMI-A-1 1920x1080@1.3333334
+janelas: firefox×1 foot×1 soviet-ops-btop×1 soviet-ops-clock×1 soviet-ops-fetch×1 soviet-ops-shell×1

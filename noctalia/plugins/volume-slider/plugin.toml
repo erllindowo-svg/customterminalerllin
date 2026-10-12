@@ -1,0 +1,26 @@
+# Terminal Soviético — popup compacto de volume (somente um slider).
+# Aberto pelo clique no widget nativo de volume da barra:
+#   [widget.volume.actions] left = "panel-toggle erllan/volume-slider:panel"
+# Lê/escreve o volume de saída padrão via wpctl (WirePlumber, o gerenciador de
+# sessão PipeWire já em uso); acompanha mudanças externas com watch-sink.sh
+# (pactl subscribe) só enquanto o popup está aberto. Sem daemon.
+id = "erllan/volume-slider"
+name = "Volume Slider"
+version = "1.0.0"
+plugin_api = 24
+author = "erllan"
+license = "MIT"
+dependencies = ["wpctl", "pactl"]
+icon = "volume"
+description = "Popup compacto com um único slider de volume de saída."
+tags = ["audio"]
+
+[[panel]]
+id = "panel"
+entry = "panel.luau"
+width = 220
+height = 34
+placement = "attached"
+position = "auto"
+open_near_click = true
+capture_keys = ["escape"]

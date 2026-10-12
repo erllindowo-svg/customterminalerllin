@@ -1,0 +1,72 @@
+#!/bin/bash
+# Terminal Soviético — painel de sistema da central de operações (soviet-ops-fetch).
+#
+# Informações gerais (fastfetch, config ~/.config/fastfetch/soviet-ops.jsonc) e,
+# no espaço abaixo delas, a ÁREA DE ILUSTRAÇÃO: um conjunto arte+frase da
+# coleção do arttime, desenhado pelo `artprint` via ~/.local/bin/soviet-arte
+# (sem relógio nem contadores). O conjunto é sorteado uma vez por sessão entre
+# as artes que cabem nesta área e fica estável; SUPER+ALT+A abre o modo
+# interativo (arttime) e o menu "Cores da ilustração".
+#
+# Sem polling: a arte é desenhada uma vez e guardada; só é refeita quando
+#   * a janela muda de tamanho (SIGWINCH), ou
+#   * soviet-arte avisa que o conjunto ou as cores mudaram (SIGUSR1).
+# O fastfetch é relido a cada 30 min e a arte em cache é só reimpressa.
+# Créditos e licenças da arte: LICENSE_ART e LICENSE_ADDENDUM_CFLA do arttime
+# (~/.local/src/arttime) e THIRD_PARTY.md do repositório.
+
+set -uo pipefail
+
+CONF="$HOME/.config/fastfetch/soviet-ops.jsonc"
+SELF_DIR=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)   # bin/ instalado ou do checkout
+ARTE="$SELF_DIR/soviet-arte"
+RUN_DIR="${XDG_RUNTIME_DIR:-/run/user/$UID}/terminal-soviet"
+N=$'\e[0m'
+
+mkdir -p "$RUN_DIR"
+echo $$ > "$RUN_DIR/ops-fetch.pid"
+
+info=""
+art=""          # ilustração renderizada (cache)
+art_key=""      # "<cols>x<rows>" do cache; vazio = refazer
+
+refresh_info() {
+  # --pipe false: com stdout capturado o fastfetch omitiria os resets de cor.
+  info=$(fastfetch -c "$CONF" --pipe false 2>/dev/null) || info="fastfetch indisponível"
+}
+
+draw() {
+  local cols rows info_lines free
+  cols=$(tput cols 2>/dev/null || echo 80)
+  rows=$(tput lines 2>/dev/null || echo 24)
+  info_lines=$(printf '%s\n' "$info" | wc -l)
+  free=$(( rows - info_lines - 1 ))
+  echo "$cols $free" > "$RUN_DIR/ops-fetch.area"
+  if [[ $art_key != "${cols}x${free}" ]]; then
+    art=""
+    (( free > 4 )) && art=$("$ARTE" render --cols "$cols" --rows "$free" 2>/dev/null)
+    art_key="${cols}x${free}"
+  fi
+  printf '\e[H\e[2J%s\n%s%s' "$info" "$art" "$N"
+}
+
+sp=""
+cleanup() {
+  [[ -n $sp ]] && kill "$sp" 2>/dev/null
+  [[ $(cat "$RUN_DIR/ops-fetch.pid" 2>/dev/null) == "$$" ]] && rm -f "$RUN_DIR/ops-fetch.pid"
+  printf '\e[?25h%s' "$N"; stty echo icanon 2>/dev/null; exit 0
+}
+trap cleanup INT TERM HUP
+trap draw WINCH
+trap 'art_key=""; draw' USR1
+
+stty -echo -icanon 2>/dev/null
+printf '\e[?25l\e[?7l'     # sem cursor, sem quebra automática de linha
+refresh_info
+draw
+while :; do
+  [[ -n $sp ]] || { sleep 1800 & sp=$!; }
+  wait "$sp"               # `wait` é interrompido por WINCH/USR1 -> redesenha
+  (( $? > 128 )) && continue
+  sp=""; refresh_info; draw
+done

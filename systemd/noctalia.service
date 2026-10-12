@@ -1,0 +1,19 @@
+# Terminal Soviético — Noctalia v5 (barra) na sessão Hyprland/uwsm.
+# Único mecanismo de inicialização do Noctalia (não há entrada em autostart.lua).
+# Documentação: README.md e docs/architecture.md no repositório do projeto.
+[Unit]
+Description=Noctalia shell (barra do Terminal Soviético)
+Documentation=https://docs.noctalia.dev/noctalia/
+After=graphical-session.target
+PartOf=graphical-session.target
+ConditionEnvironment=WAYLAND_DISPLAY
+ConditionEnvironment=XDG_CURRENT_DESKTOP=Hyprland
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/noctalia
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

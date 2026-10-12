@@ -1,0 +1,109 @@
+#!/bin/bash
+# Terminal Soviético — visibilidade da barra do Noctalia conforme o workspace.
+#
+#   workspace 1 ativo                         -> bar-hide   (central de operações)
+#   workspace ativo contém janela do Firefox  -> bar-hide   (navegação em tela cheia)
+#   qualquer outro caso                       -> bar-show
+#
+# Orientado a eventos: lê o socket de eventos do Hyprland (.socket2.sock) e só
+# reage a eventos de workspace/monitor e de abrir/fechar/mover janela. Troca de
+# foco entre janelas do mesmo workspace não gera evento tratado, então não mexe
+# na barra. Envia apenas ações explícitas (hide/show), nunca toggle, e só
+# quando o estado desejado muda.
+#
+# Uso:
+#   soviet-bar-sync            daemon (soviet-bar-sync.service)
+#   soviet-bar-sync --apply    aplica uma vez, forçado (hook `started` do Noctalia)
+#   soviet-bar-sync --status   mostra workspace ativo e estado desejado
+#
+# Logs: journalctl --user -u soviet-bar-sync
+
+set -uo pipefail
+
+# Preferências (config/terminal-soviet.conf, instalado por install.sh).
+TS_CONF="${TS_CONF:-${XDG_CONFIG_HOME:-$HOME/.config}/terminal-soviet/terminal-soviet.conf}"
+# shellcheck source=/dev/null
+[[ -r $TS_CONF ]] && source "$TS_CONF"
+BAR="${BAR_NAME:-estacao}"                    # barra em ~/.config/noctalia/20-barra.toml
+HIDDEN_WORKSPACE="${HIDDEN_WORKSPACE:-1}"      # workspace da central de operações
+COLLAPSE_CLASSES="${COLLAPSE_CLASSES-^firefox$}" # classes que colapsam a barra (vazio = nenhuma)
+
+log() { printf '%s\n' "$*" >&2; }
+
+# Workspace ativo no monitor focado (numérico; especiais são ignorados).
+active_workspace() {
+  hyprctl -j monitors 2>/dev/null | jq -r '[.[] | select(.focused)][0].activeWorkspace.id // empty'
+}
+
+# Quantas janelas de COLLAPSE_CLASSES estão no workspace $1.
+collapse_windows_on() {
+  hyprctl -j clients 2>/dev/null | jq --argjson ws "$1" --arg re "$COLLAPSE_CLASSES" \
+    '[.[] | select(.workspace.id == $ws and (.class | test($re)))] | length'
+}
+
+# Estado desejado e motivo ("hide central", "hide firefox", "show").
+desired_for() {
+  if [[ $1 == "$HIDDEN_WORKSPACE" ]]; then echo "hide central"
+  elif [[ -n $COLLAPSE_CLASSES ]] && (( $(collapse_windows_on "$1" || echo 0) > 0 )); then echo "hide colapsar"
+  else echo "show"
+  fi
+}
+
+current=""   # último estado aplicado com sucesso: hide | show | "" (desconhecido)
+
+apply() {
+  local force=${1:-} ws want why
+  ws=$(active_workspace)
+  [[ -z $ws ]] && { log "workspace ativo indisponível; nada a fazer"; return 1; }
+  read -r want why < <(desired_for "$ws")
+  [[ -z $force && $want == "$current" ]] && return 0
+  if noctalia msg "bar-$want" "$BAR" >/dev/null 2>&1; then
+    [[ $want != "$current" || -n $force ]] && log "workspace $ws -> barra $want${why:+ ($why)}"
+    current=$want
+    return 0
+  fi
+  current=""   # Noctalia fora do ar; o hook `started` reaplica quando voltar
+  log "noctalia indisponível (bar-$want); aguardando próximo evento ou hook started"
+  return 1
+}
+
+case ${1:-} in
+  --apply)
+    # Chamado pelo hook `started` do Noctalia: IPC já está pronto.
+    apply force
+    exit $?
+    ;;
+  --status)
+    ws=$(active_workspace)
+    echo "workspace=$ws desejado=$(desired_for "$ws") noctalia=$(noctalia msg status 2>/dev/null | jq -c . || echo indisponível)"
+    exit 0
+    ;;
+  "") ;;
+  *) echo "uso: soviet-bar-sync [--apply|--status]" >&2; exit 2 ;;
+esac
+
+for dep in hyprctl jq socat noctalia; do
+  command -v "$dep" >/dev/null || { log "dependência ausente: $dep"; exit 1; }
+done
+
+: "${HYPRLAND_INSTANCE_SIGNATURE:?HYPRLAND_INSTANCE_SIGNATURE não definido (sessão Hyprland?)}"
+SOCKET="${XDG_RUNTIME_DIR:-/run/user/$UID}/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock"
+[[ -S $SOCKET ]] || { log "socket de eventos não encontrado: $SOCKET"; exit 1; }
+
+log "iniciado; barra '$BAR' oculta no workspace $HIDDEN_WORKSPACE"
+
+# Estado inicial (sessão aberta direto em qualquer workspace). Se o Noctalia
+# ainda estiver subindo, o hook `started` corrige.
+apply force || true
+
+# socat termina se o Hyprland fechar o socket; o systemd reinicia o serviço.
+while IFS= read -r line; do
+  case ${line%%>>*} in
+    workspacev2|focusedmonv2|moveworkspacev2|monitoraddedv2|monitorremovedv2|configreloaded|openwindow|closewindow|movewindowv2)
+      apply
+      ;;
+  esac
+done < <(socat -u "UNIX-CONNECT:$SOCKET" -)
+
+log "socket de eventos encerrado"
+exit 1

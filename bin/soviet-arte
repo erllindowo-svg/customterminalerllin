@@ -1,0 +1,429 @@
+#!/bin/bash
+# Terminal Soviético — ilustração da central (arte + frase do arttime).
+#
+# Fonte: a instalação externa do arttime (~/.local/share/arttime, instalada de
+# github.com/poetaman/arttime, commit 38c2955, via install.sh --local). Nada da
+# coleção é copiado: a arte é lida e desenhada pelo próprio `artprint`.
+#
+# Conjunto arte+frase: no arttime cada arquivo de arte guarda a frase na
+# 1ª linha e o desenho no resto; é essa a associação usada aqui e pelo arttime.
+# 509 dos 516 arquivos trazem só o texto-modelo "Custom message for art goes
+# here": nesses casos a arte é exibida SEM frase (nenhuma frase é inventada) e
+# o menu mostra "sem frase no acervo original".
+#
+# Subcomandos:
+#   render --cols C --rows R   desenha a ilustração da sessão numa área CxR
+#   desenhar <arte> --cols C --rows R   desenha uma arte qualquer (testes/prévia),
+#                              sem mudar a seleção da sessão
+#   atual                      mostra o conjunto da sessão e as preferências
+#   definir <arte>             fixa o conjunto da sessão (usado pelo modo interativo)
+#   sortear                    sorteia outro conjunto que caiba no painel
+#   cores [tema|originais|alternar]   "Cores da ilustração" (persistente)
+#   politica [sessao|diaria]   troca por login (padrão) ou uma vez por dia
+#   interativo                 abre/fecha a janela flutuante (SUPER+ALT+A)
+#   menu                       menu interativo (roda dentro da janela flutuante)
+#   arttime [args]             arttime interativo com cores/sincronização
+#   indice                     reconstrói o índice da coleção
+#
+# Estado:
+#   ~/.local/state/terminal-soviet/arte.conf     CORES, POLITICA (preferências)
+#   ~/.local/state/terminal-soviet/arte-selecao  conjunto atual (SESSAO, DATA, NOME)
+#   ~/.cache/terminal-soviet/arte-indice.tsv     nome, largura, altura, frase, cor
+# Documentação: docs/controls.md e docs/architecture.md no repositório.
+
+set -uo pipefail
+
+ARTTIME_SHARE="${ARTTIME_SHARE:-$HOME/.local/share/arttime}"
+ARTDIR="$ARTTIME_SHARE/textart"
+ARTPRINT="${ARTPRINT:-$HOME/.local/bin/artprint}"
+SELF_DIR=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)   # bin/ instalado ou do checkout
+# Dados do projeto: <prefixo>/share/terminal-soviet/arte (instalado em ~/.local
+# ou o próprio checkout do repositório).
+DATA_DIR="${TS_ARTE_DIR:-$SELF_DIR/../share/terminal-soviet/arte}"
+FILTER="$DATA_DIR/cores-tema.pl"
+SHIM_SRC="$DATA_DIR/artprint-shim"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/terminal-soviet"
+CONF="$STATE_DIR/arte.conf"
+SEL="$STATE_DIR/arte-selecao"
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/terminal-soviet"
+INDEX="$CACHE_DIR/arte-indice.tsv"
+RUN_DIR="${XDG_RUNTIME_DIR:-/run/user/$UID}/terminal-soviet"
+PANEL_PID="$RUN_DIR/ops-fetch.pid"
+PLACEHOLDER='"Custom message for art goes here"'
+APP_ID="soviet-arte"
+TITLE="ИЛЛЮСТРАЦИЯ // ILUSTRAÇÃO"
+
+mkdir -p "$STATE_DIR" "$CACHE_DIR" "$RUN_DIR"
+
+die() { printf 'soviet-arte: %s\n' "$*" >&2; exit 1; }
+[[ -x $ARTPRINT && -d $ARTDIR ]] || die "arttime não encontrado em $ARTTIME_SHARE (instale: ~/.local/src/arttime/install.sh --local --noupdaterc --zcompdir -)"
+
+# ------------------------------------------------------------------ preferências
+CORES=tema
+POLITICA=sessao
+load_conf() {
+  CORES=tema; POLITICA=sessao
+  [[ -r $CONF ]] || return 0
+  local k v
+  while IFS='=' read -r k v; do
+    case $k in
+      CORES) [[ $v == tema || $v == originais ]] && CORES=$v ;;
+      POLITICA) [[ $v == sessao || $v == diaria ]] && POLITICA=$v ;;
+    esac
+  done < "$CONF"
+}
+save_conf() {
+  printf '# Terminal Soviético — preferências da ilustração (escritas pelo menu SUPER+ALT+A)\nCORES=%s\nPOLITICA=%s\n' \
+    "$CORES" "$POLITICA" > "$CONF.tmp" && mv -f "$CONF.tmp" "$CONF"
+}
+load_conf
+
+# ------------------------------------------------------------------ índice
+# nome \t largura \t altura \t frase(original|ausente) \t largura_frase \t cor(0|1)
+# Largura/altura medidas como o artprint mede (sem SGR, contagem de caracteres).
+build_index() {
+  LC_ALL=C.UTF-8 perl -CSD -e '
+    my ($dir, $ph) = @ARGV;
+    opendir my $d, $dir or die; my @f = sort grep { -f "$dir/$_" } readdir $d;
+    for my $n (@f) {
+      open my $fh, "<", "$dir/$n" or next; local $/; my $s = <$fh>; close $fh;
+      my ($title, $art) = split /\n/, $s, 2; $title //= ""; $art //= "";
+      $art =~ s/\n+\z//;
+      my @l = split /\n/, $art, -1; my $w = 0;
+      for (@l) { (my $t = $_) =~ s/\e\[[0-9;]*m//g; $w = length $t if length $t > $w }
+      my $has = ($title ne "" && $title ne $ph) ? "original" : "ausente";
+      (my $tw = $title) =~ s/\e\[[0-9;]*m//g;
+      my $color = ($art =~ /\e\[/) ? 1 : 0;
+      print join("\t", $n, $w, scalar(@l), $has, ($has eq "original" ? length $tw : 0), $color), "\n";
+    }' "$ARTDIR" "$PLACEHOLDER" > "$INDEX.tmp" && mv -f "$INDEX.tmp" "$INDEX"
+}
+ensure_index() {
+  [[ -s $INDEX && $INDEX -nt $ARTDIR ]] || build_index
+}
+index_row() { ensure_index; awk -F'\t' -v n="$1" '$1 == n { print; exit }' "$INDEX"; }
+
+# Linhas que o artprint ocupa para uma arte de altura h (com/sem frase).
+rows_needed() { (( $2 )) && echo $(( $1 + 3 )) || echo $(( $1 + 1 )); }
+
+# Cabe numa área cols x rows? (uma linha de respiro acima/abaixo)
+fits() {  # fits <largura> <altura> <frase:original|ausente> <largura_frase> <cols> <rows>
+  local w=$1 h=$2 ph=$3 tw=$4 cols=$5 rows=$6 hasp=0
+  [[ $ph == original ]] && hasp=1
+  (( w <= cols - 2 && tw <= cols - 2 && $(rows_needed "$h" $hasp) + 2 <= rows ))
+}
+
+# ------------------------------------------------------------------ seleção
+SESSION_KEY="${HYPRLAND_INSTANCE_SIGNATURE:-boot-$(cat /proc/sys/kernel/random/boot_id 2>/dev/null)}"
+SEL_SESSAO="" SEL_DATA="" SEL_NOME=""
+read_sel() {
+  SEL_SESSAO="" SEL_DATA="" SEL_NOME=""
+  [[ -r $SEL ]] || return 0
+  local k v
+  while IFS='=' read -r k v; do
+    case $k in SESSAO) SEL_SESSAO=$v ;; DATA) SEL_DATA=$v ;; NOME) SEL_NOME=$v ;; esac
+  done < "$SEL"
+}
+write_sel() {  # write_sel <nome>
+  printf 'SESSAO=%s\nDATA=%s\nNOME=%s\n' "$SESSION_KEY" "$(date +%F)" "$1" > "$SEL.tmp" && mv -f "$SEL.tmp" "$SEL"
+}
+
+# Sorteia entre as artes que cabem na área (mesmo acervo do sorteio do arttime:
+# tudo menos tarot-*, e menos a página de ajuda). Sem área conhecida: qualquer uma.
+pick_random() {  # pick_random [cols rows] [excluir]
+  ensure_index
+  local cols=${1:-0} rows=${2:-0} skip=${3:-}
+  awk -F'\t' -v c="$cols" -v r="$rows" -v skip="$skip" '
+    $1 ~ /^tarot-/ || $1 == "help" || $1 == skip { next }
+    { need = ($4 == "original") ? $3 + 3 : $3 + 1 }
+    c == 0 || ($2 <= c - 2 && $5 <= c - 2 && need + 2 <= r) { print $1 }' "$INDEX" | shuf -n1
+}
+
+# Conjunto da sessão. Estável durante a sessão; política "diaria" reaproveita o do dia.
+session_art() {  # session_art [cols rows]
+  exec 8>"$RUN_DIR/arte-selecao.lock"; flock 8
+  read_sel
+  local nome=""
+  if [[ -n $SEL_NOME && -f $ARTDIR/$SEL_NOME ]]; then
+    if [[ $SEL_SESSAO == "$SESSION_KEY" ]]; then
+      nome=$SEL_NOME
+    elif [[ $POLITICA == diaria && $SEL_DATA == "$(date +%F)" ]]; then
+      nome=$SEL_NOME; write_sel "$nome"
+    fi
+  fi
+  if [[ -z $nome ]]; then
+    local cols=${1:-0} rows=${2:-0}
+    # Sem área informada, usa a última área registrada pelo painel da central.
+    (( cols == 0 )) && read -r cols rows < "$RUN_DIR/ops-fetch.area" 2>/dev/null
+    nome=$(pick_random "${cols:-0}" "${rows:-0}")
+    [[ -z $nome ]] && nome=$(pick_random)
+    [[ -n $nome ]] && write_sel "$nome" && logger -t soviet-arte -- "novo conjunto da sessão: $nome" 2>/dev/null
+  fi
+  flock -u 8; exec 8>&-
+  printf '%s\n' "$nome"
+}
+
+refresh_panel() {
+  local pid
+  pid=$(cat "$PANEL_PID" 2>/dev/null) || return 0
+  [[ $pid =~ ^[0-9]+$ ]] && kill -USR1 "$pid" 2>/dev/null
+  return 0
+}
+
+# ------------------------------------------------------------------ desenho
+# Desenha a arte <nome> com o artprint (frase original ou nenhuma) e aplica o
+# modo de cores. Saída: exatamente as linhas do artprint, já centralizadas.
+draw_art() {  # draw_art <nome> <cols> <rows>
+  local nome=$1 cols=$2 rows=$3 row title
+  row=$(index_row "$nome")
+  local _n w h ph tw col
+  IFS=$'\t' read -r _n w h ph tw col <<< "$row"
+  title=-
+  [[ $ph == original ]] && title=$(head -n1 "$ARTDIR/$nome")
+  if [[ $CORES == tema ]]; then
+    "$ARTPRINT" -a "$nome" -t "$title" --ac 2 --tc 2 --width "$cols" --height "$rows" 2>/dev/null | "$FILTER"
+  else
+    "$ARTPRINT" -a "$nome" -t "$title" --width "$cols" --height "$rows" 2>/dev/null
+  fi
+  printf '\e[0m'
+}
+
+cmd_render() {
+  local cols=0 rows=0
+  while (( $# )); do
+    case $1 in --cols) cols=$2; shift ;; --rows) rows=$2; shift ;; esac; shift
+  done
+  (( cols > 0 && rows > 0 )) || die "uso: soviet-arte render --cols C --rows R"
+  local nome; nome=$(session_art "$cols" "$rows")
+  [[ -n $nome ]] || return 0
+  local _n w h ph tw col
+  IFS=$'\t' read -r _n w h ph tw col <<< "$(index_row "$nome")"
+  if fits "$w" "$h" "$ph" "$tw" "$cols" "$rows"; then
+    draw_art "$nome" "$cols" "$rows"
+  else
+    # Escolhida no modo interativo e maior que a área: avisa, não corta.
+    local msg="«$nome» (${w}×${h}) não cabe nesta área · SUPER+ALT+A"
+    (( ${#msg} > cols - 2 )) && msg="«$nome» não cabe aqui"
+    printf '\n\n%*s\e[38;2;113;141;88m%s\e[0m\n' $(( (cols - ${#msg}) / 2 > 0 ? (cols - ${#msg}) / 2 : 0 )) '' "$msg"
+  fi
+}
+
+describe() {  # describe <nome> -> "frase|sem frase"
+  local _n w h ph tw col
+  IFS=$'\t' read -r _n w h ph tw col <<< "$(index_row "$1")"
+  if [[ $ph == original ]]; then head -n1 "$ARTDIR/$1"; else echo "(sem frase no acervo original)"; fi
+}
+
+cmd_atual() {
+  local nome; nome=$(session_art)
+  local _n w h ph tw col
+  IFS=$'\t' read -r _n w h ph tw col <<< "$(index_row "$nome")"
+  printf 'arte:     %s (%s×%s, %s)\nfrase:    %s\ncores:    %s\npolítica: %s\nsessão:   %s\n' \
+    "$nome" "$w" "$h" "$([[ $col == 1 ]] && echo colorida || echo monocromática)" \
+    "$(describe "$nome")" "$([[ $CORES == tema ]] && echo 'Tema do terminal' || echo 'Cores originais')" \
+    "$([[ $POLITICA == sessao ]] && echo 'um conjunto por login' || echo 'um conjunto por dia')" "$SESSION_KEY"
+}
+
+cmd_definir() {
+  local nome=${1:-}
+  [[ -n $nome && $nome != help && -f $ARTDIR/$nome && $nome != */* ]] || die "arte inexistente: $nome"
+  exec 8>"$RUN_DIR/arte-selecao.lock"; flock 8
+  write_sel "$nome"
+  flock -u 8; exec 8>&-
+  logger -t soviet-arte -- "conjunto definido: $nome" 2>/dev/null
+  refresh_panel
+}
+
+cmd_sortear() {
+  read_sel
+  local geo cols=0 rows=0 nome
+  geo=$(cat "$RUN_DIR/ops-fetch.area" 2>/dev/null) && read -r cols rows <<< "$geo"
+  nome=$(pick_random "${cols:-0}" "${rows:-0}" "$SEL_NOME")
+  [[ -n $nome ]] || die "nenhuma arte cabe na área atual (${cols}×${rows})"
+  cmd_definir "$nome"
+  echo "$nome"
+}
+
+cmd_cores() {
+  case ${1:-alternar} in
+    tema|originais) CORES=$1 ;;
+    alternar) [[ $CORES == tema ]] && CORES=originais || CORES=tema ;;
+    *) die "uso: soviet-arte cores [tema|originais|alternar]" ;;
+  esac
+  save_conf; refresh_panel
+  echo "$CORES"
+}
+
+cmd_politica() {
+  case ${1:-} in sessao|diaria) POLITICA=$1 ;; *) die "uso: soviet-arte politica [sessao|diaria]" ;; esac
+  save_conf; echo "$POLITICA"
+}
+
+# ------------------------------------------------------------------ arttime interativo
+# O arttime chama "$bindir/artprint" (bindir derivado do caminho REAL do
+# arttime.zsh) para desenhar cada arte. Para aplicar o modo de cores e saber
+# qual arte o usuário escolheu, o arttime roda a partir de uma árvore em
+# $XDG_RUNTIME_DIR (tmpfs) com: o arttime.zsh original copiado sem alteração,
+# a coleção/keypoems/doc por link simbólico e bin/artprint = artprint-shim, que
+# registra a arte e repassa ao artprint original. Nada da instalação é alterado.
+build_tree() {
+  local t="$RUN_DIR/arttime"
+  rm -rf "$t"
+  mkdir -p "$t/bin" "$t/share/arttime/src"
+  cp "$ARTTIME_SHARE/src/arttime.zsh" "$t/share/arttime/src/arttime.zsh"
+  ln -s "$ARTTIME_SHARE/textart" "$t/share/arttime/textart"
+  ln -s "$ARTTIME_SHARE/keypoems" "$t/share/arttime/keypoems"
+  ln -s "$ARTTIME_SHARE/doc" "$t/share/arttime/doc"
+  [[ -d $HOME/.local/share/man ]] && ln -s "$HOME/.local/share/man" "$t/share/man"
+  cp "$SHIM_SRC" "$t/bin/artprint"; chmod +x "$t/bin/artprint"
+  echo "$t"
+}
+
+# Última arte "a" desenhada pelo arttime: o log tem "<epoch> <nome>" por chamada.
+# Chamadas em rajada (<0,3 s) são a-arte seguida da b-arte (animação): vale a 1ª.
+last_selected() {
+  awk 'NR == 1 || $1 - prev > 0.3 { first = $2 } { prev = $1 } END { print first }' "$1" 2>/dev/null
+}
+
+cmd_arttime() {
+  command -v zsh >/dev/null || die "zsh ausente (dependência do arttime)"
+  local tree log nome before
+  tree=$(build_tree)
+  log="$RUN_DIR/arttime-artes.log"; : > "$log"
+  nome=$(session_art); before=$nome
+  local args=(--nolearn --hours 24 -a "$nome")
+  [[ $CORES == tema ]] && args+=(--ac 2)
+  SOVIET_ARTE_LOG="$log" TS_ARTE_DIR="$DATA_DIR" ARTPRINT="$ARTPRINT" zsh -fi "$tree/share/arttime/src/arttime.zsh" "${args[@]}" "$@"
+  local rc=$?
+  sync_from_log "$log" "$before"
+  return $rc
+}
+
+sync_from_log() {  # sync_from_log <log> <arte_antes>
+  local sel; sel=$(last_selected "$1")
+  if [[ -n $sel && $sel != "$2" && -f $ARTDIR/$sel ]]; then
+    cmd_definir "$sel"
+  fi
+}
+
+# ------------------------------------------------------------------ menu
+G=$'\e[38;2;184;213;138m' O=$'\e[38;2;113;141;88m' D=$'\e[38;2;68;75;66m'
+T=$'\e[38;2;200;203;191m' A=$'\e[38;2;201;178;107m' B=$'\e[1m' N=$'\e[0m'
+
+menu_header() {
+  local cols=$1 nome=$2 line
+  printf -v line '%*s' $(( cols - 4 > 0 ? cols - 4 : 0 )) ''
+  printf '\e[H\e[2J'
+  printf ' %s%sИЛЛЮСТРАЦИЯ // ILUSTRAÇÃO%s\n %s%s%s\n' "$G" "$B" "$N" "$D" "${line// /─}" "$N"
+  local _n w h ph tw col
+  IFS=$'\t' read -r _n w h ph tw col <<< "$(index_row "$nome")"
+  printf ' %sconjunto%s  %s%s%s  %s%s×%s · %s%s\n' "$O" "$N" "$G" "$nome" "$N" "$D" "$w" "$h" \
+    "$([[ $col == 1 ]] && echo colorida || echo monocromática)" "$N"
+  if [[ $ph == original ]]; then
+    printf ' %sfrase%s     %s%s%s\n' "$O" "$N" "$T" "$(head -n1 "$ARTDIR/$nome")" "$N"
+  else
+    printf ' %sfrase%s     %s(sem frase no acervo original)%s\n' "$O" "$N" "$D" "$N"
+  fi
+  printf ' %scores%s     %s\n' "$O" "$N" \
+    "$([[ $CORES == tema ]] && echo "${G}● Tema do terminal${N}  ${D}○ Cores originais${N}" || echo "${D}○ Tema do terminal${N}  ${G}● Cores originais${N}")"
+  printf ' %s%s%s\n' "$D" "${line// /─}" "$N"
+  printf ' %s[Enter]%s abrir o arttime  %s(h ajuda · a escolher · x fzf · j aleatória · c cor · q sair)%s\n' "$G" "$N" "$D" "$N"
+  printf ' %s[c]%s Cores da ilustração   %s[s]%s sortear outro conjunto   %s[p]%s política: %s   %s[q]%s fechar\n' \
+    "$G" "$N" "$G" "$N" "$G" "$N" "$([[ $POLITICA == sessao ]] && echo 'por login' || echo 'diária')" "$G" "$N"
+  printf ' %s%s%s\n' "$D" "${line// /─}" "$N"
+}
+
+menu_draw() {
+  local cols rows nome used=9 free
+  cols=$(tput cols 2>/dev/null || echo 100); rows=$(tput lines 2>/dev/null || echo 30)
+  load_conf
+  nome=$(session_art)
+  menu_header "$cols" "$nome"
+  free=$(( rows - used - 1 ))
+  local _n w h ph tw col
+  IFS=$'\t' read -r _n w h ph tw col <<< "$(index_row "$nome")"
+  if fits "$w" "$h" "$ph" "$tw" "$cols" "$free"; then
+    draw_art "$nome" "$cols" "$free"
+  else
+    printf '\n %s(prévia omitida: a arte tem %s×%s e a janela, %s×%s livres)%s\n' "$D" "$w" "$h" "$cols" "$free" "$N"
+  fi
+}
+
+menu_cores() {
+  printf '\e[H\e[2J\n %s%sCores da ilustração%s\n\n' "$G" "$B" "$N"
+  printf '   %s[1]%s Tema do terminal  %spaleta fósforo do Terminal Soviético%s %s\n' "$G" "$N" "$D" "$N" "$([[ $CORES == tema ]] && echo "${G}● atual${N}")"
+  printf '   %s[2]%s Cores originais   %sANSI/truecolor nativos da arte%s %s\n' "$G" "$N" "$D" "$N" "$([[ $CORES == originais ]] && echo "${G}● atual${N}")"
+  printf '\n   %s[Esc]%s voltar\n' "$G" "$N"
+  local k; read -rsn1 k
+  case $k in 1) cmd_cores tema >/dev/null ;; 2) cmd_cores originais >/dev/null ;; esac
+}
+
+cmd_menu() {
+  local log="$RUN_DIR/arttime-artes.log" before
+  # Fechar a janela com o arttime aberto (SUPER+ALT+A de novo): ainda sincroniza.
+  trap 'sync_from_log "$log" "$before" 2>/dev/null; exit 0' HUP TERM
+  trap 'menu_draw' WINCH
+  printf '\e[?25l'
+  stty -echo 2>/dev/null
+  while :; do
+    before=$(session_art)
+    menu_draw
+    local k=""
+    IFS= read -rsn1 k || exit 0
+    case $k in
+      ""|a|A) printf '\e[?25h'; stty echo 2>/dev/null; cmd_arttime; stty -echo 2>/dev/null; printf '\e[?25l' ;;
+      c|C) menu_cores ;;
+      s|S) cmd_sortear >/dev/null 2>&1 ;;
+      p|P) load_conf; [[ $POLITICA == sessao ]] && cmd_politica diaria >/dev/null || cmd_politica sessao >/dev/null ;;
+      q|Q|$'\e') printf '\e[?25h'; exit 0 ;;
+    esac
+  done
+}
+
+# Janela flutuante: abre no workspace atual; aberta aqui -> fecha; aberta em
+# outro workspace -> traz para cá. Mesmo padrão do soviet-inspect (SUPER+M).
+cmd_interativo() {
+  exec 9>"$RUN_DIR/soviet-arte-window.lock"
+  flock -n 9 || exit 0
+  local addr win_ws pid cur_ws
+  read -r addr win_ws pid < <(hyprctl clients -j | jq -r --arg c "$APP_ID" \
+    '[.[] | select(.class == $c)][0] | select(. != null) | "\(.address) \(.workspace.name) \(.pid)"')
+  cur_ws=$(hyprctl activeworkspace -j | jq -r '.name')
+  if [[ -n ${addr:-} ]]; then
+    if [[ $win_ws == "$cur_ws" ]]; then
+      hyprctl dispatch "hl.dsp.window.close({ window = \"address:$addr\" })" >/dev/null 2>&1 || kill -TERM "$pid" 2>/dev/null
+    else
+      hyprctl dispatch "hl.dsp.window.move({ workspace = \"$cur_ws\", window = \"address:$addr\", follow = false })" >/dev/null 2>&1
+      hyprctl dispatch "hl.dsp.focus({ window = \"address:$addr\" })" >/dev/null 2>&1
+    fi
+    exit 0
+  fi
+  pgrep -u "$USER" -f -- "foot .*--app-id=$APP_ID( |$)" >/dev/null && exit 0
+  setsid -f uwsm-app -- foot --app-id="$APP_ID" --title="$TITLE" --override=pad=10x8 \
+    "$SELF_DIR/soviet-arte" menu >/dev/null 2>&1 9>&-
+  local i
+  for (( i = 0; i < 30; i++ )); do
+    hyprctl clients -j | jq -e --arg c "$APP_ID" 'any(.[]; .class == $c)' >/dev/null && break
+    sleep 0.1
+  done
+}
+
+case ${1:-} in
+  render) shift; cmd_render "$@" ;;
+  desenhar)
+    shift; nome=${1:-}; shift || true
+    [[ -n $nome && -f $ARTDIR/$nome ]] || die "arte inexistente: $nome"
+    cols=0 rows=0
+    while (( $# )); do case $1 in --cols) cols=$2; shift ;; --rows) rows=$2; shift ;; esac; shift; done
+    (( cols > 0 && rows > 0 )) || die "uso: soviet-arte desenhar <arte> --cols C --rows R"
+    draw_art "$nome" "$cols" "$rows" ;;
+  atual) cmd_atual ;;
+  definir) shift; cmd_definir "$@" ;;
+  sortear) cmd_sortear ;;
+  cores) shift; cmd_cores "$@" ;;
+  politica) shift; cmd_politica "$@" ;;
+  interativo) cmd_interativo ;;
+  menu) cmd_menu ;;
+  arttime) shift; cmd_arttime "$@" ;;
+  indice) build_index; wc -l < "$INDEX" ;;
+  *) sed -n '2,/^set -uo/p' "$0" | sed '$d; s/^# \{0,1\}//'; exit 2 ;;
+esac

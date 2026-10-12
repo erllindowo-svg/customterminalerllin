@@ -1,0 +1,152 @@
+# shellcheck shell=bash
+# Terminal Soviético — funções comuns do instalador (carregado por install.sh).
+#
+# Responsável por: mensagens, leitura/validação de config/terminal-soviet.conf,
+# cálculo dos marcadores @TOKEN@, renderização dos modelos *.in e a tabela de
+# destinos (o que vai para onde em $HOME).
+
+TS_RED=$'\e[31m' TS_YEL=$'\e[33m' TS_GRN=$'\e[32m' TS_DIM=$'\e[2m' TS_RST=$'\e[0m'
+[[ -t 1 ]] || { TS_RED="" TS_YEL="" TS_GRN="" TS_DIM="" TS_RST=""; }
+
+info() { printf '%s\n' "$*"; }
+ok()   { printf '%s✓%s %s\n' "$TS_GRN" "$TS_RST" "$*"; }
+warn() { printf '%s!%s %s\n' "$TS_YEL" "$TS_RST" "$*" >&2; }
+err()  { printf '%s✗%s %s\n' "$TS_RED" "$TS_RST" "$*" >&2; }
+die()  { err "$*"; exit 1; }
+
+# ------------------------------------------------------------------ configuração
+CONF_KEYS=(HIDDEN_WORKSPACE COLLAPSE_CLASSES BAR_NAME WEATHER_ADDRESS KEY_INSPECT KEY_OPS
+           KEY_ARTE FAVORITES BAR_LAUNCHERS GPU_SENSORS)
+
+# Lê VAR="valor" sem executar o arquivo (só chaves conhecidas).
+load_conf() {
+  local file=$1 line k v
+  [[ -r $file ]] || die "configuração não encontrada: $file"
+  while IFS= read -r line || [[ -n $line ]]; do
+    [[ $line =~ ^[[:space:]]*(#|$) ]] && continue
+    [[ $line =~ ^([A-Z_]+)=\"([^\"]*)\"[[:space:]]*(#.*)?$ ]] \
+      || die "linha inválida em $file: $line  (use VAR=\"valor\")"
+    k=${BASH_REMATCH[1]} v=${BASH_REMATCH[2]}
+    [[ " ${CONF_KEYS[*]} " == *" $k "* ]] || die "chave desconhecida em $file: $k"
+    printf -v "$k" '%s' "$v"
+  done < "$file"
+  local missing=()
+  for k in "${CONF_KEYS[@]}"; do [[ -v $k ]] || missing+=("$k"); done
+  (( ${#missing[@]} == 0 )) || die "faltam chaves em $file: ${missing[*]}"
+  validate_conf
+}
+
+validate_conf() {
+  [[ $HIDDEN_WORKSPACE =~ ^[1-9][0-9]?$ ]] || die "HIDDEN_WORKSPACE deve ser um número (1-99)"
+  [[ $BAR_NAME =~ ^[a-z][a-z0-9_-]*$ ]] || die "BAR_NAME inválido: $BAR_NAME"
+  [[ $WEATHER_ADDRESS != *\\* ]] || die "WEATHER_ADDRESS não pode conter \\"
+  [[ $GPU_SENSORS =~ ^(auto|yes|no)$ ]] || die "GPU_SENSORS deve ser auto, yes ou no"
+  local k
+  for k in KEY_INSPECT KEY_OPS KEY_ARTE; do
+    [[ ${!k} =~ ^(SUPER|SHIFT|CTRL|ALT)( \+ (SUPER|SHIFT|CTRL|ALT))*( \+ [A-Z0-9]+)$ ]] \
+      || die "$k inválido: '${!k}' (ex.: \"SUPER + ALT + A\")"
+  done
+  local f
+  for f in $FAVORITES; do
+    [[ $f =~ ^[A-Za-z0-9._-]+:[a-z0-9._,-]+$ ]] || die "FAVORITES: item inválido '$f' (desktop-id:classe1,classe2)"
+  done
+}
+
+# ------------------------------------------------------------------ marcadores
+# Valores derivados que dependem da máquina (lançadores instalados, GPU).
+compute_tokens() {
+  T_HOME=$HOME
+  T_BIN="$HOME/.local/bin"
+
+  local launchers=() l
+  for l in $BAR_LAUNCHERS; do
+    case $l in
+      firefox) command -v firefox >/dev/null && launchers+=('"firefox"') ;;
+      osu)     command -v osu-lazer >/dev/null && launchers+=('"osu"') ;;
+      *) die "BAR_LAUNCHERS: lançador desconhecido '$l' (firefox, osu)" ;;
+    esac
+  done
+  local end='["spotify", "sep", '
+  (( ${#launchers[@]} )) && end+="$(IFS=,; echo "${launchers[*]}" | sed 's/,/, /g'), \"sep\", "
+  T_BAR_END="$end\"tray\", \"notificacoes\", \"volume\", \"weather\", \"clock\", \"control-center\"]"
+
+  local gpu=0
+  case $GPU_SENSORS in yes) gpu=1 ;; auto) command -v nvidia-smi >/dev/null && gpu=1 ;; esac
+  if (( gpu )); then
+    T_SENSOR_MEMBERS='["l_cpu", "cpu", "cpu_temp", "l_ram", "ram", "l_gpu", "gpu", "gpu_temp", "vram", "l_net", "net_down", "net_up"]'
+  else
+    T_SENSOR_MEMBERS='["l_cpu", "cpu", "cpu_temp", "l_ram", "ram", "l_net", "net_down", "net_up"]'
+  fi
+
+  local pins="" f id classes c list
+  for f in $FAVORITES; do
+    id=${f%%:*} classes=${f#*:} list=""
+    IFS=, read -r -a c <<< "$classes"
+    for l in "${c[@]}"; do list+="\"$l\", "; done
+    pins+="  { id = \"$id\", classes = { ${list%, } } },"$'\n'
+  done
+  T_PINNED_LUA=${pins%$'\n'}
+}
+
+# render <origem> <destino>: *.in -> troca @TOKEN@; outros -> cópia exata.
+render() {
+  local src=$1 dst=$2
+  mkdir -p "$(dirname "$dst")"
+  if [[ $src == *.in ]]; then
+    TS_HOME="$T_HOME" TS_BIN="$T_BIN" TS_BAR_NAME="$BAR_NAME" TS_BAR_END="$T_BAR_END" \
+    TS_SENSOR_MEMBERS="$T_SENSOR_MEMBERS" TS_WEATHER_ADDRESS="$WEATHER_ADDRESS" \
+    TS_KEY_INSPECT="$KEY_INSPECT" TS_KEY_OPS="$KEY_OPS" TS_KEY_ARTE="$KEY_ARTE" \
+    TS_HIDDEN_WORKSPACE="$HIDDEN_WORKSPACE" TS_PINNED_LUA="$T_PINNED_LUA" \
+    perl -pe 's/@([A-Z_]+)@/exists $ENV{"TS_$1"} ? $ENV{"TS_$1"} : "\@$1\@"/ge' "$src" > "$dst"
+    if grep -qE '@[A-Z][A-Z_]+@' "$dst"; then
+      die "marcador sem valor em $src: $(grep -oE '@[A-Z][A-Z_]+@' "$dst" | sort -u | tr '\n' ' ')"
+    fi
+    chmod --reference="$src" "$dst"
+  else
+    cp -p "$src" "$dst"
+  fi
+}
+
+# ------------------------------------------------------------------ destinos
+# Imprime "<origem relativa ao repo>\t<destino relativo a $HOME>" para cada
+# arquivo gerenciado. Modelos perdem o sufixo .in no destino.
+payload_map() {
+  local r=$1 f rel
+  emit() { printf '%s\t%s\n' "$1" "${2%.in}"; }
+  for f in "$r"/bin/soviet-*; do emit "bin/${f##*/}" ".local/bin/${f##*/}"; done
+  for f in "$r"/share/terminal-soviet/arte/*; do emit "${f#"$r"/}" ".local/${f#"$r"/}"; done
+  emit hypr/terminal_soviet.lua.in .config/hypr/terminal_soviet.lua
+  while IFS= read -r rel; do emit "noctalia/config/$rel" ".config/noctalia/$rel"; done \
+    < <(cd "$r/noctalia/config" && find . -type f | sed 's|^\./||' | sort)
+  while IFS= read -r rel; do emit "noctalia/plugins/$rel" ".local/share/noctalia/plugins/$rel"; done \
+    < <(cd "$r/noctalia/plugins" && find . -type f | sed 's|^\./||' | sort)
+  while IFS= read -r rel; do emit "omarchy/plugins/$rel" ".config/omarchy/plugins/$rel"; done \
+    < <(cd "$r/omarchy/plugins" && find . -type f | sed 's|^\./||' | sort)
+  while IFS= read -r rel; do emit "omarchy/themes/$rel" ".config/omarchy/themes/$rel"; done \
+    < <(cd "$r/omarchy/themes" && find . -type f | sed 's|^\./||' | sort)
+  emit omarchy/workspace-layouts/central.lua.in ".local/state/omarchy/workspace-layouts/$HIDDEN_WORKSPACE.lua"
+  for f in "$r"/systemd/*.service; do emit "systemd/${f##*/}" ".config/systemd/user/${f##*/}"; done
+  for f in "$r"/btop/*.conf; do emit "btop/${f##*/}" ".config/btop/${f##*/}"; done
+  for f in "$r"/fastfetch/*; do emit "fastfetch/${f##*/}" ".config/fastfetch/${f##*/}"; done
+  emit config/terminal-soviet.conf .config/terminal-soviet/terminal-soviet.conf
+}
+
+# Links simbólicos gerenciados: "<destino relativo a $HOME>\t<alvo absoluto>".
+# Ícones para as classes soviet-* (a barra procura o ícone pela classe).
+# Só são criados se o ícone do sistema existir.
+link_map() {
+  local icons="$HOME/.local/share/icons/hicolor/scalable/apps" sys=/usr/share/icons/hicolor/scalable/apps
+  local c t
+  for c in soviet-ops-btop:btop soviet-inspect:btop soviet-ops-fetch:foot soviet-ops-clock:foot \
+           soviet-ops-shell:foot soviet-arte:foot; do
+    t="$sys/${c#*:}.svg"
+    [[ -e $t ]] && printf '%s\t%s\n' "${icons#"$HOME"/}/${c%%:*}.svg" "$t"
+  done
+  # Equivalente a `systemctl --user enable` (WantedBy=graphical-session.target),
+  # feito como link para funcionar também sem o gerenciador (testes isolados).
+  for c in noctalia.service soviet-bar-sync.service; do
+    printf '%s\t%s\n' ".config/systemd/user/graphical-session.target.wants/$c" "$HOME/.config/systemd/user/$c"
+  done
+}
+
+sha() { sha256sum "$1" 2>/dev/null | cut -d' ' -f1; }

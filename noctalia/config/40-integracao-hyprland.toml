@@ -1,0 +1,7 @@
+# Terminal Soviético — integração com o Hyprland
+#
+# Ao (re)iniciar, o Noctalia sobe com a barra visível; este hook reaplica o
+# estado correto para o workspace ativo (oculta no 1, visível nos demais).
+# A troca de workspace em si é tratada por soviet-bar-sync.service.
+[hooks]
+started = "$HOME/.local/bin/soviet-bar-sync --apply"

@@ -1,0 +1,19 @@
+### P1.1 repouso, workspace 2 — 60 s — 2026-10-12T17:29:52-03:00
+PID       CPU%med CPU%pico    RSSmed    RSSmax  COMANDO
+66699        6.27     10.0      32.7      32.7  foot --working-directory=~ -e bash -c tmux attach || tmux n
+1517         3.62      8.0      32.5      32.5  btop --config ~/.config/btop/soviet-ops.conf
+1152         2.85      4.0     249.8     249.8  Hyprland --watchdog-fd 4
+1258         1.97      4.0     210.6     211.4  /usr/bin/noctalia
+1947         0.17      2.0       4.1       4.1  /bin/bash ~/.local/bin/soviet-ops-clock
+1469         0.07      1.0      23.4      23.4  /usr/bin/foot --app-id=soviet-ops-btop --title=СТАНЦИЯ // MONITORAMENT
+1880         0.03      1.0      22.6      22.6  /usr/bin/foot --app-id=soviet-ops-clock --title=СТАНЦИЯ // HORA E CONT
+2303         0.00      0.0       4.8       4.8  socat -U - UNIX-CONNECT:/run/user/1000/hypr/efb50993780079460b0cbed136
+1745         0.00      0.0      20.7      20.7  /usr/bin/foot --app-id=soviet-ops-shell --title=СТАНЦИЯ // TERMINAL --
+1495         0.00      0.0       4.8       4.8  socat -u UNIX-CONNECT:/run/user/1000/hypr/efb50993780079460b0cbed1363e
+1268         0.00      0.0       4.6       4.6  /bin/bash ~/.local/bin/soviet-bar-sync
+1207         0.00      0.0     495.9     495.9  quickshell -n -p /usr/share/omarchy/shell
+105050       0.00      0.0       4.9       4.9  socat -u UNIX-CONNECT:/run/user/1000/hypr/efb50993780079460b0cbed1363e
+102456       0.00      0.0       4.2       4.2  /bin/bash ~/.local/bin/soviet-ops-fetch
+102446       0.00      0.0      22.2      22.2  /usr/bin/foot --app-id=soviet-ops-fetch --title=СТАНЦИЯ // SISTEMA --w
+CPU total do sistema (todos os núcleos): 5.75%   processos criados: 32.9/s
+Memória: usada 6136 MB, disponível 9757 MB (total 15893 MB)

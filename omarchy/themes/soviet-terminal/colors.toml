@@ -1,0 +1,36 @@
+# Soviet Terminal — fósforo verde sobre grafite.
+mode = "dark"
+
+accent = "#B8D58A"
+selection = "#2B3229"
+muted = "#444B42"
+
+background = "#101210"
+dark_background = "#0C0E0C"
+darker_background = "#080908"
+lighter_background = "#191C19"
+
+foreground = "#C8CBBF"
+dark_foreground = "#8E9788"
+light_foreground = "#B4B9AA"
+bright_foreground = "#E2E5D8"
+
+# Borda sólida e fina, sem gradiente.
+hyprland_active_border = "rgb(718D58)"
+hyprland_inactive_border = "rgb(444B42)"
+
+red = "#BD4A42"
+yellow = "#C9B26B"
+orange = "#B9824A"
+green = "#B8D58A"
+cyan = "#8FB09A"
+blue = "#7F9A88"
+magenta = "#A27B76"
+brown = "#6B5A3E"
+
+bright_red = "#D2625A"
+bright_yellow = "#DCC88A"
+bright_green = "#D2E8AE"
+bright_cyan = "#AECBB8"
+bright_blue = "#9FB8A6"
+bright_magenta = "#BE9A94"

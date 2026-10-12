@@ -1,0 +1,41 @@
+# Terminal Soviético — monitoramento e clima
+
+# Coleta nativa do Noctalia. CPU: hwmon k10temp (Tctl). GPU: NVML (driver NVIDIA
+# proprietário, GTX 1660 SUPER). Nada é estimado: fonte ausente aparece como
+# indisponível, não como zero.
+[system.monitor]
+enabled = true
+cpu_poll_seconds = 2.0
+memory_poll_seconds = 2.0
+gpu_poll_seconds = 5.0
+network_poll_seconds = 3.0
+# Limiares: atividade = começa a tingir; crítico = vermelho pleno.
+cpu_usage_activity_threshold = 70.0
+cpu_usage_critical_threshold = 95.0
+cpu_temp_activity_threshold = 70.0
+cpu_temp_critical_threshold = 88.0
+ram_pct_activity_threshold = 75.0
+ram_pct_critical_threshold = 92.0
+gpu_usage_activity_threshold = 70.0
+gpu_usage_critical_threshold = 97.0
+gpu_temp_activity_threshold = 70.0
+gpu_temp_critical_threshold = 85.0
+gpu_vram_activity_threshold = 75.0
+gpu_vram_critical_threshold = 92.0
+net_rx_activity_threshold = 5.0
+net_rx_critical_threshold = 80.0
+net_tx_activity_threshold = 5.0
+net_tx_critical_threshold = 80.0
+
+# Localização fixa — sem geolocalização por IP.
+[location]
+auto_locate = false
+address = "@WEATHER_ADDRESS@"   # config/terminal-soviet.conf: WEATHER_ADDRESS
+
+# Serviço nativo (Open-Meteo). Previsão: control center, aba Weather
+# (clique no widget de clima).
+[weather]
+enabled = true
+unit = "metric"
+refresh_minutes = 30
+effects = false

@@ -1,0 +1,67 @@
+# Soviet Terminal — btop
+# Verde-fósforo domina; vermelho só para seleção e níveis de alerta.
+theme[main_bg]="#101210"
+theme[main_fg]="#C8CBBF"
+theme[title]="#B8D58A"
+theme[hi_fg]="#BD4A42"
+theme[selected_bg]="#BD4A42"
+theme[selected_fg]="#101210"
+theme[inactive_fg]="#5C6458"
+theme[graph_text]="#8E9788"
+theme[meter_bg]="#252A24"
+theme[proc_misc]="#718D58"
+
+# Contornos dos painéis e divisores
+theme[cpu_box]="#718D58"
+theme[mem_box]="#718D58"
+theme[net_box]="#718D58"
+theme[proc_box]="#718D58"
+theme[div_line]="#444B42"
+
+# Temperatura: verde -> âmbar -> vermelho (alerta)
+theme[temp_start]="#718D58"
+theme[temp_mid]="#C9B26B"
+theme[temp_end]="#BD4A42"
+
+# CPU/GPU: carga alta vira vermelho
+theme[cpu_start]="#718D58"
+theme[cpu_mid]="#B8D58A"
+theme[cpu_end]="#BD4A42"
+
+theme[free_start]="#444B42"
+theme[free_mid]="#5C6E4E"
+theme[free_end]="#718D58"
+
+theme[cached_start]="#4E5A48"
+theme[cached_mid]="#718D58"
+theme[cached_end]="#8E9788"
+
+theme[available_start]="#5C6E4E"
+theme[available_mid]="#8FAE6C"
+theme[available_end]="#B8D58A"
+
+theme[used_start]="#718D58"
+theme[used_mid]="#B8D58A"
+theme[used_end]="#BD4A42"
+
+# Rede: download em fósforo, upload em cinza-claro para distinguir
+theme[download_start]="#4E6340"
+theme[download_mid]="#8FAE6C"
+theme[download_end]="#B8D58A"
+
+theme[upload_start]="#5C6458"
+theme[upload_mid]="#8E9788"
+theme[upload_end]="#C8CBBF"
+
+theme[process_start]="#718D58"
+theme[process_mid]="#B8D58A"
+theme[process_end]="#BD4A42"
+
+theme[gradient_color_0]="#101210"
+theme[gradient_color_1]="#191C19"
+theme[gradient_color_2]="#2B3229"
+theme[gradient_color_3]="#444B42"
+theme[gradient_color_4]="#718D58"
+theme[gradient_color_5]="#8FAE6C"
+theme[gradient_color_6]="#B8D58A"
+theme[gradient_color_7]="#D2E8AE"

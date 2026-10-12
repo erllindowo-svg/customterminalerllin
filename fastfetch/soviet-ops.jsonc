@@ -1,0 +1,92 @@
+// Terminal Soviético — fastfetch da central de operações (painel soviet-ops-fetch).
+// Derivado de /etc/fastfetch/config.jsonc (que segue intocado e é o padrão do `fastfetch`).
+// Removido aqui o que os outros painéis já mostram: CPU, GPU, disco, memória, swap e uptime
+// (btop), o módulo Terminal (detectaria o script, não o foot), a linha do tema ("Soviet Terminal ●●●") e o logo. Usado por ~/.local/bin/soviet-ops-fetch.
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": {
+    "type": "none"
+  },
+  "display": {
+    "disableLinewrap": true
+  },
+  "modules": [
+    {
+      "type": "custom",
+      "format": "\u001b[90m┌──────────────────────Software──────────────────────┐"
+    },
+    {
+      "type": "command",
+      "key": " OS",
+      "keyColor": "blue",
+      "text": "version=$(omarchy-version) && echo \"Omarchy $version\""
+    },
+    {
+      "type": "command",
+      "key": "│ ├󰘬",
+      "keyColor": "blue",
+      "text": "omarchy-version-branch"
+    },
+    {
+      "type": "command",
+      "key": "│ ├󰔫",
+      "keyColor": "blue",
+      "text": "channel=$(omarchy-version-channel); echo \"$channel\""
+    },
+    {
+      "type": "kernel",
+      "key": "│ ├",
+      "keyColor": "blue"
+    },
+    {
+      "type": "wm",
+      "key": "│ ├",
+      "keyColor": "blue"
+    },
+    {
+      "type": "display",
+      "key": "│ ├󱄄",
+      "keyColor": "blue"
+    },
+    {
+      "type": "packages",
+      "key": "│ ├󰏖",
+      "keyColor": "blue"
+    },
+    {
+      "type": "wmtheme",
+      "key": "│ ├󰉼",
+      "keyColor": "blue"
+    },
+    {
+      "type": "terminalfont",
+      "key": "└ └",
+      "keyColor": "blue"
+    },
+    {
+      "type": "custom",
+      "format": "\u001b[90m└────────────────────────────────────────────────────┘"
+    },
+    "break",
+    {
+      "type": "custom",
+      "format": "\u001b[90m┌────────────────────Age / Update────────────────────┐"
+    },
+    {
+      "type": "command",
+      "key": "󱦟 OS Age",
+      "keyColor": "magenta",
+      "text": "echo $(( ($(date +%s) - $(stat -c %W /)) / 86400 )) days"
+    },
+    {
+      "type": "command",
+      "key": " Update",
+      "keyColor": "magenta",
+      "text": "updated=$(omarchy-version-pkgs); echo \"$updated\""
+    },
+    {
+      "type": "custom",
+      "format": "\u001b[90m└────────────────────────────────────────────────────┘"
+    }
+  ]
+}

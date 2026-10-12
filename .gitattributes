@@ -1,0 +1,2 @@
+# Cópia literal do upstream (spotify-media @ 6a66f85): não normalizar espaços.
+noctalia/plugins/spotify-media/upstream/** -whitespace

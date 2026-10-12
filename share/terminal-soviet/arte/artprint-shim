@@ -1,0 +1,39 @@
+#!/bin/bash
+# Terminal Soviético — intermediário do artprint para o arttime INTERATIVO.
+#
+# Copiado por `soviet-arte arttime` para <árvore>/bin/artprint em
+# $XDG_RUNTIME_DIR/terminal-soviet/arttime. O arttime chama "$bindir/artprint"
+# para desenhar cada arte; este script:
+#   1. registra "<epoch> <arte>" em $SOVIET_ARTE_LOG (só desenhos da tela
+#      principal: --height numérico; a prévia do fzf usa "--height term" e a
+#      página de ajuda é "help"), para sincronizar a escolha com o painel;
+#   2. troca a frase-modelo "Custom message for art goes here" por nenhuma
+#      frase (mesma regra do painel; nenhuma frase é inventada);
+#   3. no modo "Tema do terminal", passa a saída pelo filtro de cores;
+#      em "Cores originais", executa o artprint original sem mudança.
+# soviet-arte exporta ARTPRINT (artprint original) e TS_ARTE_DIR (este diretório).
+REAL="${ARTPRINT:-$HOME/.local/bin/artprint}"
+FILTER="${TS_ARTE_DIR:-$HOME/.local/share/terminal-soviet/arte}/cores-tema.pl"
+CONF="${XDG_STATE_HOME:-$HOME/.local/state}/terminal-soviet/arte.conf"
+PLACEHOLDER='"Custom message for art goes here"'
+
+args=("$@") name="" height=""
+for (( i = 0; i < ${#args[@]}; i++ )); do
+  case ${args[i]} in
+    -a) name=${args[i+1]:-} ;;
+    --height) height=${args[i+1]:-} ;;
+    -t) [[ ${args[i+1]:-} == "$PLACEHOLDER" ]] && args[i+1]="-" ;;
+  esac
+done
+
+if [[ -n ${SOVIET_ARTE_LOG:-} && -n $name && $name != help && $height =~ ^[0-9]+$ ]]; then
+  printf '%s %s\n' "${EPOCHREALTIME:-$(date +%s.%N)}" "$name" >> "$SOVIET_ARTE_LOG"
+fi
+
+cores=tema
+[[ -r $CONF ]] && grep -qx 'CORES=originais' "$CONF" && cores=originais
+if [[ $cores == tema ]]; then
+  "$REAL" "${args[@]}" | "$FILTER"
+else
+  exec "$REAL" "${args[@]}"
+fi

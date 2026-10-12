@@ -1,0 +1,161 @@
+--!nonstrict
+-- Terminal Soviético — favoritos + aplicativos em execução (exceto o workspace da central).
+-- MODELO: install.sh gera bar.luau (marcadores HIDDEN_WORKSPACE e PINNED_LUA).
+--
+-- Um bloco por aplicativo, com o ícone real (appIconPath pelo desktop id ou
+-- pela classe). Favoritos ficam sempre visíveis; os demais aparecem enquanto
+-- tiverem janela aberta fora do WS 1 (a central de operações).
+--   traço fósforo (primary)   = aplicativo da janela focada
+--   traço oliva (secondary)   = aplicativo em execução (traço largo: 2+ janelas)
+--   sem traço, ícone atenuado = favorito fechado
+-- Clique: em execução -> foca a janela mais recente (cliques seguidos alternam
+-- entre as janelas do app); fechado -> abre pelo .desktop (uwsm-app).
+--
+-- Orientado a eventos: um único `socat` lê o socket2 do Hyprland e cada evento
+-- de janela/workspace agenda uma leitura de `hyprctl clients -j` (coalescida).
+-- update() a cada 30 s é só rede de segurança.
+
+local HIDDEN_WS = @HIDDEN_WORKSPACE@
+local ICON = 18
+
+-- Favoritos: desktop id (abrir e ícone) e classes de janela que o representam.
+-- Gerado por install.sh a partir de FAVORITES em config/terminal-soviet.conf.
+local PINNED = {
+@PINNED_LUA@
+}
+
+local classToPin = {}
+for i, p in ipairs(PINNED) do
+  for _, c in ipairs(p.classes) do classToPin[c] = i end
+end
+
+local apps = {}
+local cycle = {}
+local busy, pending = false, false
+local streaming = false
+
+-- appIconPath é caro (varre temas de ícones): uma busca por app, em cache.
+local icons = {}
+local function iconFor(key, id, class)
+  local v = icons[key]
+  if v == nil then
+    v = noctalia.appIconPath(id, ICON)
+    if not v and class and class ~= id then v = noctalia.appIconPath(string.lower(class), ICON) end
+    icons[key] = v or false
+  end
+  return v or nil
+end
+
+function activate(key)
+  for _, a in ipairs(apps) do
+    if a.key == key then
+      if #a.windows == 0 then
+        noctalia.runAsync({ "uwsm-app", "--", a.id .. ".desktop" })
+      else
+        local i = 1
+        if a.focused and #a.windows > 1 then i = ((cycle[key] or 1) % #a.windows) + 1 end
+        cycle[key] = i
+        noctalia.runAsync({ "hyprctl", "dispatch",
+          'hl.dsp.focus({ window = "address:' .. a.windows[i] .. '" })' })
+      end
+      return
+    end
+  end
+end
+
+local function render()
+  local items = {}
+  for _, a in ipairs(apps) do
+    local key = a.key
+    local path = iconFor(key, a.id, a.class)
+    local node = path and ui.image({ path = path, width = ICON, height = ICON, fit = "contain" })
+      or ui.glyph({ name = "app-window", size = ICON - 2, color = "on_surface" })
+    local mark = "#00000000"
+    if a.focused then mark = "primary" elseif #a.windows > 0 then mark = "secondary" end
+    table.insert(items, ui.column({
+      key = key, gap = 1, align = "center",
+      opacity = (#a.windows == 0) and 0.55 or 1.0,
+      onClick = function() activate(key) end,
+    }, {
+      node,
+      ui.box({ width = (#a.windows > 1) and 12 or 8, height = 2, fill = mark }),
+    }))
+  end
+  barWidget.render(ui.row({ gap = 5, align = "center" }, items))
+end
+
+local function rebuild(list)
+  local byKey, order = {}, {}
+  for i, p in ipairs(PINNED) do
+    local a = { key = "pin:" .. p.id, id = p.id, class = p.classes[1], windows = {},
+                focused = false, rank = i, rec = {} }
+    byKey[a.key] = a
+    table.insert(order, a)
+  end
+  for _, c in ipairs(list) do
+    local class = c.class or ""
+    if c.mapped and c.workspace and c.workspace.id ~= HIDDEN_WS and class ~= "" then
+      local lc = string.lower(class)
+      local pin = classToPin[lc]
+      local key = pin and ("pin:" .. PINNED[pin].id) or ("app:" .. lc)
+      local a = byKey[key]
+      if not a then
+        local ws = c.workspace.id < 0 and 99 or c.workspace.id
+        a = { key = key, id = class, class = class, windows = {}, focused = false,
+              rank = 100 + ws, rec = {} }
+        byKey[key] = a
+        table.insert(order, a)
+      end
+      table.insert(a.rec, { addr = c.address, h = c.focusHistoryID or 999 })
+      if c.focusHistoryID == 0 then a.focused = true end
+    end
+  end
+  for _, a in ipairs(order) do
+    table.sort(a.rec, function(x, y) return x.h < y.h end)
+    for _, w in ipairs(a.rec) do table.insert(a.windows, w.addr) end
+    a.rec = nil
+  end
+  table.sort(order, function(x, y)
+    if x.rank ~= y.rank then return x.rank < y.rank end
+    return x.key < y.key
+  end)
+  apps = order
+end
+
+local function refresh()
+  if busy then pending = true; return end
+  busy = true
+  noctalia.runAsync({ "hyprctl", "clients", "-j" }, function(r)
+    busy = false
+    rebuild(noctalia.json.decode(r.stdout or "") or {})
+    render()
+    if pending then pending = false; refresh() end
+  end, 2000)
+end
+
+local EVENTS = {
+  openwindow = true, closewindow = true, movewindowv2 = true, activewindowv2 = true,
+  workspacev2 = true, focusedmonv2 = true, configreloaded = true,
+}
+
+local function startStream()
+  if streaming then return end
+  local sig = noctalia.getenv("HYPRLAND_INSTANCE_SIGNATURE")
+  local run = noctalia.getenv("XDG_RUNTIME_DIR")
+  if not sig or not run or not noctalia.commandExists("socat") then return end
+  streaming = true
+  noctalia.runStream("exec socat -u UNIX-CONNECT:" .. run .. "/hypr/" .. sig .. "/.socket2.sock -",
+    function(line)
+      local ev = string.match(line or "", "^(%w+)>>")
+      if ev and EVENTS[ev] then refresh() end
+    end)
+end
+
+function update()
+  noctalia.setUpdateInterval(30000)
+  startStream()
+  refresh()
+end
+
+startStream()
+refresh()

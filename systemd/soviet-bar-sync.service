@@ -1,0 +1,17 @@
+# Terminal Soviético — oculta a barra do Noctalia no workspace 1, mostra nos demais.
+# Orientado a eventos (socket2 do Hyprland). Script: ~/.local/bin/soviet-bar-sync
+[Unit]
+Description=Terminal Soviético: visibilidade da barra por workspace
+After=graphical-session.target noctalia.service
+Wants=noctalia.service
+PartOf=graphical-session.target
+ConditionEnvironment=HYPRLAND_INSTANCE_SIGNATURE
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/soviet-bar-sync
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

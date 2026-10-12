@@ -1,0 +1,15 @@
+#!/bin/bash
+# Terminal Soviético — foca a janela de classe EXATA <classe> ou executa o comando.
+# Usado pelos launchers Firefox/osu! da barra do Noctalia (20-barra.toml).
+# (omarchy-launch-or-focus usa \b...\b em classe e título; com "osu!" a fronteira
+#  após "!" nunca casa, e títulos de outras janelas podem casar por engano.)
+# Uso: soviet-launch-or-focus <classe> <comando> [args...]
+set -uo pipefail
+(( $# >= 2 )) || { echo "uso: soviet-launch-or-focus <classe> <comando> [args...]" >&2; exit 2; }
+class=$1; shift
+addr=$(hyprctl clients -j | jq -r --arg c "$class" '[.[] | select(.class == $c)] | sort_by(.focusHistoryID) | .[0].address // empty')
+if [[ -n $addr ]]; then
+  hyprctl dispatch "hl.dsp.focus({ window = \"address:$addr\" })" >/dev/null
+else
+  exec setsid uwsm-app -- "$@"
+fi

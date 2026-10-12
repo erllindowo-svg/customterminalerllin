@@ -1,0 +1,310 @@
+# Terminal Soviético — barra do Noctalia (substitui a barra do Omarchy)
+#
+# MODELO: install.sh gera ~/.config/noctalia/20-barra.toml trocando os marcadores BIN,
+# BAR_NAME, BAR_END (lançadores instalados) e SENSOR_MEMBERS (com/sem GPU)
+# conforme config/terminal-soviet.conf.
+#
+# Uma única barra ("estacao") no topo. Visibilidade controlada por workspace:
+#   workspace 1  -> oculta  (a central de operações ocupa a tela)
+#   outros       -> visível
+# quem faz isso é ~/.local/bin/soviet-bar-sync (serviço soviet-bar-sync.service),
+# via `noctalia msg bar-hide|bar-show`. Não ligar auto_hide aqui.
+#
+# Grupos (esquerda -> direita):
+#   CONTEXTO      menu ☭ · workspaces · overview · aplicativos (favoritos + abertos; ponto = app ativo)
+#   MONITORAMENTO CPU % T° · RAM % · GPU % T° VRAM · NET ↓ ↑ · [inspeção]   (centro)
+#   UTILIDADES    Spotify · │ Firefox · osu! │ bandeja · notificações · volume │ clima RJ · relógio · control center
+
+[bar]
+order = ["@BAR_NAME@"]
+
+[bar.@BAR_NAME@]
+enabled = true
+position = "top"
+thickness = 26
+layer = "top"
+reserve_space = true
+auto_hide = false
+smart_auto_hide = false
+margin_edge = 0
+margin_ends = 0
+padding = 6
+widget_spacing = 6
+background_opacity = 1.0
+border = "outline"
+border_width = 1.0
+radius = 0
+concave_edge_corners = false
+shadow = false
+contact_shadow = false
+hover_highlight = true
+font_scale = 0.90
+font_weight = 500
+color = "on_surface"
+icon_color = "secondary"
+
+start   = ["menu", "workspaces", "overview", "sep", "apps"]
+center  = ["group:sensores", "inspecao"]
+end     = @BAR_END@
+
+# Bloco de instrumentos: moldura fina, sem preenchimento chamativo.
+[[bar.@BAR_NAME@.capsule_group]]
+id = "sensores"
+members = @SENSOR_MEMBERS@
+fill = "surface_variant"
+border = "outline"
+radius = 0
+padding = 6
+widget_spacing = 7
+
+[bar.@BAR_NAME@.dead_zone.actions]
+right = "panel-toggle control-center"
+
+# ---------------------------------------------------------------- CONTEXTO
+
+[widget.menu]
+type = "custom_button"
+glyph = "star-filled"       # estrela (☭ não existe na fonte de ícones Tabler)
+label = ""
+tooltip = "Menu Omarchy  (dir.: launcher do Noctalia)"
+icon_color = "primary"
+[widget.menu.actions]
+left = "exec omarchy-menu toggle"
+right = "panel-toggle launcher"
+middle = "none"
+
+[widget.workspaces]
+type = "workspaces"
+style = "regular"
+show_labels = true
+label_source = "id"
+max_label_chars = 2
+labels_only_when_occupied = false
+hide_when_empty = false
+pill_scale = 0.8
+active_pill_size = 1.6
+inactive_pill_size = 1.0
+focused_color = "primary"
+occupied_color = "secondary"
+empty_color = "outline"
+urgent_color = "error"
+capsule_radius = 0
+
+# Overview de workspaces (plugin moorgrove.overview do shell Omarchy), que antes
+# tinha botão na barra antiga.
+[widget.overview]
+type = "custom_button"
+glyph = "layout-grid"
+tooltip = "Overview dos workspaces"
+[widget.overview.actions]
+left = "exec omarchy-shell shell toggle moorgrove.overview '{}'"
+middle = "none"
+
+[widget.sep]
+type = "text"
+text = "│"
+color = "outline"
+interactive = false
+
+# Favoritos fixos (escurecidos quando fechados) + aplicativos abertos.
+[widget.apps]
+type = "erllan/tarefas:bar"   # plugin: todas as janelas exceto WS 1 (taskbar nativo não filtra)
+
+[widget.active_window]
+type = "active_window"
+icon_size = 12.0
+max_length = 150.0
+min_length = 0.0
+title_scroll = "none"
+color = "on_surface_variant"
+
+# ---------------------------------------------------------------- CENTRO
+
+[widget.clock]
+type = "clock"
+format = "{:%H:%M}"
+color = "primary"
+font_weight = 700
+[widget.clock.actions]
+left = "panel-toggle control-center calendar"
+
+[widget.weather]
+type = "weather"
+show_condition = false
+show_temperature = true
+max_length = 130
+color = "on_surface"
+[widget.weather.actions]
+left = "panel-toggle control-center weather"
+
+# ---------------------------------------------------------------- MONITORAMENTO
+# Dados nativos do Noctalia: /proc, hwmon k10temp (Tctl) e NVML da NVIDIA.
+# Valor em fósforo; ao passar do limiar de atividade tinge para vermelho, que
+# só fica pleno no limiar crítico (limiares em 30-monitoramento.toml).
+
+[widget.cpu]
+type = "sysmon"
+stat = "cpu_usage"
+visualization = "none"
+show_glyph = false
+label_min_width = 24
+color = "primary"
+highlight_color = "error"
+
+[widget.cpu_temp]
+type = "sysmon"
+stat = "cpu_temp"
+visualization = "none"
+show_glyph = true
+glyph = "temperature"
+label_min_width = 24
+color = "primary"
+highlight_color = "error"
+
+[widget.ram]
+type = "sysmon"
+stat = "ram_pct"
+visualization = "none"
+show_glyph = false
+label_min_width = 24
+color = "primary"
+highlight_color = "error"
+
+[widget.gpu]
+type = "sysmon"
+stat = "gpu_usage"
+visualization = "none"
+show_glyph = false
+label_min_width = 24
+color = "primary"
+highlight_color = "error"
+
+[widget.gpu_temp]
+type = "sysmon"
+stat = "gpu_temp"
+visualization = "none"
+show_glyph = true
+glyph = "temperature"
+label_min_width = 24
+color = "primary"
+highlight_color = "error"
+
+[widget.vram]
+type = "sysmon"
+stat = "gpu_vram"
+visualization = "none"
+show_glyph = true
+glyph = "stack-2"
+label_min_width = 24
+color = "primary"
+highlight_color = "error"
+
+[widget.net_down]
+type = "sysmon"
+stat = "net_rx"
+visualization = "none"
+show_glyph = true
+glyph = "arrow-down"
+network_speed_compact = true
+label_min_width = 34
+color = "on_surface"
+highlight_color = "tertiary"
+
+[widget.net_up]
+type = "sysmon"
+stat = "net_tx"
+visualization = "none"
+show_glyph = true
+glyph = "arrow-up"
+network_speed_compact = true
+label_min_width = 34
+color = "on_surface"
+highlight_color = "tertiary"
+
+# Rótulos dos instrumentos (oliva, não interativos).
+[widget.l_cpu]
+type = "text"
+text = "CPU"
+color = "secondary"
+interactive = false
+
+[widget.l_ram]
+type = "text"
+text = "RAM"
+color = "secondary"
+interactive = false
+
+[widget.l_gpu]
+type = "text"
+text = "GPU"
+color = "secondary"
+interactive = false
+
+[widget.l_net]
+type = "text"
+text = "NET"
+color = "secondary"
+interactive = false
+
+# Mesmo mecanismo do atalho SUPER+M: ~/.local/bin/soviet-inspect (abre/fecha).
+[widget.inspecao]
+type = "custom_button"
+glyph = "activity-heartbeat"
+tooltip = "Inspeção: btop flutuante (SUPER+M)"
+icon_color = "primary"
+[widget.inspecao.actions]
+left = "exec @BIN@/soviet-inspect"
+middle = "none"
+
+# ---------------------------------------------------------------- UTILIDADES
+
+[widget.tray]
+type = "tray"
+
+# O daemon de notificações é o do shell Omarchy (ver 00-coexistencia-omarchy.toml).
+[widget.notificacoes]
+type = "custom_button"
+glyph = "bell"
+tooltip = "Notificações: histórico  (dir.: não perturbe)"
+[widget.notificacoes.actions]
+left = "exec omarchy-shell notifications showHistory"
+right = "exec omarchy-toggle-notification-silencing"
+middle = "exec omarchy-shell notifications dismissAll"
+
+[widget.volume]
+type = "volume"
+device = "output"
+[widget.volume.actions]
+left = "panel-toggle erllan/volume-slider:panel"   # popup só com slider (plugin local)
+middle = "volume-mute"
+scroll_up = "volume-up 5%"
+scroll_down = "volume-down 5%"
+
+# Spotify (MPRIS): capa, artista – título rolando, anterior/play-pause/próxima;
+# clique na capa/título foca ou abre o Spotify. Fork local de azokyen/spotify-media
+# em ~/.local/share/noctalia/plugins/spotify-media. Substitui o widget "media".
+[widget.spotify]
+type = "erllan/spotify-media:bar"
+
+# Launchers fixos (ícones originais coloridos). Reaproveitam a janela existente
+# via ~/.local/bin/soviet-launch-or-focus (classe exata) em vez de abrir outra instância.
+[widget.firefox]
+type = "custom_button"
+custom_image = "/usr/share/icons/hicolor/scalable/apps/firefox.svg"
+custom_image_colorize = false
+tooltip = "Firefox"
+[widget.firefox.actions]
+left = "exec @BIN@/soviet-launch-or-focus firefox firefox"
+middle = "none"
+
+[widget.osu]
+type = "custom_button"
+custom_image = "/usr/share/pixmaps/osu-lazer.png"
+custom_image_colorize = false
+tooltip = "osu!"
+[widget.osu.actions]
+left = "exec @BIN@/soviet-launch-or-focus osu! osu-lazer"
+middle = "none"
+
+[widget.control-center]
+type = "control-center"

@@ -1,0 +1,33 @@
+# Terminal Soviético — o que NÃO entra no repositório.
+# Regras específicas de propósito: nada de padrões genéricos que escondam código.
+
+# Resultados de execução e temporários
+tests/results/
+*.log
+*.tmp
+*.part
+*.swp
+*~
+.DS_Store
+
+# Mídia de terceiros: baixada e conferida por scripts/fetch-backgrounds.sh
+# (licenças CC com atribuição; ver THIRD_PARTY.md)
+omarchy/themes/*/backgrounds/
+omarchy/themes/*/preview.png
+
+# Backups operacionais (ficam em ~/terminal-sovietico-backups e
+# ~/.local/state/terminal-soviet/install/backups, nunca aqui)
+backups/
+*.bak
+*.bak.*
+
+# Segredos: o repositório não é cofre
+.env
+.env.*
+*.pem
+*.p12
+id_rsa*
+id_ed25519*
+
+# Dependências externas obtidas localmente (arttime, omarchy-overview)
+vendor/

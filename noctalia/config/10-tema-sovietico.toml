@@ -1,0 +1,40 @@
+# Terminal Soviético — identidade visual do Noctalia
+#
+# Paleta: palettes/SovietTerminal.json (valores do tema Omarchy soviet-terminal,
+# ~/.config/omarchy/themes/soviet-terminal/colors.toml e btop.theme).
+#   primary   #B8D58A  fósforo — números, item ativo, informação prioritária
+#   secondary #718D58  oliva   — rótulos, ícones, itens ocupados
+#   tertiary  #C9B26B  âmbar   — avisos
+#   error     #BD4A42  vermelho — somente estado crítico
+#   surface   #0A0C0A  quase preto
+#   outline   #2F362D  divisores e bordas finas
+#
+# Só o Noctalia lê este arquivo; nenhum aplicativo é re-tematizado (ver 00-*.toml).
+
+[theme]
+source = "custom"
+custom_palette = "SovietTerminal"
+mode = "dark"
+shell_mode = "follow"
+
+[shell]
+font_family = "JetBrainsMono Nerd Font"   # mesma fonte do foot.ini
+corner_radius_scale = 0.0                  # cantos retos, como as janelas (rounding = 0)
+popup_shadows = false
+button_borders = true
+card_borders = true
+input_borders = true
+popup_borders = true
+date_format = "%a %d.%m.%Y"
+time_format = "{:%H:%M}"
+
+[shell.animation]
+enabled = true
+speed = 1.6                                # animações curtas, só funcionais
+
+[shell.panel]
+shadow = false
+borders = true
+transparency_mode = "solid"
+launcher_placement = "attached"
+launcher_position = "auto"

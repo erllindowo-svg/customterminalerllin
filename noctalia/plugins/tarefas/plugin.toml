@@ -1,0 +1,15 @@
+# Terminal Soviético — taskbar: todas as janelas abertas, exceto as do WS 1
+# (central de operações), mais favoritos fixos. Ícone original do app; traço
+# fósforo = app focado, oliva = em execução. Orientado a eventos (socket2).
+id = "erllan/tarefas"
+name = "Tarefas"
+version = "1.1.0"
+plugin_api = 24
+author = "erllan"
+license = "MIT"
+dependencies = ["hyprctl", "socat", "uwsm-app"]
+icon = "apps"
+description = "Favoritos + apps em execução, exceto o workspace 1 (eventos do Hyprland)."
+[[widget]]
+id = "bar"
+entry = "bar.luau"

@@ -1,0 +1,23 @@
+### P4 arttime interativo (pty, sem janela) — 60 s — 2026-10-12T17:36:19-03:00
+PID       CPU%med CPU%pico    RSSmed    RSSmax  COMANDO
+66699        5.10      7.0      32.9      32.9  foot --working-directory=~ -e bash -c tmux attach || tmux n
+1517         3.62      9.0      32.7      32.7  btop --config ~/.config/btop/soviet-ops.conf
+1152         2.47      3.0     250.2     250.2  Hyprland --watchdog-fd 4
+1258         2.03      4.0     210.1     211.3  /usr/bin/noctalia
+1947         0.17      1.0       4.1       4.1  /bin/bash ~/.local/bin/soviet-ops-clock
+208470       0.12      1.0       6.5       6.5  zsh -fi /run/user/1000/terminal-soviet/arttime/share/arttime/src/artti
+208449       0.05      1.0      10.9      10.9  python3 -I - ~/www/customterminalerllin/bin/soviet-arte 68
+1880         0.03      1.0      22.6      22.6  /usr/bin/foot --app-id=soviet-ops-clock --title=СТАНЦИЯ // HORA E CONT
+1469         0.02      1.0      23.4      23.4  /usr/bin/foot --app-id=soviet-ops-btop --title=СТАНЦИЯ // MONITORAMENT
+2303         0.00      0.0       4.8       4.8  socat -U - UNIX-CONNECT:/run/user/1000/hypr/efb50993780079460b0cbed136
+208452       0.00      0.0       4.2       4.2  /bin/bash ~/www/customterminalerllin/bin/soviet-arte arttim
+1745         0.00      0.0      20.7      20.7  /usr/bin/foot --app-id=soviet-ops-shell --title=СТАНЦИЯ // TERMINAL --
+1495         0.00      0.0       4.8       4.8  socat -u UNIX-CONNECT:/run/user/1000/hypr/efb50993780079460b0cbed1363e
+1268         0.00      0.0       4.6       4.6  /bin/bash ~/.local/bin/soviet-bar-sync
+1207         0.00      0.0     494.8     495.1  quickshell -n -p /usr/share/omarchy/shell
+105050       0.00      0.0       4.9       4.9  socat -u UNIX-CONNECT:/run/user/1000/hypr/efb50993780079460b0cbed1363e
+102456       0.00      0.0       4.7       4.7  /bin/bash ~/.local/bin/soviet-ops-fetch
+102446       0.00      0.0      22.2      22.2  /usr/bin/foot --app-id=soviet-ops-fetch --title=СТАНЦИЯ // SISTEMA --w
+CPU total do sistema (todos os núcleos): 5.42%   processos criados: 33.7/s
+Memória: usada 6015 MB, disponível 9878 MB (total 15893 MB)
+processos arttime após sair: 0

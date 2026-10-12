@@ -1,0 +1,60 @@
+# Terminal Soviético — coexistência Noctalia × shell Omarchy
+#
+# O Noctalia aqui é SOMENTE a barra (e os painéis que ela abre: control center,
+# launcher, clima). O shell do Omarchy (quickshell em /usr/share/omarchy/shell)
+# continua dono dos serviços de sessão compartilhados, porque outras partes do
+# Omarchy dependem deles (omarchy-crash-watch, omarchy-notification-wait,
+# atalhos de notificação, lock antes do suspend, polkit, papel de parede por tema).
+#
+# Cada chave abaixo desliga um serviço do Noctalia que disputaria o mesmo recurso.
+# Documentação: ~/.config/noctalia/README.md
+
+[shell]
+setup_wizard_enabled = false   # configuração vem destes arquivos, não do assistente
+telemetry_enabled = false
+polkit_agent = false           # agente polkit = shell Omarchy (omarchy.polkit)
+clipboard_enabled = false      # histórico = shell Omarchy (SUPER+CTRL+V)
+
+[notification]
+enable_daemon = false          # org.freedesktop.Notifications = shell Omarchy
+
+[osd]
+enabled = false                # OSD de volume/brilho = shell Omarchy (omarchy.osd)
+
+[wallpaper]
+enabled = false                # papel de parede = tema Omarchy (soviet-terminal/backgrounds)
+
+[lockscreen]
+enabled = false                # bloqueio = omarchy.lock (SUPER+CTRL+L, idle, suspend)
+lock_before_suspend = false
+
+[desktop_widgets]
+enabled = false                # o workspace 1 usa terminais reais, não widgets de desktop
+
+[nightlight]
+enabled = false                # luz noturna = hyprsunset (SUPER+CTRL+N)
+
+[theme.templates]
+# NUNCA deixar o Noctalia reescrever temas de foot/btop/gtk/etc.: o tema
+# soviet-terminal do Omarchy é a fonte da verdade para os aplicativos.
+enable_builtin_templates = false
+enable_community_templates = false
+
+[plugins]
+auto_update = "none"           # nada é baixado sem ação explícita
+# Plugins locais (~/.local/share/noctalia/plugins/): popup de volume e Spotify.
+enabled = ["erllan/volume-slider", "erllan/spotify-media", "erllan/tarefas"]
+
+# Fontes de plugins desativadas: nenhum `git clone` automático ao iniciar.
+# Para navegar no catálogo oficial, reative manualmente (enabled = true).
+[[plugins.source]]
+name = "official"
+kind = "git"
+location = "https://github.com/noctalia-dev/official-plugins"
+enabled = false
+
+[[plugins.source]]
+name = "community"
+kind = "git"
+location = "https://github.com/noctalia-dev/community-plugins"
+enabled = false

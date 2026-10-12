@@ -1,0 +1,4 @@
+-- Terminal Soviético — layout dwindle no workspace da central (a grade de
+-- painéis do soviet-ops exige dwindle). Mesmo formato do toggle de layout do
+-- Omarchy (~/.local/state/omarchy/workspace-layouts/<n>.lua). Gerado por install.sh.
+hl.workspace_rule({ workspace = "@HIDDEN_WORKSPACE@", layout = "dwindle" })

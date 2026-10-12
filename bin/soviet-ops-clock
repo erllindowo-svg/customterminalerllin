@@ -1,0 +1,122 @@
+#!/bin/bash
+# Terminal Soviético — painel de relógio e contexto da central de operações.
+#
+# Mostra hora local em dígitos grandes, data e clima do Rio de Janeiro. (Uptime,
+# carga e kernel ficam no btop e no painel de sistema; não são repetidos aqui.) Não faz requisições de rede: o clima vem do cache que o
+# serviço nativo do Noctalia mantém (~/.cache/noctalia/weather.json, Open-Meteo).
+# Se o cache faltar ou estiver velho, isso é mostrado — nenhum valor é inventado.
+#
+# Roda dentro do foot (app-id soviet-ops-clock), aberto por soviet-ops.
+
+set -uo pipefail
+
+# Preferências (config/terminal-soviet.conf, instalado por install.sh).
+TS_CONF="${TS_CONF:-${XDG_CONFIG_HOME:-$HOME/.config}/terminal-soviet/terminal-soviet.conf}"
+# shellcheck source=/dev/null
+[[ -r $TS_CONF ]] && source "$TS_CONF"
+WEATHER="${XDG_CACHE_HOME:-$HOME/.cache}/noctalia/weather.json"
+LOCATION="${XDG_CACHE_HOME:-$HOME/.cache}/noctalia/location.json"
+
+# Cores (paleta soviet-terminal, truecolor).
+G=$'\e[38;2;184;213;138m'   # fósforo  #B8D58A
+O=$'\e[38;2;113;141;88m'    # oliva    #718D58
+D=$'\e[38;2;68;75;66m'      # divisor  #444B42
+T=$'\e[38;2;200;203;191m'   # texto    #C8CBBF
+A=$'\e[38;2;201;178;107m'   # âmbar    #C9B26B
+R=$'\e[38;2;189;74;66m'     # vermelho #BD4A42
+B=$'\e[1m'; N=$'\e[0m'
+
+# Dígitos grandes: 3 linhas x 4 colunas, separadas por "|".
+declare -A BIG=(
+  [0]="█▀▀█|█  █|█▄▄█" [1]=" ▀█ |  █ | ▄█▄" [2]="▀▀▀█|█▀▀▀|█▄▄▄" [3]="▀▀▀█| ▀▀█|▄▄▄█"
+  [4]="█  █|▀▀▀█|   █" [5]="█▀▀▀|▀▀▀█|▄▄▄█" [6]="█▀▀▀|█▀▀█|█▄▄█" [7]="▀▀▀█|   █|   █"
+  [8]="█▀▀█|█▀▀█|█▄▄█" [9]="█▀▀█|▀▀▀█|▄▄▄█"
+)
+COLON=(" " "▀" "▀")
+
+wmo_pt() {
+  case $1 in
+    0) echo "céu limpo" ;; 1) echo "predom. limpo" ;; 2) echo "parcialm. nublado" ;; 3) echo "nublado" ;;
+    45|48) echo "neblina" ;; 51|53|55) echo "chuvisco" ;; 56|57) echo "chuvisco gelado" ;;
+    61) echo "chuva fraca" ;; 63) echo "chuva" ;; 65) echo "chuva forte" ;; 66|67) echo "chuva gelada" ;;
+    71|73|75|77) echo "neve" ;; 80) echo "pancadas fracas" ;; 81) echo "pancadas" ;; 82) echo "pancadas fortes" ;;
+    85|86) echo "neve" ;; 95) echo "trovoada" ;; 96|99) echo "trovoada c/ granizo" ;; *) echo "código $1" ;;
+  esac
+}
+
+rule() {  # rule "TÍTULO" largura
+  local title=" $1 " w=$2 line
+  printf -v line '%*s' $(( w - ${#title} - 2 > 0 ? w - ${#title} - 2 : 0 )) ''
+  printf '%s──%s%s%s%s%s\n' "$D" "$O$B" "$title" "$N$D" "${line// /─}" "$N"
+}
+
+big_time() {  # imprime HH:MM em 3 linhas
+  local s=$1 row i ch out rows
+  for row in 0 1 2; do
+    out="  "
+    for (( i = 0; i < ${#s}; i++ )); do
+      ch=${s:i:1}
+      if [[ $ch == ":" ]]; then
+        out+="${COLON[row]}  "
+      else
+        IFS='|' read -r -a rows <<< "${BIG[$ch]}"
+        out+="${rows[row]} "
+      fi
+    done
+    printf '%s%s%s%s\n' "$G" "$B" "$out" "$N"
+  done
+}
+
+weather_block() {
+  if [[ ! -r $WEATHER ]]; then
+    printf '  %ssem dados: cache do Noctalia ausente%s\n' "$A" "$N"; return
+  fi
+  local now age
+  now=$(date +%s)
+  jq -r --argjson now "$now" '
+    .snapshot as $s
+    | [ ($s.current.temperature_c|tostring), ($s.current.apparent_temperature_c|tostring),
+        ($s.current.weather_code|tostring), ($s.current.relative_humidity_percent|tostring),
+        ($s.current.wind_speed_kmh|tostring),
+        ($s.forecast_days[0].temperature_min_c|tostring), ($s.forecast_days[0].temperature_max_c|tostring),
+        ($s.forecast_days[0].weather_code|tostring),
+        ($s.forecast_days[0].sunrise_iso[11:16]), ($s.forecast_days[0].sunset_iso[11:16]),
+        (($now - $s.fetched_at)|tostring) ] | @tsv' "$WEATHER" 2>/dev/null |
+  while IFS=$'\t' read -r t feel code hum wind tmin tmax dcode rise set age; do
+    printf '  %s%s%.0f°C%s %s%s%s  %ssensação %.0f°C%s\n' "$G" "$B" "$t" "$N" "$T" "$(wmo_pt "$code")" "$N" "$O" "$feel" "$N"
+    printf '  %sumidade%s %s%%  %svento%s %.0f km/h\n' "$O" "$T" "$hum" "$O" "$T" "$wind"
+    printf '  %shoje%s %.0f–%.0f°C %s  %s☀ %s ☾ %s%s\n' "$O" "$T" "$tmin" "$tmax" "$(wmo_pt "$dcode")" "$O" "$rise" "$set" "$N"
+    if (( age > 5400 )); then
+      printf '  %sdados de %d min atrás%s\n' "$A" $(( age / 60 )) "$N"
+    fi
+  done
+}
+
+
+place=$(jq -r '.name // empty' "$LOCATION" 2>/dev/null | sed 's/, Brazil$//; s/^Rio de Janeiro$/Rio de Janeiro/')
+place=${place:-${WEATHER_ADDRESS%%,*}}
+place=${place:-Rio de Janeiro}
+
+cleanup() { printf '\e[?25h\e[?1049l'; exit 0; }
+trap cleanup INT TERM HUP
+trap 'printf "\e[2J"' WINCH
+printf '\e[?1049h\e[?25l\e[2J'
+
+# Dias da semana em português sem depender do locale pt_BR estar gerado.
+DIAS=(dom seg ter qua qui sex sáb)
+
+while :; do
+  cols=$(tput cols 2>/dev/null || echo 48)
+  w=$(( cols > 60 ? 60 : cols - 1 ))
+  {
+    printf '\e[H'
+    rule "ВРЕМЯ · HORA LOCAL" "$w"
+    echo
+    big_time "$(date +%H:%M)"
+    printf '\n  %s%s%s  %s%s%s\n\n' "$T" "${DIAS[$(date +%w)]} $(date +%d.%m.%Y)" "$N" "$O" "UTC$(date +%:z) · $(date +%S)s" "$N"
+    rule "$(echo "$place" | tr '[:lower:]' '[:upper:]')" "$w"
+    weather_block
+  } | sed 's/$/\x1b[K/'
+  printf '\e[J'
+  sleep 1
+done
