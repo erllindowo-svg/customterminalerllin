@@ -10,8 +10,7 @@ e @KEY_INSPECT@. static 57/0, sandbox 41/0.
 ## Próximo passo exato
 (Item 6 FEITO: widget nativo "alca" (glyph grip-vertical) em 20-barra.toml.in e no
  start vertical de bin/soviet-bar-pos.)
-2. Item 7 (tabela de plugins: gh api nos catálogos community-plugins/official-plugins,
-   plugin.toml de cada um: plugin_api, dependencies; nada instalado).
+(Item 7 FEITO: retomada/plugins-avaliacao.md.)
 3. DOCS PENDENTES: docs/decisions.md (achados da API, KEY_PIN, Editar barra, Grupos sem
    webapps, atalhos via Lua isolado, tooltip preso ao widget, nativos só mudam com
    ./install.sh, sem arrasto na barra), docs/controls.md (KEY_PIN, clique direito fora de
@@ -41,7 +40,7 @@ Instalado no sistema: tudo acima (a partir do checkout principal, branch redesen
 - [x] 4 Grupos: classificador + tabela (aguarda aprovação) + painel + edição (grupos.json só após aprovação)
 - [x] 5 atalhos no hover: soviet-atalhos + plugin + nativos (marcadores AT_*)
 - [x] 6 sem arrasto na barra (API) → alça grip-vertical "alca" no início da start + clique direito na zona vazia, ambos abrem erllan/barra:posicao
-- [ ] 7 avaliação de plugins (tabela)
+- [x] 7 avaliação de plugins: retomada/plugins-avaliacao.md (candidatos: timer, notes, special-workspaces, lyrics — aguarda escolha)
 - [ ] testes, docs, validate, capturas, resumo final
 
 ## Como verificar o que já foi feito
@@ -80,6 +79,7 @@ Instalado no sistema: tudo acima (a partir do checkout principal, branch redesen
 - Google Maps: removido no arquivo pessoal ~/.config/hypr/bindings.lua (não é do projeto).
 
 ## Decisões em aberto (dependem do usuário)
+- Quais plugins candidatos instalar (retomada/plugins-avaliacao.md).
 - Aprovar a tabela app → grupo (retomada/grupos-proposta.txt) antes de gravar grupos.json.
 - (RESOLVIDO: Google Maps fica como está, só sem o atalho; webapps/sites não entram nos Grupos.)
 - [obsoleto] O lançador "Google Maps" (~/.local/share/applications/Google Maps.desktop) ainda existe; só o atalho foi removido. Remover o webapp também?
