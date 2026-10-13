@@ -65,7 +65,7 @@ bin/                       scripts → ~/.local/bin (soviet-ops, soviet-arte, so
 share/terminal-soviet/arte filtro de cores e shim do artprint → ~/.local/share/terminal-soviet/arte
 hypr/                      módulo Hyprland (modelo) → ~/.config/hypr/terminal_soviet.lua
 noctalia/config/           configuração do Noctalia (modelos .in) → ~/.config/noctalia
-noctalia/plugins/          plugins Luau (tarefas, volume-slider, spotify-media) → ~/.local/share/noctalia/plugins
+noctalia/plugins/          plugins Luau (tarefas, audio, spotify-media) → ~/.local/share/noctalia/plugins
 omarchy/plugins/           barra nula erllan.sem-barra → ~/.config/omarchy/plugins
 omarchy/themes/            tema soviet-terminal (sem as fotos) → ~/.config/omarchy/themes
 omarchy/workspace-layouts/ layout dwindle da central → ~/.local/state/omarchy/workspace-layouts

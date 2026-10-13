@@ -12,7 +12,7 @@ repositório e é obtido na instalação.
 | Ideia de composição da central | `bin/soviet-ops` (comentário) | [ivanimmanuel-dev/Hypr-Dashboard](https://github.com/ivanimmanuel-dev/Hypr-Dashboard) @ `0dddcdf` | MIT | Padrão adaptado: abrir um painel, esperar a janela e usar `preselect` do dwindle. A implantação original registrou que o projeto foi lido, não executado, e o `soviet-ops` é escrito para foot/bash com travas e idempotência próprias. Por ser MIT, a atribuição fica aqui e no cabeçalho do script. |
 
 Todo o restante (scripts `soviet-*`, `install.sh`, `lib/`, plugins
-`erllan/tarefas`, `erllan/volume-slider` e `erllan.sem-barra`, paleta, tema
+`erllan/tarefas`, `erllan/audio` e `erllan.sem-barra`, paleta, tema
 `soviet-terminal` sem as fotos, configurações) foi escrito para este projeto.
 
 ## Obtidos na instalação (não versionados)

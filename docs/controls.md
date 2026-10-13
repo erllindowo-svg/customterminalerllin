@@ -25,6 +25,17 @@ pertencem ao projeto, na sessão atual.
 | Qualquer outro | **visível**: menu, workspaces, overview, apps abertos · ações · Spotify, apps fixados, bandeja, notificações, volume, clima, relógio, control center |
 | Troca de foco no mesmo workspace | nada muda |
 
+### Áudio
+
+O ícone mostra a saída ativa: **fone** ou **alto-falante** (riscado e vermelho no mudo).
+
+| Gesto | Ação |
+|---|---|
+| clique | popup: mudo, volume e lista de saídas (clicar numa saída a torna padrão e move o que está tocando) |
+| **clique direito** | **alterna fone ↔ alto-falante** |
+| clique do meio | mudo |
+| rolagem | volume ±5 % |
+
 ### Ações (centro)
 
 | Ícone | Clique | Clique direito |

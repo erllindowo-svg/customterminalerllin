@@ -1,0 +1,35 @@
+# Terminal Soviético — áudio: ícone da saída ativa (fone × alto-falante), popup com
+# volume, mudo e lista de saídas, troca rápida fone ↔ alto-falante. Substitui o
+# widget nativo `volume` e o antigo erllan/volume-slider.
+# Fonte única: um `pactl subscribe` (service `fonte`), filho do Noctalia; sem daemon.
+id = "erllan/audio"
+name = "Áudio"
+version = "1.0.0"
+plugin_api = 24
+author = "erllan"
+license = "MIT"
+dependencies = ["pactl", "wpctl", "jq"]
+icon = "headphones"
+description = "Saída de áudio: fone × alto-falante, volume, mudo e troca de saída (PipeWire)."
+tags = ["audio"]
+
+[[service]]
+id = "fonte"
+entry = "fonte.luau"
+
+[[widget]]
+id = "bar"
+entry = "bar.luau"
+  # O meio é do script (mudo): sem isso o host abre as configurações do widget.
+  [widget.actions]
+  middle = "none"
+
+[[panel]]
+id = "painel"
+entry = "painel.luau"
+width = 300
+height = 230
+placement = "attached"
+position = "auto"
+open_near_click = true
+capture_keys = ["escape"]

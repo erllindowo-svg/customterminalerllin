@@ -1,0 +1,49 @@
+--!nonstrict
+-- Terminal Soviético — áudio na barra: glifo da saída ativa (fone × alto-falante)
+-- e o volume. MODELO: install.sh gera bar.luau (marcador ICON da grade da barra).
+--   esquerdo = popup (volume, mudo, saídas)   direito = alterna fone ↔ alto-falante
+--   meio     = mudo                           rolagem = ±5 %
+-- Mudo: glifo riscado em vermelho. Dados: service `fonte` (state "audio").
+
+local ICON = @ICON@
+local estado = noctalia.state.get("audio") or {}
+
+local function pedir(op, arg)
+  noctalia.state.set("pedido", { op = op, arg = arg, n = noctalia.nowMs() })
+end
+
+local function render()
+  local fone = estado.tipo == "fone"
+  local glifo = fone and "headphones" or "device-speaker"
+  if estado.mudo then glifo = glifo .. "-off" end
+  local cor = estado.mudo and "error" or "on_surface"
+  local container = barWidget.isVertical() and ui.column or ui.row
+  local filhos = { ui.glyph({ name = glifo, size = ICON, color = cor }) }
+  if not barWidget.isVertical() then
+    table.insert(filhos, ui.label({ text = tostring(estado.vol or 0) .. "%", color = cor }))
+  end
+  barWidget.render(container({ gap = 4, align = "center" }, filhos))
+end
+
+noctalia.state.watch("audio", function(v)
+  if type(v) == "table" then estado = v; render() end
+end)
+
+function onClick()
+  noctalia.togglePanel("erllan/audio:painel")
+end
+
+function onRightClick()
+  pedir("alternar")
+end
+
+function onMiddleClick()
+  pedir("mudo")
+end
+
+function onScroll(axis, steps)
+  if axis ~= "vertical" or steps == 0 then return end
+  pedir(steps < 0 and "mais" or "menos")
+end
+
+render()

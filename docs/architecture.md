@@ -17,7 +17,8 @@ shell do Omarchy: usa só os pontos de extensão do usuário (`~/.config`,
  systemd --user        │  graphical-session.target                                                               │
    noctalia.service ───┤    ├ noctalia ─────────── barra "estacao" + control center + clima (sysmon desligado)│
    soviet-bar-sync ────┤    │    ├ plugin erllan/tarefas ── service: socat (socket2) → hyprctl│jq (sob evento)  │
-                       │    │    ├ plugin erllan/spotify-media, erllan/volume-slider                              │
+                       │    │    ├ plugin erllan/audio ── service: pactl subscribe → pactl│jq (sob evento)       │
+                       │    │    ├ plugin erllan/spotify-media                                                    │
                        │    │    └ hook started → soviet-bar-sync --apply                                        │
                        │    └ soviet-bar-sync ── socat (socket2) → noctalia msg bar-hide|bar-show estacao        │
                        │                                                                                         │

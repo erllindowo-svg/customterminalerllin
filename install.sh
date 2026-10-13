@@ -367,12 +367,16 @@ activate() {
   fi
   systemctl --user daemon-reload
   systemctl --user start noctalia.service soviet-bar-sync.service
-  local line act kind rel extra restart_sync=0
+  local line act kind rel extra restart_sync=0 restart_noctalia=0
   for line in "${PLAN[@]}"; do
     IFS=$'\t' read -r act kind rel extra <<< "$line"
     [[ $act != OK && $rel == .local/bin/soviet-bar-sync ]] && restart_sync=1
+    # Plugin novo, removido ou com entradas mudadas: a recarga a quente do Noctalia
+    # pode ler a barra antes do plugin.toml novo ("unrecognized widget type").
+    [[ $act != OK && $rel == .local/share/noctalia/plugins/*/plugin.toml ]] && restart_noctalia=1
   done
   (( restart_sync )) && systemctl --user restart soviet-bar-sync.service
+  (( restart_noctalia )) && systemctl --user restart noctalia.service
   hyprctl reload >/dev/null
   local errs; errs=$(hyprctl configerrors 2>&1 | sed '/^$/d')
   if [[ -n $errs ]]; then
@@ -499,7 +503,7 @@ cmd_uninstall() {
   # Diretórios do projeto que ficaram vazios.
   local d
   for d in .local/share/terminal-soviet/arte .local/share/terminal-soviet .config/terminal-soviet \
-           .local/share/noctalia/plugins/tarefas .local/share/noctalia/plugins/volume-slider/ \
+           .local/share/noctalia/plugins/tarefas .local/share/noctalia/plugins/audio \
            .local/share/noctalia/plugins/spotify-media .config/omarchy/plugins/erllan.sem-barra \
            .config/noctalia/palettes .config/noctalia; do
     [[ -d $HOME/$d ]] && find "$HOME/$d" -depth -type d -empty -delete 2>/dev/null || true

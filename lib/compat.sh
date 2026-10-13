@@ -36,6 +36,8 @@ DEPS=( "hyprctl    hyprland    1  compositor e IPC"
        "zsh        zsh         1  exigido pelo arttime"
        "git        git         1  baixar arttime fixado em commit"
        "systemctl  systemd     1  serviços do usuário"
+       "pactl      libpulse    1  áudio da barra (eventos e lista de saídas)"
+       "wpctl      wireplumber 1  áudio da barra (saída padrão, volume)"
        "playerctl  playerctl   0  widget do Spotify"
        "fzf        fzf         0  tecla x do arttime (escolher com fzf)"
        "logger     util-linux  0  registro no journal" )

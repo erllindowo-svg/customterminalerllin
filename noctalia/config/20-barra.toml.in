@@ -16,7 +16,7 @@
 # Grupos (esquerda -> direita):
 #   CONTEXTO      menu ☭ · workspaces · overview · apps ABERTOS não fixados
 #   AÇÕES         inspeção (btop) · captura · luz noturna · cafeína · perfil de energia · jogo   (centro)
-#   UTILIDADES    Spotify · apps FIXADOS · bandeja · notificações · volume · clima RJ · relógio · control center
+#   UTILIDADES    Spotify · apps FIXADOS · bandeja · notificações · áudio · clima RJ · relógio · control center
 #
 # Aplicativos estilo Windows (plugin erllan/tarefas): abertos à esquerda, fixados à
 # direita (atenuado = fechado). Clique direito num ícone: fixar/desafixar.
@@ -218,14 +218,11 @@ left = "exec omarchy-shell notifications showHistory"
 right = "exec omarchy-toggle-notification-silencing"
 middle = "exec omarchy-shell notifications dismissAll"
 
-[widget.volume]
-type = "volume"
-device = "output"
-[widget.volume.actions]
-left = "panel-toggle erllan/volume-slider:panel"   # popup só com slider (plugin local)
-middle = "volume-mute"
-scroll_up = "volume-up 5%"
-scroll_down = "volume-down 5%"
+# Áudio (plugin local erllan/audio): glifo fone × alto-falante + volume.
+# Esq. = popup (volume, mudo, saídas) · dir. = alterna fone ↔ alto-falante ·
+# meio = mudo · rolagem = ±5 %. Os gestos são do plugin (sem actions aqui).
+[widget.audio]
+type = "erllan/audio:bar"
 
 # Spotify (MPRIS): capa, artista – título rolando, anterior/play-pause/próxima;
 # clique na capa/título foca ou abre o Spotify. Fork local de azokyen/spotify-media

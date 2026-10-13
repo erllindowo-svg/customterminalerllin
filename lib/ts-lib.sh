@@ -68,7 +68,7 @@ compute_tokens() {
   T_CAPSULE_THICKNESS=$(awk -v i="$T_ITEM" -v b="$T_BAR_THICKNESS" 'BEGIN { printf "%.3f", i / b }')
 
   # Seção da direita: player, fixados (erllan/tarefas:fixados) e utilidades.
-  T_BAR_END='["spotify", "fixados", "tray", "notificacoes", "volume", "weather", "clock", "control-center"]'
+  T_BAR_END='["spotify", "fixados", "tray", "notificacoes", "audio", "weather", "clock", "control-center"]'
 
   # Centro: ações (grupo "acoes"); o botão do jogo só entra se o .desktop existir.
   T_ACOES_MEMBERS='["inspecao", "captura", "luz_noturna", "cafeina", "energia"'
