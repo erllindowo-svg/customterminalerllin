@@ -149,10 +149,24 @@ gerar_ativos() {
 }
 
 # ------------------------------------------------------------------ bloco do tema
-# Cores por variante. fosforo/ambar: omarchy/themes/soviet-terminal/colors.toml.
+# Cores por variante. robco: o verde do texto da arte do fallout-grub-theme
+# (69D87A). fosforo/ambar: omarchy/themes/soviet-terminal/colors.toml.
 # fallout: Fallout_limine/Limine.txt do Neptune3013 (@9a777b9), sem interface_*.
 cores() {
   case $LIMINE_THEME in
+    robco) cat <<'EOF'
+backdrop: 040904
+term_background: 99081008
+term_foreground: 69D87A
+term_background_bright: 12301A
+term_foreground_bright: A6F5B2
+term_palette: 081008;BD4A42;69D87A;C9B26B;3E8A50;A27B76;5FBF74;9FD9A8
+term_palette_bright: 2C4A33;D2625A;A6F5B2;DCC88A;5FAE70;BE9A94;8EE09E;D4F7DA
+interface_branding_color: 69D87A
+interface_help_color: 3E8A50
+interface_help_color_bright: A6F5B2
+EOF
+    ;;
     fosforo) cat <<'EOF'
 backdrop: 080908
 term_background: 99101210

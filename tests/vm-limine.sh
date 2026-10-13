@@ -10,7 +10,7 @@
 # (o OVMF começa em 1280×800). A tela é capturada pelo monitor do QEMU (screendump).
 #
 # Uso: tests/vm-limine.sh [saída]   (padrão: tests/results/vm-limine/)
-# Cenários: fosforo, ambar, fallout (arte), fosforo do zero, fonte phxega,
+# Cenários: robco, fosforo, ambar, fallout (arte), fosforo do zero, fonte phxega,
 # hash errado, fonte ausente, cirílico CP866. Requer qemu-system-x86_64,
 # edk2-ovmf (/usr/share/edk2/x64), socat, Pillow; KVM se houver.
 set -uo pipefail
@@ -29,7 +29,8 @@ KVM=(); [[ -w /dev/kvm ]] && KVM=(-enable-kvm)
 conf() {  # conf chave=valor…: o conf versionado com LIMINE_* trocados
   local f="$W/conf.$RANDOM" kv
   cp "$ROOT/config/terminal-soviet.conf" "$f"
-  for kv in "$@"; do sed -i "s|^${kv%%=*}=.*|${kv%%=*}=\"${kv#*=}\"|" "$f"; done
+  local d=$'\x01'   # delimitador do sed: valores podem ter "|" (linhas do título)
+  for kv in "$@"; do sed -i "s${d}^${kv%%=*}=.*${d}${kv%%=*}=\"${kv#*=}\"${d}" "$f"; done
   printf '%s\n' "$f"
 }
 
@@ -75,7 +76,7 @@ x0, y0, x1, y1 = map(int, sys.argv[2:6]); r = a[y0:y1, x0:x1].reshape(-1, 3)
 print(" ".join(f"{v:.0f}" for v in r.mean(axis=0)), f"{r.std(axis=0).mean():.1f}")' "$@"; }
 
 section "Variantes (capturas em ${OUT#"$ROOT"/})"
-for v in fosforo ambar fallout; do
+for v in robco fosforo ambar fallout; do
   e=$(esp "$v" "$(conf LIMINE_THEME=$v LIMINE_ORIGEM=arte)") || { fail "variante $v (instalar)"; continue; }
   capturar "$v" "$e"
   if [[ -s $OUT/$v.png ]]; then
@@ -112,7 +113,7 @@ fonte866() {  # fonte866 <esp>: troca a fonte do menu por CP866 e regrava o hash
   h=$(b2sum "$1/ts-limine-fonte.f14" | cut -d' ' -f1)
   sed -i "s|^term_font: boot():/ts-limine-fonte.f14#.*|term_font: boot():/ts-limine-fonte.f14#$h|" "$1/limine.conf"
 }
-e=$(esp acentos "$(conf LIMINE_ORIGEM=arte LIMINE_TITULO="TERMINAL SOVIÉTICO")") && {
+e=$(esp acentos "$(conf LIMINE_ORIGEM=arte LIMINE_TITULO="ÉPOCA DO SISTEMA|LINHA DOIS: ç é ü ñ á í ó ú")") && {
   renomear "$e/limine.conf" '"Soviético Ñ ç ü".encode("utf-8")'
   capturar acentos "$e"; check "acentos (UTF-8 → CP437) no menu e no título: capturado" test -s "$OUT/acentos.png"; }
 e=$(esp cirilico-utf8 "$(conf LIMINE_ORIGEM=arte LIMINE_TITULO=)") && {
@@ -121,7 +122,7 @@ e=$(esp cirilico-utf8 "$(conf LIMINE_ORIGEM=arte LIMINE_TITULO=)") && {
 e=$(esp cirilico-cp866 "$(conf LIMINE_ORIGEM=arte LIMINE_TITULO=)") && {
   fonte866 "$e"; renomear "$e/limine.conf" '"ТЕРМИНАЛ Ядро".encode("cp866").decode("cp437").encode("utf-8")'
   capturar cirilico-cp866 "$e"; check "cirílico com fonte CP866 e texto nas posições do CP437: capturado" test -s "$OUT/cirilico-cp866.png"; }
-e=$(esp titulo-cirilico "$(conf LIMINE_ORIGEM=arte LIMINE_TITULO="СОВЕТСКИЙ ТЕРМИНАЛ")") && {
+e=$(esp titulo-cirilico "$(conf LIMINE_ORIGEM=arte LIMINE_TITULO="СИСТЕМА ЗАГРУЗКИ")") && {
   capturar titulo-cirilico "$e"; check "título em cirílico no papel de parede (menu em CP437): capturado" test -s "$OUT/titulo-cirilico.png"; }
 
 summary

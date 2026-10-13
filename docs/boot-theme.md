@@ -2,13 +2,14 @@
 
 Opcional e separado do `./install.sh`. Deixa o menu do Limine com cara de tela
 CRT: fundo com linhas de varredura e moldura arredondada, fonte de terminal
-bitmap e as cores do tema `soviet-terminal`. Baseado no
+bitmap, o texto da tela RobCo do Fallout no topo e o verde dela. Baseado no
 [fallout-limine-theme](https://github.com/Neptune3013/fallout-limine-theme)
 (Limine v12), sem a arte de terceiros.
 
 | Variante (`LIMINE_THEME`) | Texto | Destaque | Uso |
 |---|---|---|---|
-| `fosforo` (padrão) | `B8D58A` | `D2E8AE` | o verde do tema |
+| `robco` (padrão) | `69D87A` | `A6F5B2` | o verde do texto da tela RobCo (medido na arte) |
+| `fosforo` | `B8D58A` | `D2E8AE` | o verde do tema |
 | `ambar` | `C9B26B` | `DCC88A` | clima de dosímetro |
 | `fallout` | `67d97a` | `16de6d` | valores originais do upstream, para comparar |
 
@@ -48,11 +49,11 @@ Preferências em `config/terminal-soviet.conf`:
 
 | Chave | Valores | Padrão |
 |---|---|---|
-| `LIMINE_THEME` | `fosforo`, `ambar`, `fallout` | `fosforo` |
+| `LIMINE_THEME` | `robco`, `fosforo`, `ambar`, `fallout` | `robco` |
 | `LIMINE_ORIGEM` | `arte` (tela CRT do fallout-grub-theme sem o Vault Boy e o texto), `zero` (desenhada, sem arte de terceiros) | `arte` |
 | `LIMINE_FONTE` | `terminus` (Terminus IBM-437, OFL), `phxega` (PHXEGA8.F14 do upstream) | `terminus` |
 | `LIMINE_RESOLUCAO` | `LxA` do monitor; define também a escala da fonte (altura ÷ 540) | `1920x1080` |
-| `LIMINE_TITULO` | texto no topo do papel de parede (CP437 com acentos ou cirílico); vazio = sem | `TERMINAL SOVIETICO` |
+| `LIMINE_TITULO` | texto no topo do papel de parede (CP437 com acentos ou cirílico; `\|` separa linhas); vazio = sem | o texto da tela RobCo (3 linhas) |
 | `LIMINE_TIMEOUT` | segundos | `15` |
 
 Mudou algo? `--install` de novo: o bloco é substituído, nunca duplicado, e se

@@ -33,7 +33,8 @@ conf() {
   local f="$W/conf.$RANDOM" kv
   cp "$ROOT/config/terminal-soviet.conf" "$f"
   sed -i 's/^LIMINE_ORIGEM=.*/LIMINE_ORIGEM="zero"/' "$f"
-  for kv in "$@"; do sed -i "s|^${kv%%=*}=.*|${kv%%=*}=\"${kv#*=}\"|" "$f"; done
+  local d=$'\x01'   # delimitador do sed: valores podem ter "|" (linhas do título)
+  for kv in "$@"; do sed -i "s${d}^${kv%%=*}=.*${d}${kv%%=*}=\"${kv#*=}\"${d}" "$f"; done
   printf '%s\n' "$f"
 }
 
@@ -170,7 +171,7 @@ tema "$B" "$C" --install --yes > "$B/saida" 2>&1; rc=$?
 check "sem limine.conf: recusa" bash -c '[[ $1 != 0 ]] && grep -q "não existe" "$2" && [[ -z $(ls "$3") ]]' _ "$rc" "$B/saida" "$B/boot"
 
 section "Variantes e fundos"
-for v in fosforo ambar fallout; do
+for v in robco fosforo ambar fallout; do
   B=$(novo_boot "var-$v")
   tema "$B" "$(conf LIMINE_THEME=$v)" --install --yes > /dev/null 2>&1; rc=$?
   check "variante $v instala" bash -c '[[ $1 == 0 ]] && grep -q "variante: $2" "$3"' _ "$rc" "$v" "$B/boot/limine.conf"

@@ -47,7 +47,7 @@ validate_conf() {
     [[ ${!k} =~ ^(SUPER|SHIFT|CTRL|ALT)( \+ (SUPER|SHIFT|CTRL|ALT))*( \+ [A-Z0-9]+)$ ]] \
       || die "$k inválido: '${!k}' (ex.: \"SUPER + ALT + A\")"
   done
-  [[ $LIMINE_THEME =~ ^(fosforo|ambar|fallout)$ ]] || die "LIMINE_THEME: fosforo, ambar ou fallout"
+  [[ $LIMINE_THEME =~ ^(robco|fosforo|ambar|fallout)$ ]] || die "LIMINE_THEME: robco, fosforo, ambar ou fallout"
   [[ $LIMINE_ORIGEM =~ ^(arte|zero)$ ]] || die "LIMINE_ORIGEM: arte ou zero"
   [[ $LIMINE_FONTE =~ ^(terminus|phxega)$ ]] || die "LIMINE_FONTE: terminus ou phxega"
   [[ $LIMINE_RESOLUCAO =~ ^[1-9][0-9]{2,3}x[1-9][0-9]{2,3}$ ]] || die "LIMINE_RESOLUCAO: LxA, ex. 1920x1080"

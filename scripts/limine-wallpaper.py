@@ -7,8 +7,9 @@ Dois modos:
     INDUSTRIES…" e deixa só o fundo CRT (linhas de varredura + moldura);
   * --gerar-do-zero: desenha varredura, vinheta e moldura arredondada sem usar
     arte nenhuma de terceiros.
-Depois recolore para a variante (fosforo, ambar, fallout = cores originais),
-escreve o título opcional com a própria fonte do boot e ajusta à resolução.
+Depois recolore para a variante (robco, fosforo, ambar, fallout = cores
+originais), escreve o título opcional com a própria fonte do boot (linhas
+separadas por "|") e ajusta à resolução.
 
 Remoção: as linhas de varredura são iguais em todas as colunas (desvio médio
 de 0,28 da mediana da linha, medido na imagem 1920×1080). Dentro das caixas do
@@ -20,8 +21,8 @@ das caixas e não é tocada.
 
 Uso:
   limine-wallpaper.py <saída.png> [--origem arte.png | --gerar-do-zero]
-                      [--variante fosforo|ambar|fallout] [--resolucao 1920x1080]
-                      [--titulo "TERMINAL SOVIETICO" --fonte fonte.f14 [--pagina cp866]]
+                      [--variante robco|fosforo|ambar|fallout] [--resolucao 1920x1080]
+                      [--titulo "LINHA 1|LINHA 2" --fonte fonte.f14 [--pagina cp866]]
 Requer Pillow e numpy.
 """
 import argparse
@@ -39,7 +40,9 @@ DILATA = 4
 
 # Variantes: (cor zero = moldura/preto, cor cheia). A intensidade sai do canal
 # verde da tela original: o verde "cheio" do Fallout (G≈222) vira a cor cheia.
+# robco: o verde do texto da própria arte (≈ 69D87A, medido no "ROBCO INDUSTRIES…").
 VARIANTES = {
+    "robco": ("040904", "69D87A"),
     "fosforo": ("080908", "B8D58A"),
     "ambar": ("080908", "C9B26B"),
     "fallout": None,   # cores originais
@@ -114,18 +117,21 @@ def ler_fonte(caminho):
 
 def escrever_titulo(a, texto, fonte, cor, escala, pagina="cp437"):
     dados, alt = ler_fonte(fonte)
-    texto = texto.encode(pagina, "replace")
     larg = 9 * escala          # 8 px + 1 de espaço, como o term_font_spacing padrão
-    x0 = (a.shape[1] - larg * len(texto)) // 2
+    passo = (alt + 2) * escala
     y0 = int(a.shape[0] * 0.045)
     cor = hexrgb(cor)
-    for i, ch in enumerate(texto):
-        g = dados[ch * alt:(ch + 1) * alt]
-        for linha, byte in enumerate(g):
-            for col in range(8):
-                if byte & (0x80 >> col):
-                    y, x = y0 + linha * escala, x0 + i * larg + col * escala
-                    a[y:y + escala, x:x + escala, :] = cor
+    for n, linha_txt in enumerate(texto.split("|")):
+        linha_txt = linha_txt.encode(pagina, "replace")
+        x0 = (a.shape[1] - larg * len(linha_txt)) // 2
+        yl = y0 + n * passo
+        for i, ch in enumerate(linha_txt):
+            g = dados[ch * alt:(ch + 1) * alt]
+            for linha, byte in enumerate(g):
+                for col in range(8):
+                    if byte & (0x80 >> col):
+                        y, x = yl + linha * escala, x0 + i * larg + col * escala
+                        a[y:y + escala, x:x + escala, :] = cor
     return a
 
 
@@ -134,9 +140,9 @@ def main():
     ap.add_argument("saida")
     ap.add_argument("--origem", help="PNG 1920×1080 do fallout-grub-theme (conferido pelo instalador)")
     ap.add_argument("--gerar-do-zero", action="store_true")
-    ap.add_argument("--variante", choices=list(VARIANTES), default="fosforo")
+    ap.add_argument("--variante", choices=list(VARIANTES), default="robco")
     ap.add_argument("--resolucao", default="1920x1080")
-    ap.add_argument("--titulo", default="")
+    ap.add_argument("--titulo", default="", help='linhas separadas por "|"')
     ap.add_argument("--fonte", help="fonte crua (para o título)")
     ap.add_argument("--pagina", choices=["cp437", "cp866"], default="cp437",
                     help="página de código da --fonte (cp866 para título em cirílico)")
@@ -163,7 +169,7 @@ def main():
     if a.titulo:
         cor = VARIANTES[a.variante][1] if VARIANTES[a.variante] else FALLOUT_VERDE
         arr = escrever_titulo(np.asarray(out).astype(float).copy(), a.titulo, a.fonte, cor,
-                              max(1, round(h / 360)), a.pagina)
+                              max(1, round(h / 540)), a.pagina)
         out = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGB")
     out.save(a.saida, optimize=True)
     print(f"{a.saida} {w}x{h} variante={a.variante} pixels_trocados={trocados}")
