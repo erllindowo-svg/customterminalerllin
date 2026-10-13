@@ -58,6 +58,19 @@ tests/run.sh [--live|--disruptive]                   # testes
 
 Recuperação e backups das fases anteriores: [`docs/backup-restore.md`](docs/backup-restore.md).
 
+### Tema do menu de boot (opcional)
+
+O menu do Limine com cara de tela CRT nas cores do tema. Fica fora do
+`./install.sh` porque mexe em `/boot` e pede sudo:
+
+```bash
+scripts/install-limine-theme.sh            # plano: mostra o diff, não escreve
+scripts/install-limine-theme.sh --install  # aplica (backup datado, confere, limine-update)
+scripts/install-limine-theme.sh --status   # confere; --remove desfaz
+```
+
+Variantes, riscos e recuperação: [`docs/boot-theme.md`](docs/boot-theme.md).
+
 ## Estrutura
 
 ```
@@ -92,6 +105,7 @@ docs/                      documentação (abaixo)
 | [`docs/backup-restore.md`](docs/backup-restore.md) | manifesto, desinstalação, backups das fases |
 | [`docs/installation-omarchy.md`](docs/installation-omarchy.md) | instalação nova e migração desta máquina |
 | [`docs/decisions.md`](docs/decisions.md) | decisões, alternativas e limites |
+| [`docs/boot-theme.md`](docs/boot-theme.md) | tema do menu de boot (Limine): instalar, remover, riscos, recuperação |
 | [`THIRD_PARTY.md`](THIRD_PARTY.md) | licenças, o que fica fora do repositório e por quê |
 
 ## Licenças

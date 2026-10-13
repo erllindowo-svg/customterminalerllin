@@ -1,21 +1,26 @@
 # Progresso — tema de boot do Limine
 
 ## Onde parei
-Plano APROVADO (respostas em "Decisões"). Implementando: passo 5 (VM QEMU/OVMF e capturas).
-Também na branch: cherry-pick do fix da espessura da barra (`102f272` da redesenho-barra).
+Implementação COMPLETA no worktree; nada tocado no /boot real.
+- scripts/limine-font.py, scripts/limine-wallpaper.py, scripts/install-limine-theme.sh
+- tests/limine.sh (50/0, /boot falso), tests/vm-limine.sh (14/0, capturas em
+  tests/results/vm-limine/), tests/static.sh (60/0)
+- docs: boot-theme.md, decisions D19, stack, file-map, THIRD_PARTY, README.
+Achados da VM: hash errado = tela PRETA esperando tecla (Y segue); fonte ausente =
+fonte embutida; Limine v12 converte UTF-8→CP437 (acentos ok, cirílico só com
+fonte CP866 + texto nas posições CP437) → título em cirílico via fonte CP866 própria.
 
 ## Próximo passo exato
-2. (FEITO) scripts/limine-font.py: ter-i14n → CP437 0 ausentes; ter-k14n+ter-i14n → CP866 8 ausentes.
-3. (FEITO) scripts/limine-wallpaper.py: resíduo ≤ 4/255 nas caixas, 0 px alterados fora (moldura intacta).
-4. (FEITO) install-limine-theme.sh + fixture + tests/limine.sh (50/0) + static (escrita só em $BOOT_DIR). limine-update/snapper-sync só rodam se TS_BOOT_DIR == ESP_PATH do sistema.
-5. `tests/vm-limine.sh` (QEMU/OVMF/vvfat) → capturas das 3 variantes → mostrar.
-6. Docs (boot-theme.md, decisions D19, file-map, stack, THIRD_PARTY, README) e static.sh.
+1. Mostrar as capturas ao usuário e pedir aprovação para o --install no /boot real.
+2. Se aprovado: `scripts/install-limine-theme.sh` (plano, com sudo), depois
+   `--install`, `--status`; o usuário reinicia para ver.
+3. Mesclar limine → redesenho-barra (sem retomada/) quando aprovado.
 
 ## Checklist
 - [x] worktree `../customterminalerllin-limine` (branch `limine`, base redesenho-barra) + ESPEC
 - [x] leitura das referências e do sistema (achados em PLANO.md)
 - [x] aprovação do plano
-- [ ] fonte · papel de parede · instalador · testes sandbox · VM e capturas · docs
+- [x] fonte · papel de parede · instalador · testes sandbox · VM e capturas · docs
 - [ ] (nunca) --install no /boot real sem aprovação das capturas
 
 ## Como verificar

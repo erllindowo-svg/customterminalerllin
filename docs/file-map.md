@@ -55,6 +55,9 @@ customterminalerllin/
 ├── migrate/phase1-inline.sh        remove os trechos manuais da Fase 1 (conferência por SHA-256)
 ├── scripts/
 │   ├── install-arttime.sh          arttime no commit fixado (instalador oficial --local)
+│   ├── install-limine-theme.sh     tema do menu de boot (--plan|--install|--remove|--status; sudo, /boot)
+│   ├── limine-font.py              PSF com tabela Unicode → fonte crua CP437/CP866 do Limine
+│   ├── limine-wallpaper.py         papel de parede CRT (remove Vault Boy/texto, recolore, título)
 │   ├── fetch-backgrounds.sh        fotos do tema (Commons, SHA-1) + preview.png
 │   ├── perf-sample.sh              amostragem /proc a 1 Hz
 │   └── perf-run.sh                 cenários de desempenho
@@ -62,6 +65,9 @@ customterminalerllin/
 │   ├── run.sh                      orquestra e grava tests/results/ (ignorado pelo Git)
 │   ├── lib.sh                      PASSOU/FALHOU/PULADO
 │   ├── static.sh                   sintaxe, formatos, modelos, caminhos, segredos
+│   ├── limine.sh                   tema de boot com /boot falso (sem sudo)
+│   ├── vm-limine.sh                tema de boot numa VM QEMU+OVMF (capturas)
+│   ├── fixtures/limine.conf        cabeçalho do Omarchy + entradas no formato do limine-entry-tool
 │   ├── sandbox.sh                  instalador em HOMEs isolados
 │   ├── live.sh                     sessão real (com e sem --disruptive)
 │   └── pty_menu.py                 menu/arttime num pseudo-terminal
@@ -97,6 +103,9 @@ customterminalerllin/
 | `~/.local/state/terminal-soviet/arte.conf`, `arte-selecao` | — | L | modo de cores, política, conjunto da sessão |
 | `~/.local/state/noctalia/plugins/data/erllan/tarefas/fixados.json` | semente: `FAVORITES` | L | apps fixados (clique direito → fixar/desafixar) |
 | `~/.local/state/noctalia/plugins/data/erllan/spotify-media/ultima.json`, `capa-*.jpg` | — | L | última música mostrada na barra |
+| `/boot/limine.conf` (bloco `terminal-soviet limine`), `/boot/ts-limine-{fundo.png,fonte.f14}`, `/boot/limine.conf.terminal-soviet-*.bak` | `scripts/install-limine-theme.sh` | G | **fora do manifesto do install.sh**; só com `--install` (sudo); `--remove` desfaz |
+| `~/.local/state/terminal-soviet/limine/` | `install-limine-theme.sh` | L | `instalado`, `chaves-originais.conf`, `backups/` (cópia do limine.conf fora da ESP) |
+| `~/.cache/terminal-soviet/limine/upstream/` | `install-limine-theme.sh` | D | arte e fonte opcional baixadas (SHA-256 conferido) |
 | `~/.local/state/omarchy/toggles/screensaver-off` | `install.sh` | flag | tela de descanso do Omarchy desligada (religada no uninstall se foi o instalador que desligou) |
 | `~/.local/state/terminal-soviet/barra-posicao`, `~/.config/noctalia/90-posicao-barra.toml` | `soviet-bar-pos` | L | borda da barra escolhida (não versionado; removido no uninstall) |
 | `~/.config/terminal-soviet/spotify.env` | — | L | opcional, chmod 600: credenciais da Web API (só busca); nunca versionado |

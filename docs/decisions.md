@@ -210,3 +210,38 @@ Ver `THIRD_PARTY.md`.
   que a desligou (`install/screensaver-off.nosso`).
 * **Limite**: o tempo é lido do `shell.json` na instalação; mudou lá, rode
   `./install.sh` de novo.
+
+## D19. Tema de boot do Limine: instalador separado, ativos por commit fixo, sem arte de terceiros
+
+* **Instalador separado com sudo** (`scripts/install-limine-theme.sh`): o
+  `./install.sh` continua sem sudo e sem tocar em `/boot`. O tema mexe na ESP
+  (vfat, `fmask=0077`: só root lê), então até `--plan` e `--status` usam sudo,
+  e só para isso. Toda escrita privilegiada vai para `$BOOT_DIR` (conferido em
+  `tests/static.sh`). Backup datado ao lado do `limine.conf` e cópia fora da ESP.
+* **Bloco entre marcadores no topo** do `limine.conf`, substituído a cada
+  `--install`. As chaves de aparência do cabeçalho do Omarchy saem (chave
+  repetida no Limine é ambígua) e voltam no `--remove`. `default_entry` e as
+  entradas (`/…`) nunca mudam (conferido byte a byte antes e depois).
+  `limine-update`/`limine-snapper-sync` só rodam quando o alvo é a ESP do
+  sistema (`ESP_PATH` de `/etc/default/limine`): os testes usam um `/boot` falso.
+* **Arte de terceiros fora do repositório**: a tela CRT do
+  [shvchk/fallout-grub-theme](https://github.com/shvchk/fallout-grub-theme)
+  (o PNG que o fallout-limine-theme usa, byte a byte) tem o Vault Boy e o texto
+  RobCo, da Bethesda. O repositório guarda só o gerador
+  (`scripts/limine-wallpaper.py`), que baixa a imagem por commit fixo + SHA-256,
+  remove personagem e texto (mediana da linha) e recolore; o resultado só existe
+  no cache local e na ESP. `LIMINE_ORIGEM=zero` desenha tudo sem arte nenhuma.
+* **Fonte livre por padrão**: a `PHXEGA8.F14` do upstream não tem origem nem
+  licença declaradas. O padrão é a Terminus IBM-437 (`terminus-font`, OFL),
+  convertida por `scripts/limine-font.py` para a fonte crua de 256 glifos que o
+  Limine exige (0 glifos ausentes no CP437). A Phoenix fica como opção
+  (`LIMINE_FONTE=phxega`), baixada por commit fixo + SHA-256, nunca versionada.
+* **Hashes**: `wallpaper` e `term_font` levam o `b2sum`. Sem Secure Boot não são
+  obrigatórios, mas protegem se ele for ligado. Custo observado na VM: se um dos
+  arquivos mudar sem o `limine.conf` acompanhar, o Limine para numa tela preta
+  esperando tecla (`Y` segue). O `--status` detecta isso antes do boot.
+* **Texto**: o Limine v12 converte UTF-8 em CP437; acentos do CP437 funcionam,
+  cirílico não. O título (desenhado no papel de parede) aceita cirílico com uma
+  fonte CP866 própria; o menu fica em CP437.
+* **Fora**: reaplicação automática (hook do pacman ou unit path) só proposta em
+  `docs/boot-theme.md`; `interface_resolution` não é forçado.
