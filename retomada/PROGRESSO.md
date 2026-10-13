@@ -1,18 +1,17 @@
 # Progresso — barra v2
 
 ## Onde parei
-(Também: cherry-pick do fix da espessura da barra, px físicos inteiros — redesenho-barra 102f272, já instalado.)
-Itens 0–7 FEITOS e DOCS FEITAS (decisions D16–D18, controls, file-map,
-noctalia/config/README, README, grupos/README). static 57/0, sandbox 41/0.
-Nada instalado no sistema.
+INSTALADO no sistema a partir do worktree (aprovado pelo usuário em 2026-10-13).
+Ponto de retorno: tag `estavel-2026-10-13` (102f272) + backup em
+~/.local/state/terminal-soviet/rollback/estavel-2026-10-13/ (voltar.sh, fixados.json v1).
+Testes ao vivo: live.sh 30/0; KEY_PIN (alternar 2×) ok; mover via IPC ok; Grupos
+(soviet-grupos classificar, 54 apps) ok; painéis Grupos e Editar abriam VAZIOS
+(onOpen > 25 ms de CPU por appIconPath) → corrigido com bin/soviet-icones.
 
 ## Próximo passo exato
-1. Esperar o usuário: aprovar tabela de grupos (retomada/grupos-proposta.txt, 54 apps
-   sem webapps), escolher plugins candidatos (retomada/plugins-avaliacao.md), aprovar
-   `./install.sh` a partir do worktree para o teste ao vivo.
-2. Depois da aprovação: install a partir do worktree, tests/live.sh, capturas,
-   `soviet-grupos classificar`, conferir tooltips/KEY_PIN/Editar barra/Grupos/alça.
-3. Mesclar barra-v2 → redesenho-barra (sem retomada/) quando aprovado.
+1. Testar voltar.sh (rollback) e reinstalar a v2.
+2. Pendentes do usuário: plugins candidatos (retomada/plugins-avaliacao.md).
+3. Mesclar barra-v2 → redesenho-barra (sem retomada/) quando o usuário aprovar.
 
 ## Estado do pedido anterior (fases 1–7, branch redesenho-barra)
 | Fase | Estado | Commit |
@@ -37,7 +36,7 @@ Instalado no sistema: tudo acima (a partir do checkout principal, branch redesen
 - [x] 6 sem arrasto na barra (API) → alça grip-vertical "alca" no início da start + clique direito na zona vazia, ambos abrem erllan/barra:posicao
 - [x] 7 avaliação de plugins: retomada/plugins-avaliacao.md (candidatos: timer, notes, special-workspaces, lyrics — aguarda escolha)
 - [x] docs; testes estáticos e sandbox
-- [ ] teste ao vivo, capturas (dependem de aprovar o install)
+- [x] teste ao vivo e capturas (painéis corrigidos: soviet-icones)
 
 ## Como verificar o que já foi feito
 - `git -C ~/www/customterminalerllin-barra-v2 log --oneline redesenho-barra..barra-v2`

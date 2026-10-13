@@ -1,0 +1,122 @@
+#!/bin/bash
+# Terminal Soviético — caminhos de ícones de apps para os painéis da barra.
+#
+# noctalia.appIconPath (API de plugins) varre os temas de ícones a cada nome que
+# erra: 18–24 ms de CPU por busca com o cache frio, e o 5.0.1 corta qualquer
+# callback de plugin que passe de 25 ms (kCallBudget). Painéis com dezenas de
+# apps (Grupos, Editar barra) ficavam vazios. Aqui a busca roda fora do Luau, num
+# processo só, com um índice dos temas em cache; o painel recebe os caminhos num
+# único callback e só os lê.
+#
+# Mesma ordem do resolvedor do Noctalia: o nome passa primeiro pelos .desktop
+# (desktop-id ou StartupWMClass → Icon=), depois pelo tema de ícones do GTK com a
+# cadeia Inherits, hicolor e /usr/share/pixmaps. Prefere SVG; senão o PNG de
+# tamanho mais próximo acima do pedido.
+#
+# Uso:  soviet-icones <tamanho> <chave>=<nome1>[,<nome2>…] …
+# Saída: uma linha "<chave>\t<caminho>" por chave resolvida (as outras ficam fora).
+# Índice: ~/.cache/terminal-soviet/icones-<tema>.tsv (refeito quando um diretório
+# de tema muda).
+set -uo pipefail
+(( $# >= 1 )) || { echo "uso: soviet-icones <tamanho> <chave>=<nome>[,<nome>…] …" >&2; exit 2; }
+
+TEMA=$(gsettings get org.gnome.desktop.interface icon-theme 2>/dev/null | tr -d "'") || TEMA=""
+CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/terminal-soviet/icones-${TEMA:-hicolor}.tsv"
+APPS_DIRS="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
+for d in ${XDG_DATA_DIRS:-/usr/local/share:/usr/share}; do APPS_DIRS+=":${d%/}/applications"; done
+APPS_DIRS+=":$HOME/.local/share/flatpak/exports/share/applications:/var/lib/flatpak/exports/share/applications"
+
+TEMA=$TEMA CACHE=$CACHE APPS_DIRS=$APPS_DIRS exec perl -CSDA -Mutf8 - "$@" <<'PERL'
+use strict; use warnings;
+use File::Find ();
+my ($tam, @pedidos) = @ARGV;
+$tam = 48 unless defined $tam && $tam =~ /^\d+$/;
+
+# Bases de ícones (usuário primeiro) e cadeia de temas: tema do GTK + Inherits, hicolor.
+my @bases = grep { -d } ("$ENV{HOME}/.local/share/icons", "$ENV{HOME}/.icons",
+  map { "$_/icons" } split /:/, ($ENV{XDG_DATA_DIRS} || '/usr/local/share:/usr/share'));
+my (@temas, %vistoTema);
+my @fila = ($ENV{TEMA} || ());
+while (defined(my $t = shift @fila)) {
+  next if $vistoTema{$t}++;
+  push @temas, $t;
+  for my $b (@bases) {
+    next unless open(my $fh, '<', "$b/$t/index.theme");
+    while (<$fh>) { if (/^Inherits\s*=\s*(.+)$/) { push @fila, map { s/^\s+|\s+$//gr } split /,/, $1; last } }
+    close $fh; last;
+  }
+}
+push @temas, 'hicolor' unless $vistoTema{hicolor};
+my @dirs = map { my $t = $_; map { "$_/$t" } grep { -d "$_/$t" } @bases } @temas;
+
+# Índice: nome → "rank\tcaminho" (rank menor = melhor: tema antes, SVG, tamanho).
+my %idx;
+my $novo = 1;
+if (-r $ENV{CACHE}) {
+  my $m = (stat $ENV{CACHE})[9];
+  $novo = grep { (stat $_)[9] > $m } @dirs, map { glob "$_/*" } @dirs;
+}
+if ($novo) {
+  my $rankTema = 0;
+  for my $d (@dirs, '/usr/share/pixmaps') {
+    $rankTema++;
+    next unless -d $d;
+    File::Find::find({ no_chdir => 1, follow_skip => 2, wanted => sub {
+      return unless /\.(svg|png)$/i && -f $_;
+      my ($nome, $ext) = m{([^/]+)\.(svg|png)$}i;
+      my $sz = m{/(\d+)x\d+(?:@\d+x)?/} ? $1 : (m{/scalable/} ? 0 : 999);
+      # SVG vale qualquer tamanho; PNG: o menor ≥ pedido, senão o maior.
+      my $pena = lc $ext eq 'svg' ? 0 : ($sz >= $tam ? 1 + ($sz - $tam) : 1000 + ($tam - $sz));
+      my $r = $rankTema * 100000 + $pena;
+      $idx{$nome} = "$r\t$File::Find::name" if !exists $idx{$nome} || $r < (split /\t/, $idx{$nome})[0];
+    } }, $d);
+  }
+  (my $dir = $ENV{CACHE}) =~ s{/[^/]+$}{};
+  system('mkdir', '-p', $dir);
+  if (open(my $out, '>', "$ENV{CACHE}.tmp")) {
+    print $out "$_\t$idx{$_}\n" for sort keys %idx;
+    close $out; rename "$ENV{CACHE}.tmp", $ENV{CACHE};
+  }
+} else {
+  open(my $in, '<', $ENV{CACHE}) or die;
+  while (<$in>) { chomp; my ($n, $r, $p) = split /\t/, $_, 3; $idx{$n} = "$r\t$p" }
+}
+
+# .desktop: desktop-id e StartupWMClass (minúsculos) → Icon=.
+my %iconeDe;
+for my $d (split /:/, $ENV{APPS_DIRS}) {
+  next unless opendir(my $dh, $d);
+  for my $f (grep { /\.desktop$/ } readdir $dh) {
+    next unless open(my $fh, '<', "$d/$f");
+    my ($icon, $wm, $sec);
+    while (<$fh>) {
+      if (/^\[(.+)\]/) { $sec = $1; next }
+      next unless defined $sec && $sec eq 'Desktop Entry';
+      $icon //= $1 if /^Icon=(.+)$/; $wm //= $1 if /^StartupWMClass=(.+)$/;
+    }
+    close $fh;
+    next unless defined $icon;
+    (my $id = $f) =~ s/\.desktop$//;
+    $iconeDe{lc $id} //= $icon;
+    $iconeDe{lc $wm} //= $icon if defined $wm;
+  }
+}
+
+sub resolver {
+  my ($n) = @_;
+  my $icon = $iconeDe{lc $n} // $n;
+  return $icon if $icon =~ m{^/} && -f $icon;
+  $icon =~ s/\.(svg|png)$//i;
+  my $e = $idx{$icon} // $idx{lc $icon};
+  return defined $e ? (split /\t/, $e, 2)[1] : undef;
+}
+for my $p (@pedidos) {
+  my ($chave, $nomes) = split /=/, $p, 2;
+  next unless defined $nomes;
+  for my $n (split /,/, $nomes) {
+    next if $n eq '';
+    my $c = resolver($n);
+    if (defined $c) { print "$chave\t$c\n"; last }
+  }
+}
+PERL

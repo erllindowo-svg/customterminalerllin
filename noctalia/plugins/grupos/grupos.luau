@@ -23,12 +23,35 @@ local erro = nil
 local editando = nil       -- nil | "novo" | nome do grupo sendo renomeado
 local confirmarApagar = nil
 
-local icons = {}
+local render
+
+-- Ícones: noctalia.appIconPath custa 18–24 ms de CPU por nome com o cache frio, e
+-- o 5.0.1 corta callbacks de plugin acima de 25 ms (o painel ficava vazio). O
+-- render nunca procura ícone: junta os que faltam e pede todos de uma vez ao
+-- ~/.local/bin/soviet-icones (mesma resolução, fora do Luau, índice em cache);
+-- enquanto isso mostra o glifo genérico. O cache vale entre aberturas.
+local ICONES = noctalia.expandPath("~/.local/bin/soviet-icones")
+local icons, pedidos, buscando = {}, {}, false
+local function buscarIcones()
+  if buscando or #pedidos == 0 then return end
+  buscando = true
+  local args, chaves = { ICONES, tostring(ICONE) }, pedidos
+  pedidos = {}
+  for _, p in ipairs(chaves) do table.insert(args, p.id .. "=" .. p.nomes) end
+  noctalia.runAsync(args, function(r)
+    for _, p in ipairs(chaves) do icons[p.id] = false end
+    for chave, caminho in string.gmatch(r.stdout or "", "([^\t\n]+)\t([^\n]+)") do icons[chave] = caminho end
+    buscando = false
+    if dados then render() end
+    buscarIcones()
+  end, 5000)
+end
 local function iconFor(id, app)
   local v = icons[id]
   if v == nil then
-    v = (app.icone ~= "" and noctalia.appIconPath(app.icone, ICONE)) or noctalia.appIconPath(id, ICONE)
-    icons[id] = v or false
+    icons[id] = false   -- pedido uma vez só
+    local nomes = (app.icone and app.icone ~= "") and (app.icone .. "," .. id) or id
+    table.insert(pedidos, { id = id, nomes = nomes })
   end
   return v or nil
 end
@@ -118,7 +141,6 @@ local function mover(id, origem, destino)
   salvar()
 end
 
-local render
 local menuApp   -- definida abaixo (usada nos botões)
 
 local function bloco(nome, ids, real)
@@ -274,11 +296,11 @@ render = function()
   if erro then table.insert(corpo, ui.label({ text = erro, color = "error", maxLines = 3 })) end
   table.insert(corpo, ui.scroll({ gap = 10, flexGrow = 1 }, blocos))
   panel.render(ui.column({ gap = 8 }, corpo))
+  buscarIcones()
 end
 
 function onOpen()
   editando, confirmarApagar = nil, nil
-  icons = {}
   carregar()
   render()
 end

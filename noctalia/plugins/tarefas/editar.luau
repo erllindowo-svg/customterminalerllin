@@ -12,18 +12,40 @@
 local modelo = noctalia.state.get("modelo") or {}
 local ICONE = 28
 
-local icons = {}
+local render
+
+-- Ícones: noctalia.appIconPath custa 18–24 ms de CPU por nome com o cache frio, e
+-- o 5.0.1 corta callbacks de plugin acima de 25 ms (o painel ficava vazio). O
+-- render nunca procura ícone: junta os que faltam e pede todos de uma vez ao
+-- ~/.local/bin/soviet-icones (mesma resolução, fora do Luau, índice em cache);
+-- enquanto isso mostra o glifo genérico. O cache vale entre aberturas.
+local ICONES = noctalia.expandPath("~/.local/bin/soviet-icones")
+local icons, pedidos, buscando = {}, {}, false
+local function buscarIcones()
+  if buscando or #pedidos == 0 then return end
+  buscando = true
+  local args, chaves = { ICONES, tostring(ICONE) }, pedidos
+  pedidos = {}
+  for _, p in ipairs(chaves) do table.insert(args, p.key .. "=" .. p.nomes) end
+  noctalia.runAsync(args, function(r)
+    for _, p in ipairs(chaves) do icons[p.key] = false end
+    for chave, caminho in string.gmatch(r.stdout or "", "([^\t\n]+)\t([^\n]+)") do icons[chave] = caminho end
+    buscando = false
+    render()
+    buscarIcones()
+  end, 5000)
+end
 local function iconFor(a)
   local v = icons[a.key]
   if v == nil then
-    v = noctalia.appIconPath(a.id, ICONE)
-    if not v and a.class and a.class ~= a.id then v = noctalia.appIconPath(string.lower(a.class), ICONE) end
-    icons[a.key] = v or false
+    icons[a.key] = false   -- pedido uma vez só
+    local nomes = a.id or ""
+    if a.class and a.class ~= a.id then nomes = nomes .. "," .. string.lower(a.class) end
+    table.insert(pedidos, { key = a.key, nomes = nomes })
   end
   return v or nil
 end
 
--- Vão de inserção antes da posição `pos` (largo o bastante para mirar com folga).
 local function vao(lado, pos)
   return ui.dropZone({
     key = "vao-" .. lado .. "-" .. pos,
@@ -62,13 +84,14 @@ local function lista(lado, titulo, apps)
   })
 end
 
-local function render()
+render = function()
   panel.render(ui.column({ gap = 10 }, {
     ui.label({ text = "Arraste para reordenar. Entre as listas: fixar ou desafixar.",
                color = "on_surface_variant", maxLines = 2 }),
     lista("abertos", "Abertos (esquerda da barra)", modelo.abertos or {}),
     lista("fixados", "Fixados (direita da barra)", modelo.fixados or {}),
   }))
+  buscarIcones()
 end
 
 function onSoltar(key, destino)

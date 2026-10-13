@@ -238,6 +238,14 @@ Ver `THIRD_PARTY.md`.
   (`PluginWidget::luaSetTooltip` → `m_area`). Trocar o texto no `onHover` de cada
   ícone funciona, mas o balão fica ancorado ao widget, não ao ícone. O tooltip por
   ícone só chega com a API 32.
+* **Orçamento de CPU**: cada callback de plugin tem 25 ms de CPU (`kCallBudget`
+  em `src/scripting/script_runtime.cpp`); acima disso o 5.0.1 corta o callback.
+  `noctalia.appIconPath` custa 18–24 ms por nome com o cache frio, então os
+  painéis com muitos ícones (Grupos, Editar barra) abriam vazios. A busca foi para
+  `bin/soviet-icones` (mesma ordem do resolvedor: `.desktop` → tema do GTK e
+  `Inherits` → hicolor → pixmaps; índice em `~/.cache/terminal-soviet/`): um
+  processo por abertura, e o callback só lê os caminhos. Os widgets da barra
+  continuam no `appIconPath` (poucos ícones por vez, em cache).
 * **IPC de plugin**: `noctalia msg plugin <autor/plugin:entrada> <alvo> <evento>
   [payload]`; `all` é obrigatório para `[[service]]` e `[[panel]]`.
 * **Posição efetiva da barra**: `noctalia.getSetting("bar.<nome>.position")`

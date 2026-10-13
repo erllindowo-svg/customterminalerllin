@@ -24,7 +24,8 @@ customterminalerllin/
 │   ├── soviet-bar-sync             visibilidade da barra por workspace (eventos)
 │   ├── soviet-bar-pos              borda da barra (grava e gera 90-posicao-barra.toml)
 │   ├── soviet-atalhos              atalhos ativos por app/comando (config Lua avaliada isolada × hyprctl)
-│   └── soviet-grupos               classifica os apps instalados em grupos (tabela | classificar)
+│   ├── soviet-grupos               classifica os apps instalados em grupos (tabela | classificar)
+│   └── soviet-icones               caminhos de ícones para os painéis (fora do orçamento de CPU do Luau)
 ├── share/terminal-soviet/arte/     → ~/.local/share/terminal-soviet/arte
 │   ├── cores-tema.pl               "Tema do terminal": reescreve cores SGR para a rampa fósforo
 │   └── artprint-shim               bin/artprint da árvore temporária do arttime interativo
@@ -100,6 +101,7 @@ customterminalerllin/
 | `~/.local/state/terminal-soviet/install/` | — | L | manifesto, backups, `shelljson.prev` |
 | `~/.local/state/terminal-soviet/arte.conf`, `arte-selecao` | — | L | modo de cores, política, conjunto da sessão |
 | `~/.local/state/noctalia/plugins/data/erllan/tarefas/fixados.json` | semente: `FAVORITES` | L | esquema 2: apps fixados + ordem dos abertos (mini-menu, `KEY_PIN`, painel Editar barra) |
+| `~/.cache/terminal-soviet/icones-<tema>.tsv` | `soviet-icones` | L | índice dos temas de ícones (refeito quando um tema muda) |
 | `~/.local/state/terminal-soviet/grupos.json` | `soviet-grupos classificar` | L | esquema 1: grupos, apps, `vistos` (painel Grupos) |
 | `~/.local/state/noctalia/plugins/data/erllan/spotify-media/ultima.json`, `capa-*.jpg` | — | L | última música mostrada na barra |
 | `~/.local/state/omarchy/toggles/screensaver-off` | `install.sh` | flag | tela de descanso do Omarchy desligada (religada no uninstall se foi o instalador que desligou) |
