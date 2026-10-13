@@ -22,7 +22,9 @@ customterminalerllin/
 │   ├── soviet-inspect              btop flutuante sob demanda (abre/fecha/traz)
 │   ├── soviet-arte                 ilustração: seleção, desenho, cores, menu, arttime interativo
 │   ├── soviet-bar-sync             visibilidade da barra por workspace (eventos)
-│   └── soviet-bar-pos              borda da barra (grava e gera 90-posicao-barra.toml)
+│   ├── soviet-bar-pos              borda da barra (grava e gera 90-posicao-barra.toml)
+│   ├── soviet-atalhos              atalhos ativos por app/comando (config Lua avaliada isolada × hyprctl)
+│   └── soviet-grupos               classifica os apps instalados em grupos (tabela | classificar)
 ├── share/terminal-soviet/arte/     → ~/.local/share/terminal-soviet/arte
 │   ├── cores-tema.pl               "Tema do terminal": reescreve cores SGR para a rampa fósforo
 │   └── artprint-shim               bin/artprint da árvore temporária do arttime interativo
@@ -38,9 +40,11 @@ customterminalerllin/
 │   │   └── README.md
 │   └── plugins/                    → ~/.local/share/noctalia/plugins
 │       ├── tarefas/                abertos (esq.) + fixados (dir.): service fonte.luau.in (socat,
-│       │                           fixados.json), widgets abertos/fixados.luau, comum.luau.in,
+│       │                           fixados.json v2), widgets abertos/fixados.luau, comum.luau.in,
+│       │                           painel "Editar barra" editar.luau,
 │       │                           mini-menu menu.luau, desktop-id.sh
 │       ├── barra/                  painel "posição da barra" (mini-tela com arrasto)
+│       ├── grupos/                 painel "Grupos" (grupos.luau): abrir/focar, arrastar, criar/renomear/apagar
 │       ├── audio/                  ícone da saída, popup (volume, mudo, saídas), troca fone ↔ alto-falante
 │       └── spotify-media/          fork MIT: player na barra (bar.luau.in), painel player.luau,
 │                                   tocar.sh (abre oculto + toca), LICENSE, upstream/, README.soviet.md
@@ -80,7 +84,7 @@ customterminalerllin/
 | `~/.config/hypr/terminal_soviet.lua` | `hypr/terminal_soviet.lua.in` | G | atalhos e workspace de `config/` |
 | `~/.config/hypr/hyprland.lua` | — | bloco | o instalador acrescenta 3 linhas marcadas (`require`) |
 | `~/.config/noctalia/*.toml`, `palettes/`, `README.md` | `noctalia/config/` | R/G | `20-*` e `30-*` são gerados |
-| `~/.local/share/noctalia/plugins/{tarefas,audio,spotify-media,barra}/` | `noctalia/plugins/` | R/G | `tarefas/{fonte,comum}.luau` e `spotify-media/bar.luau` são gerados |
+| `~/.local/share/noctalia/plugins/{tarefas,audio,spotify-media,barra,grupos}/` | `noctalia/plugins/` | R/G | `tarefas/{fonte,comum}.luau` e `spotify-media/bar.luau` são gerados |
 | `~/.config/omarchy/plugins/erllan.sem-barra/` | `omarchy/plugins/` | R | |
 | `~/.config/omarchy/shell.json` | — | chaves | `bar.id`, `bar.position` via `omarchy bar` |
 | `~/.config/omarchy/themes/soviet-terminal/` | `omarchy/themes/` | R | `backgrounds/`, `preview.png`: **D** (`fetch-backgrounds.sh`) |
@@ -95,7 +99,8 @@ customterminalerllin/
 | `~/.config/omarchy/plugins/moorgrove.overview/` | git fixado | D | omarchy-overview |
 | `~/.local/state/terminal-soviet/install/` | — | L | manifesto, backups, `shelljson.prev` |
 | `~/.local/state/terminal-soviet/arte.conf`, `arte-selecao` | — | L | modo de cores, política, conjunto da sessão |
-| `~/.local/state/noctalia/plugins/data/erllan/tarefas/fixados.json` | semente: `FAVORITES` | L | apps fixados (clique direito → fixar/desafixar) |
+| `~/.local/state/noctalia/plugins/data/erllan/tarefas/fixados.json` | semente: `FAVORITES` | L | esquema 2: apps fixados + ordem dos abertos (mini-menu, `KEY_PIN`, painel Editar barra) |
+| `~/.local/state/terminal-soviet/grupos.json` | `soviet-grupos classificar` | L | esquema 1: grupos, apps, `vistos` (painel Grupos) |
 | `~/.local/state/noctalia/plugins/data/erllan/spotify-media/ultima.json`, `capa-*.jpg` | — | L | última música mostrada na barra |
 | `~/.local/state/omarchy/toggles/screensaver-off` | `install.sh` | flag | tela de descanso do Omarchy desligada (religada no uninstall se foi o instalador que desligou) |
 | `~/.local/state/terminal-soviet/barra-posicao`, `~/.config/noctalia/90-posicao-barra.toml` | `soviet-bar-pos` | L | borda da barra escolhida (não versionado; removido no uninstall) |

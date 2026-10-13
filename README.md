@@ -39,7 +39,10 @@ Passo a passo, pré-requisitos e migração desta máquina:
 | `SUPER+ALT+A` | ilustração: Cores da ilustração, sortear, arttime interativo |
 | `SUPER+CTRL+M` | recompor a central do workspace 1 |
 | `SUPER+SHIFT+SPACE` | mostrar/ocultar a barra manualmente |
-| clique direito na zona vazia da barra | escolher a borda da barra (arrastar numa mini-tela) |
+| `SUPER+ALT+P` | fixar/desafixar na barra o app sob o mouse (ou o da janela em foco) |
+| alça no início da barra, ou clique direito na zona vazia | escolher a borda da barra (arrastar numa mini-tela) |
+| clique direito fora de um ícone de app | Editar barra: arrastar entre abertos e fixados, reordenar |
+| ícone de grupos no centro da barra | Grupos: apps instalados por propósito |
 
 Preferências (atalhos, clima, workspace da central, semente dos fixados,
 jogo da barra) ficam em [`config/terminal-soviet.conf`](config/terminal-soviet.conf).
@@ -68,7 +71,7 @@ bin/                       scripts → ~/.local/bin (soviet-ops, soviet-arte, so
 share/terminal-soviet/arte filtro de cores e shim do artprint → ~/.local/share/terminal-soviet/arte
 hypr/                      módulo Hyprland (modelo) → ~/.config/hypr/terminal_soviet.lua
 noctalia/config/           configuração do Noctalia (modelos .in) → ~/.config/noctalia
-noctalia/plugins/          plugins Luau (tarefas, audio, spotify-media, barra) → ~/.local/share/noctalia/plugins
+noctalia/plugins/          plugins Luau (tarefas, audio, spotify-media, barra, grupos) → ~/.local/share/noctalia/plugins
 omarchy/plugins/           barra nula erllan.sem-barra → ~/.config/omarchy/plugins
 omarchy/themes/            tema soviet-terminal (sem as fotos) → ~/.config/omarchy/themes
 omarchy/workspace-layouts/ layout dwindle da central → ~/.local/state/omarchy/workspace-layouts

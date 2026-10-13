@@ -210,3 +210,75 @@ Ver `THIRD_PARTY.md`.
   que a desligou (`install/screensaver-off.nosso`).
 * **Limite**: o tempo é lido do `shell.json` na instalação; mudou lá, rode
   `./install.sh` de novo.
+
+## D16. Barra v2: o que a API do Noctalia 5.0.1 permite e as alternativas
+
+* **Fonte**: código do `noctalia-dev/noctalia` nas tags v5.0.1, v5.1.0 e v5.2.x
+  (`gh api`). Instalado: 5.0.1, o único no repositório `extra` do Arch, com
+  `plugin_api` 3–30. A 5.1.0 também é 30; a 5.2.x sobe para 32
+  (`noctalia.getColor` na 31, `tooltip` por nó em `ui.box/row/column/image` na 32).
+  Não atualizamos: exigiria pacote fora do `extra`, nova linha em `lib/compat.sh` e
+  a revisão dos testes.
+* **Arrasto**: `ui.dragSource`/`ui.dropZone` só existem em painéis (o reconciler
+  recusa fora deles: "only supported in plugin panels"). Na barra, nada detecta
+  "pressionar e mover": `ui.graph.onPointerMove` (API 29) não diz o botão, e
+  `onScroll` horizontal é rolagem. Por isso:
+  * **reordenar/mover ícones** → painel **"Editar barra"** (`erllan/tarefas:editar`),
+    aberto pelo clique direito fora de um ícone da lista de apps ou por "Editar
+    barra…" no mini-menu. Duas zonas (Abertos, Fixados): soltar em Fixados fixa
+    na posição, em Abertos desafixa; dentro de cada zona, reordena. A ordem vai
+    para `fixados.json` (esquema 2: `fixados` + `ordemAbertos`; o esquema 1 é lido e
+    regravado como 2). O service `fonte` continua o único escritor.
+  * **arrastar a barra** → alça `grip-vertical` no início da barra (e o clique
+    direito na zona vazia, como antes): ambos abrem o painel de posição (D13).
+* **Menu de contexto**: `panel.openContextMenu` (API 28) só existe em painel e só
+  a partir de `ui.button.onRightClick`. Usado no painel Grupos; na barra fica o
+  mini-menu próprio (D6).
+* **Tooltip**: `barWidget.setTooltip` vale para a área do widget inteiro
+  (`PluginWidget::luaSetTooltip` → `m_area`). Trocar o texto no `onHover` de cada
+  ícone funciona, mas o balão fica ancorado ao widget, não ao ícone. O tooltip por
+  ícone só chega com a API 32.
+* **IPC de plugin**: `noctalia msg plugin <autor/plugin:entrada> <alvo> <evento>
+  [payload]`; `all` é obrigatório para `[[service]]` e `[[panel]]`.
+* **Posição efetiva da barra**: `noctalia.getSetting("bar.<nome>.position")`
+  (API 26). `getConfig` só lê as settings declaradas do próprio plugin.
+
+## D17. Fixar por atalho e atalhos nos tooltips
+
+* **`KEY_PIN`** (`SUPER + ALT + P`; o `SUPER + ALT + F` sugerido é "Full width" do
+  Omarchy) → `noctalia msg plugin erllan/tarefas:fonte all alternar-fixado`.
+  O service alterna o ícone sob o mouse (estado `hover-abertos`/`hover-fixados`,
+  gravado pelo `onHover` dos widgets) ou, sem ícone sob o mouse, o app da janela
+  em foco. O ícone pisca para confirmar. Nada de polling.
+* **De onde vêm os atalhos**: com a configuração do Hyprland em Lua, `hyprctl
+  binds -j` só traz tecla e descrição (dispatcher `__lua`), não o comando.
+  `bin/soviet-atalhos` avalia a própria configuração num Lua isolado (o `hl` falso
+  só registra `bind`/`unbind`; `os.execute`/`io.popen` não fazem nada), cruza com
+  o `hyprctl` (só binds ativos) e liga comando → app pelos `.desktop` instalados.
+  Nenhuma tabela fixa de apps no código.
+* **Ícones de apps** (plugin de tarefas): o service roda o `soviet-atalhos` ao
+  iniciar e a cada `configreloaded`; o tooltip mostra "Nome — TECLAS".
+* **Widgets nativos** (menu, inspeção, captura, luz noturna, cafeína,
+  notificações): o `tooltip` do TOML recebe os marcadores `@AT_*@`, calculados
+  pelo instalador (`atalho_de` em `lib/ts-lib.sh`, primeiro pela linha de
+  comando exata, depois pelo executável). Ficam fixos no arquivo: mudou um
+  atalho, rode `./install.sh`.
+
+## D18. Grupos de apps
+
+* **Classificação** (`bin/soviet-grupos`): `.desktop` do usuário, do sistema e
+  do Flatpak; ignora ocultos, `OnlyShowIn`/`NotShowIn` incompatíveis e
+  **webapps** (`omarchy-launch-webapp`, `firefox --new-window http…`,
+  `firefox-webapp-*`): o pedido é só por programas instalados. Grupo por
+  `Categories=`, com ajustes manuais onde a categoria falha (Steam, editores,
+  Docker, Cursor). `tabela` mostra sem gravar.
+* **Nunca desfaz escolha do usuário**: só apps nunca vistos (`vistos` no
+  `grupos.json`, esquema 1) são classificados. Ordem, nomes e remoções feitas
+  no painel ficam.
+* **Painel** `erllan/grupos:painel`, aberto pelo ícone no centro da barra: clique
+  abre ou foca; arrastar entre grupos; menu de contexto (API 28); criar,
+  renomear e apagar grupo; um app pode estar em vários grupos.
+* **Plugins de terceiros avaliados** (item 7 do pedido), sem instalar nada:
+  `retomada/plugins-avaliacao.md`. Candidatos: `noctalia/timer`, `noctalia/notes`,
+  `special-workspaces`, `lyrics`. Os outros sobrepõem o que o Omarchy ou o projeto
+  já fazem, ou pedem dependências extras.

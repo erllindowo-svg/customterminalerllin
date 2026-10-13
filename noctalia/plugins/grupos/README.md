@@ -4,8 +4,9 @@ Apps instalados agrupados por propósito, abertos pelo ícone de grupos no
 centro da barra.
 
 * **Classificação** (`bin/soviet-grupos`): lê os `.desktop` (usuário, sistema,
-  Flatpak), ignora ocultos e incompatíveis com o desktop atual e propõe um grupo
-  por `Categories=` com ajustes manuais (webapps sem categoria, Steam, editores).
+  Flatpak), ignora ocultos, incompatíveis com o desktop atual e webapps (sites
+  em janela própria), e propõe um grupo por `Categories=` com ajustes manuais
+  (Steam, editores, Docker).
   `soviet-grupos tabela` mostra a proposta sem gravar; `classificar` grava. Só
   apps nunca vistos são classificados: nada que você mudou é desfeito.
 * **Painel**: clique abre ou foca o app; arrastar move entre grupos; clique

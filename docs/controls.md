@@ -11,6 +11,7 @@ pertencem ao projeto, na sessão atual.
 | `SUPER+M` (`KEY_INSPECT`) | painel btop sob demanda | Abre flutuante, centralizado, no **workspace atual**. Se já estiver aberto aqui, fecha; se estiver em outro workspace, traz para cá. Acionamentos repetidos durante a abertura são ignorados (trava). Fechar encerra o btop (sem órfãos). |
 | `SUPER+ALT+A` (`KEY_ARTE`) | ilustração: menu + arttime | Abre a janela flutuante `soviet-arte` no workspace atual; a mesma tecla fecha. Não troca de workspace nem toca na central. |
 | `SUPER+CTRL+M` (`KEY_OPS`) | recompor a central | Vai ao workspace da central e reabre **só** os painéis que faltam. |
+| `SUPER+ALT+P` (`KEY_PIN`) | fixar/desafixar na barra | Com o mouse sobre um ícone da barra, alterna aquele app; sem ícone sob o mouse, o app da janela em foco. O ícone pisca. |
 | `SUPER+SHIFT+SPACE` | barra: alternar manualmente | Oculta/mostra a barra do Noctalia; a próxima troca de workspace volta à regra automática. |
 | `SUPER+CTRL+A / B / W / D / P` | control center do Noctalia | Áudio, Bluetooth, rede, monitor, energia (antes: painéis da barra do Omarchy). |
 | `SUPER+CTRL+ALT+D` | calendário | Control center → calendário. |
@@ -38,7 +39,8 @@ vídeos em tela cheia (inibidores de idle) impedem a troca. Mudou o tempo no
 
 ### Posição da barra
 
-**Clique direito numa área vazia da barra** → painel com uma mini-tela: arraste
+**Clique na alça** (ícone de pontinhos no início da barra) **ou clique direito
+numa área vazia da barra** → painel com uma mini-tela: arraste
 a barrinha até uma das 4 bordas (ou use os botões ←↑→↓). A barra é recriada na
 borda escolhida, e a escolha persiste (`~/.local/state/terminal-soviet/barra-posicao`
 → `~/.config/noctalia/90-posicao-barra.toml`). Linha de comando:
@@ -80,10 +82,31 @@ O ícone mostra a saída ativa: **fone** ou **alto-falante** (riscado e vermelho
 | captura | `omarchy-capture-screenshot` | gravar/parar (`omarchy-capture-screenrecording`) |
 | lua | luz noturna (`omarchy-toggle-nightlight`, hyprsunset) | — |
 | café | cafeína: manter acordado (`omarchy-toggle-idle`) | — |
+| grupos | painel Grupos (abaixo) | — |
 | perfil de energia | próximo perfil (power-profiles-daemon) | perfil anterior |
 | jogo (`GAME_DESKTOP`) | abre o jogo pelo `.desktop` | — |
 
 Luz noturna e cafeína são botões sem estado: o ícone não mostra se estão ligadas.
+
+O tooltip de cada botão mostra o atalho de teclado da mesma ação, lido dos binds
+ativos na instalação (mudou um atalho? rode `./install.sh`).
+
+### Grupos
+
+Apps instalados (sem webapps) agrupados por propósito: Desenvolvimento, Internet,
+Mídia, Jogos, Criação/Gráficos, Escritório e notas, Sistema, Utilitários.
+
+| Gesto | Ação |
+|---|---|
+| clique no app | abre, ou foca a janela mais recente se já estiver aberto |
+| arrastar o app | move para outro grupo ("Sem grupo" = tira do grupo) |
+| clique direito no nome | menu: abrir, tirar do grupo, adicionar a outro grupo |
+| + / ✎ / lixeira | criar, renomear, apagar grupo |
+| ⟳ | classifica os apps instalados desde a última vez |
+
+Estado: `~/.local/state/terminal-soviet/grupos.json`. Linha de comando:
+`soviet-grupos tabela` (proposta, não grava) e `soviet-grupos classificar`. A
+classificação automática só toca apps nunca vistos.
 
 ### Aplicativos (estilo Windows)
 
@@ -95,11 +118,19 @@ Luz noturna e cafeína são botões sem estado: o ícone não mostra se estão l
 * **Clique**: foca a janela mais recente, o que leva ao workspace dela; cliques
   seguidos alternam entre as janelas do app. Fixado fechado: abre o app.
 * **Clique direito**: mini-menu com **Fixar na barra** (à esquerda) ou
-  **Desafixar** (à direita), **Nova janela** e **Fechar janela(s)**.
-* Os fixados ficam em `~/.local/state/noctalia/plugins/data/erllan/tarefas/fixados.json`.
+  **Desafixar** (à direita), **Nova janela**, **Fechar janela(s)** e **Editar barra…**.
+* **Clique direito fora de um ícone** (na lista de apps) ou **Editar barra…**:
+  painel com duas listas, Abertos e Fixados. Arraste um ícone para Fixados para
+  fixar (na posição em que soltar) e para Abertos para desafixar; dentro de cada
+  lista, arraste para reordenar.
+* **Passar o mouse**: o tooltip mostra o nome e o atalho de teclado do app
+  ("Firefox — SUPER + SHIFT + B"). O balão fica preso ao grupo de ícones, não ao
+  ícone (limite do Noctalia 5.0.1).
+* Os fixados e a ordem dos abertos ficam em `~/.local/state/noctalia/plugins/data/erllan/tarefas/fixados.json`.
   `FAVORITES` (`config/terminal-soviet.conf`) é só a semente da primeira
   execução; apague o arquivo para voltar a ela.
-* Linha de comando: `noctalia msg plugin erllan/tarefas:fonte all <fixar|desafixar|novo|fechar> <app:classe|pin:id>`.
+* Linha de comando: `noctalia msg plugin erllan/tarefas:fonte all <fixar|desafixar|novo|fechar> <app:classe|pin:id>`;
+  `… all alternar-fixado` (o mesmo do `KEY_PIN`).
 
 **Vários monitores**: a regra vale para o workspace do **monitor focado**, em
 todas as barras. No Noctalia 5.0.1, ocultar a barra por monitor não funciona.

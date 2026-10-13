@@ -1,23 +1,17 @@
 # Progresso — barra v2
 
 ## Onde parei
-Item 5 COMPLETO: soviet-atalhos ganhou "linhas" (comando completo → teclas) e
-troca comma/period/slash por , . /; lib/ts-lib.sh compute_tokens gera T_AT_* via
-atalho_de (linhas exatas, senão cmds pelo executável); 20-barra.toml.in usa
-@AT_MENU@ @AT_CAPTURA@ @AT_GRAVAR@ @AT_NOTURNA@ @AT_CAFEINA@ @AT_NOTIF@ @AT_SILENCIO@
-e @KEY_INSPECT@. static 57/0, sandbox 41/0.
+Itens 0–7 FEITOS e DOCS FEITAS (decisions D16–D18, controls, file-map,
+noctalia/config/README, README, grupos/README). static 57/0, sandbox 41/0.
+Nada instalado no sistema.
 
 ## Próximo passo exato
-(Item 6 FEITO: widget nativo "alca" (glyph grip-vertical) em 20-barra.toml.in e no
- start vertical de bin/soviet-bar-pos.)
-(Item 7 FEITO: retomada/plugins-avaliacao.md.)
-3. DOCS PENDENTES: docs/decisions.md (achados da API, KEY_PIN, Editar barra, Grupos sem
-   webapps, atalhos via Lua isolado, tooltip preso ao widget, nativos só mudam com
-   ./install.sh, sem arrasto na barra), docs/controls.md (KEY_PIN, clique direito fora de
-   ícone = Editar barra, Grupos, tooltips), docs/file-map.md (soviet-grupos,
-   soviet-atalhos, plugins grupos, editar.luau, grupos.json, fixados.json v2),
-   noctalia/config/README.md, README.md (tabela de atalhos).
-4. Resumo final ao usuário + `git log --oneline redesenho-barra..barra-v2`.
+1. Esperar o usuário: aprovar tabela de grupos (retomada/grupos-proposta.txt, 54 apps
+   sem webapps), escolher plugins candidatos (retomada/plugins-avaliacao.md), aprovar
+   `./install.sh` a partir do worktree para o teste ao vivo.
+2. Depois da aprovação: install a partir do worktree, tests/live.sh, capturas,
+   `soviet-grupos classificar`, conferir tooltips/KEY_PIN/Editar barra/Grupos/alça.
+3. Mesclar barra-v2 → redesenho-barra (sem retomada/) quando aprovado.
 
 ## Estado do pedido anterior (fases 1–7, branch redesenho-barra)
 | Fase | Estado | Commit |
@@ -41,7 +35,8 @@ Instalado no sistema: tudo acima (a partir do checkout principal, branch redesen
 - [x] 5 atalhos no hover: soviet-atalhos + plugin + nativos (marcadores AT_*)
 - [x] 6 sem arrasto na barra (API) → alça grip-vertical "alca" no início da start + clique direito na zona vazia, ambos abrem erllan/barra:posicao
 - [x] 7 avaliação de plugins: retomada/plugins-avaliacao.md (candidatos: timer, notes, special-workspaces, lyrics — aguarda escolha)
-- [ ] testes, docs, validate, capturas, resumo final
+- [x] docs; testes estáticos e sandbox
+- [ ] teste ao vivo, capturas (dependem de aprovar o install)
 
 ## Como verificar o que já foi feito
 - `git -C ~/www/customterminalerllin-barra-v2 log --oneline redesenho-barra..barra-v2`
