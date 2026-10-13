@@ -56,7 +56,7 @@ icon_color = "secondary"
 
 # Na vertical, bin/soviet-bar-pos sobrepõe start/center (ações no fim da start):
 # mantenha as listas em sincronia.
-start   = ["menu", "workspaces", "overview", "abertos"]
+start   = ["alca", "menu", "workspaces", "overview", "abertos"]
 center  = ["group:acoes"]
 end     = @BAR_END@
 
@@ -78,6 +78,19 @@ widget_spacing = @GAP@
 right = "panel-toggle erllan/barra:posicao"
 
 # ---------------------------------------------------------------- CONTEXTO
+
+# Alça "⠿" (grip-vertical): abre o mesmo painel de posição do clique direito na
+# zona vazia. A barra não recebe arrasto no 5.0.1 (só painéis têm dragSource/
+# dropZone; ui.graph.onPointerMove não diz se há botão pressionado), então
+# "arrastar a barra" vira: clicar na alça e arrastar a barra na mini-tela do painel.
+[widget.alca]
+type = "custom_button"
+glyph = "grip-vertical"
+label = ""
+tooltip = "Posição da barra: arraste na mini-tela  (também: clique direito na zona vazia)"
+[widget.alca.actions]
+left = "panel-toggle erllan/barra:posicao"
+middle = "none"
 
 [widget.menu]
 type = "custom_button"

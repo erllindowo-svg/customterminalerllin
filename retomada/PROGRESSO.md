@@ -8,8 +8,8 @@ atalho_de (linhas exatas, senão cmds pelo executável); 20-barra.toml.in usa
 e @KEY_INSPECT@. static 57/0, sandbox 41/0.
 
 ## Próximo passo exato
-1. Item 6 (alça "⠿" na barra: widget erllan/barra:alca → panel-toggle erllan/barra:posicao;
-   dead_zone right já abre o painel de orientação desde a fase 6 anterior).
+(Item 6 FEITO: widget nativo "alca" (glyph grip-vertical) em 20-barra.toml.in e no
+ start vertical de bin/soviet-bar-pos.)
 2. Item 7 (tabela de plugins: gh api nos catálogos community-plugins/official-plugins,
    plugin.toml de cada um: plugin_api, dependencies; nada instalado).
 3. DOCS PENDENTES: docs/decisions.md (achados da API, KEY_PIN, Editar barra, Grupos sem
@@ -40,7 +40,7 @@ Instalado no sistema: tudo acima (a partir do checkout principal, branch redesen
 - [x] 3 painel "Editar barra" (abertos/fixados, ordenar, mover) + ordem persistida (não testado ao vivo: exige install)
 - [x] 4 Grupos: classificador + tabela (aguarda aprovação) + painel + edição (grupos.json só após aprovação)
 - [x] 5 atalhos no hover: soviet-atalhos + plugin + nativos (marcadores AT_*)
-- [ ] 6 arrasto da barra → orientação (verificar; alça ⠿)
+- [x] 6 sem arrasto na barra (API) → alça grip-vertical "alca" no início da start + clique direito na zona vazia, ambos abrem erllan/barra:posicao
 - [ ] 7 avaliação de plugins (tabela)
 - [ ] testes, docs, validate, capturas, resumo final
 

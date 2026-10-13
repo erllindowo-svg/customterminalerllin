@@ -63,7 +63,7 @@ else
     # `end` (player, fixados, utilidades) por inteiro e corta só o fim da `start`.
     # As ações vão para o fim da `start`. Mantenha em sincronia com 20-barra.toml.in.
     if [[ $pos == left || $pos == right ]]; then
-      printf 'start = ["menu", "workspaces", "overview", "abertos", "group:acoes"]\ncenter = []\n'
+      printf 'start = ["alca", "menu", "workspaces", "overview", "abertos", "group:acoes"]\ncenter = []\n'
     fi
   } > "$OUT"
 fi
