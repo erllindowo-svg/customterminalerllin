@@ -9,7 +9,7 @@ Testes ao vivo: live.sh 30/0; KEY_PIN (alternar 2×) ok; mover via IPC ok; Grupo
 (onOpen > 25 ms de CPU por appIconPath) → corrigido com bin/soviet-icones.
 
 ## Próximo passo exato
-1. Testar voltar.sh (rollback) e reinstalar a v2.
+1. (FEITO) voltar.sh testado: estável reinstalada (68 itens, 0 divergência, fixados v1), depois v2 reinstalada (75 itens).
 2. Pendentes do usuário: plugins candidatos (retomada/plugins-avaliacao.md).
 3. Mesclar barra-v2 → redesenho-barra (sem retomada/) quando o usuário aprovar.
 
