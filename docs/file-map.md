@@ -39,7 +39,7 @@ customterminalerllin/
 │   └── plugins/                    → ~/.local/share/noctalia/plugins
 │       ├── tarefas/                favoritos + apps em execução (bar.luau.in, plugin.toml)
 │       ├── volume-slider/          popup com um slider de volume
-│       └── spotify-media/          fork MIT (LICENSE, upstream/, README.soviet.md)
+│       └── spotify-media/          fork MIT (bar.luau.in, LICENSE, upstream/, README.soviet.md)
 ├── omarchy/
 │   ├── plugins/erllan.sem-barra/   → ~/.config/omarchy/plugins (barra nula: Bar.qml, manifest.json)
 │   ├── themes/soviet-terminal/     → ~/.config/omarchy/themes (colors.toml, btop.theme, hyprland.lua,
@@ -76,7 +76,7 @@ customterminalerllin/
 | `~/.config/hypr/terminal_soviet.lua` | `hypr/terminal_soviet.lua.in` | G | atalhos e workspace de `config/` |
 | `~/.config/hypr/hyprland.lua` | — | bloco | o instalador acrescenta 3 linhas marcadas (`require`) |
 | `~/.config/noctalia/*.toml`, `palettes/`, `README.md` | `noctalia/config/` | R/G | `20-*` e `30-*` são gerados |
-| `~/.local/share/noctalia/plugins/{tarefas,volume-slider,spotify-media}/` | `noctalia/plugins/` | R/G | `tarefas/bar.luau` é gerado |
+| `~/.local/share/noctalia/plugins/{tarefas,volume-slider,spotify-media}/` | `noctalia/plugins/` | R/G | `tarefas/bar.luau` e `spotify-media/bar.luau` são gerados (grade da barra) |
 | `~/.config/omarchy/plugins/erllan.sem-barra/` | `omarchy/plugins/` | R | |
 | `~/.config/omarchy/shell.json` | — | chaves | `bar.id`, `bar.position` via `omarchy bar` |
 | `~/.config/omarchy/themes/soviet-terminal/` | `omarchy/themes/` | R | `backgrounds/`, `preview.png`: **D** (`fetch-backgrounds.sh`) |

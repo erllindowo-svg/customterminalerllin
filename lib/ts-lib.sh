@@ -58,6 +58,15 @@ compute_tokens() {
   T_HOME=$HOME
   T_BIN="$HOME/.local/bin"
 
+  # Grade da barra: uma só régua para widgets nativos e plugins (px lógicos).
+  #   BAR_THICKNESS  espessura da barra (borda de 1 px incluída: sobra 24 por dentro)
+  #   ITEM           altura de todo item: botões, capa, coluna ícone+traço, cápsulas
+  #   ICON           ícones de app e glifos (= Style::baseGlyphSize dos nativos)
+  #   GAP            espaço entre widgets e entre itens dentro de um plugin
+  # Não são preferências: mudar um valor exige conferir a barra com capturas.
+  T_BAR_THICKNESS=26 T_ITEM=22 T_ICON=16 T_GAP=6
+  T_CAPSULE_THICKNESS=$(awk -v i="$T_ITEM" -v b="$T_BAR_THICKNESS" 'BEGIN { printf "%.3f", i / b }')
+
   local launchers=() l
   for l in $BAR_LAUNCHERS; do
     case $l in
@@ -66,8 +75,8 @@ compute_tokens() {
       *) die "BAR_LAUNCHERS: lançador desconhecido '$l' (firefox, osu)" ;;
     esac
   done
-  local end='["spotify", "sep", '
-  (( ${#launchers[@]} )) && end+="$(IFS=,; echo "${launchers[*]}" | sed 's/,/, /g'), \"sep\", "
+  local end='["spotify", '
+  (( ${#launchers[@]} )) && end+="$(IFS=,; echo "${launchers[*]}" | sed 's/,/, /g'), "
   T_BAR_END="$end\"tray\", \"notificacoes\", \"volume\", \"weather\", \"clock\", \"control-center\"]"
 
   local gpu=0
@@ -97,6 +106,8 @@ render() {
     TS_SENSOR_MEMBERS="$T_SENSOR_MEMBERS" TS_WEATHER_ADDRESS="$WEATHER_ADDRESS" \
     TS_KEY_INSPECT="$KEY_INSPECT" TS_KEY_OPS="$KEY_OPS" TS_KEY_ARTE="$KEY_ARTE" \
     TS_HIDDEN_WORKSPACE="$HIDDEN_WORKSPACE" TS_PINNED_LUA="$T_PINNED_LUA" \
+    TS_BAR_THICKNESS="$T_BAR_THICKNESS" TS_ITEM="$T_ITEM" TS_ICON="$T_ICON" TS_GAP="$T_GAP" \
+    TS_CAPSULE_THICKNESS="$T_CAPSULE_THICKNESS" \
     perl -pe 's/@([A-Z_]+)@/exists $ENV{"TS_$1"} ? $ENV{"TS_$1"} : "\@$1\@"/ge' "$src" > "$dst"
     if grep -qE '@[A-Z][A-Z_]+@' "$dst"; then
       die "marcador sem valor em $src: $(grep -oE '@[A-Z][A-Z_]+@' "$dst" | sort -u | tr '\n' ' ')"

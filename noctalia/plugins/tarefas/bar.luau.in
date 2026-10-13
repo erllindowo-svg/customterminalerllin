@@ -1,6 +1,7 @@
 --!nonstrict
 -- Terminal Soviético — favoritos + aplicativos em execução (exceto o workspace da central).
--- MODELO: install.sh gera bar.luau (marcadores HIDDEN_WORKSPACE e PINNED_LUA).
+-- MODELO: install.sh gera bar.luau (marcadores HIDDEN_WORKSPACE, PINNED_LUA e os da
+-- grade da barra: ITEM e ICON, definidos em lib/ts-lib.sh).
 --
 -- Um bloco por aplicativo, com o ícone real (appIconPath pelo desktop id ou
 -- pela classe). Favoritos ficam sempre visíveis; os demais aparecem enquanto
@@ -16,7 +17,11 @@
 -- update() a cada 30 s é só rede de segurança.
 
 local HIDDEN_WS = @HIDDEN_WORKSPACE@
-local ICON = 18
+local ITEM, ICON = @ITEM@, @ICON@
+-- Coluna de altura ITEM com o ícone no centro: o traço (2 px + 1 de folga) embaixo
+-- é compensado por um vão igual em cima, para o ícone ficar na linha dos glifos.
+local MARK_H = 2
+local PAD = math.floor((ITEM - ICON) / 2) - MARK_H
 
 -- Favoritos: desktop id (abrir e ícone) e classes de janela que o representam.
 -- Gerado por install.sh a partir de FAVORITES em config/terminal-soviet.conf.
@@ -69,19 +74,23 @@ local function render()
     local key = a.key
     local path = iconFor(key, a.id, a.class)
     local node = path and ui.image({ path = path, width = ICON, height = ICON, fit = "contain" })
-      or ui.glyph({ name = "app-window", size = ICON - 2, color = "on_surface" })
+      or ui.glyph({ name = "app-window", size = ICON, color = "on_surface" })
     local mark = "#00000000"
     if a.focused then mark = "primary" elseif #a.windows > 0 then mark = "secondary" end
     table.insert(items, ui.column({
-      key = key, gap = 1, align = "center",
+      key = key, gap = PAD, align = "center", justify = "center",
+      width = ITEM, height = ITEM,
       opacity = (#a.windows == 0) and 0.55 or 1.0,
       onClick = function() activate(key) end,
     }, {
+      ui.box({ width = 1, height = MARK_H, fill = "#00000000" }),
       node,
-      ui.box({ width = (#a.windows > 1) and 12 or 8, height = 2, fill = mark }),
+      ui.box({ width = (#a.windows > 1) and 12 or 8, height = MARK_H, fill = mark }),
     }))
   end
-  barWidget.render(ui.row({ gap = 5, align = "center" }, items))
+  local container = barWidget.isVertical() and ui.column or ui.row
+  -- Sem gap: cada item tem ITEM de largura, então os ícones já ficam ITEM - ICON (= GAP) apartados.
+  barWidget.render(container({ gap = 0, align = "center" }, items))
 end
 
 local function rebuild(list)

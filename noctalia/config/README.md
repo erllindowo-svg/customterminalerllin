@@ -6,7 +6,7 @@ Configuração em arquivos, mesclados em ordem alfabética:
 |---|---|
 | `00-coexistencia-omarchy.toml` | desliga no Noctalia o que o shell Omarchy já faz (notificações, OSD, papel de parede, lock, clipboard, polkit, templates de tema, plugins automáticos) |
 | `10-tema-sovietico.toml` + `palettes/SovietTerminal.json` | paleta fósforo/oliva/âmbar/vermelho (valores do tema Omarchy soviet-terminal), JetBrainsMono Nerd Font, cantos retos, sem sombras |
-| `20-barra.toml` (modelo `.in`) | barra `estacao` (topo, 26 px) e widgets |
+| `20-barra.toml` (modelo `.in`) | barra `estacao` (topo, 26 px) e widgets; grade única: item 22 · ícone 16 · espaço 6 (`lib/ts-lib.sh`) |
 | `30-monitoramento-clima.toml` (modelo `.in`) | limiares e polling do sysmon; endereço do clima de `WEATHER_ADDRESS`, métrico |
 | `40-integracao-hyprland.toml` | hook `started` → `soviet-bar-sync --apply` |
 

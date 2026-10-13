@@ -2,7 +2,11 @@
 #
 # MODELO: install.sh gera ~/.config/noctalia/20-barra.toml trocando os marcadores BIN,
 # BAR_NAME, BAR_END (lançadores instalados) e SENSOR_MEMBERS (com/sem GPU)
-# conforme config/terminal-soviet.conf.
+# conforme config/terminal-soviet.conf, e os da grade (BAR_THICKNESS, GAP,
+# CAPSULE_THICKNESS), fixos em lib/ts-lib.sh.
+#
+# Grade única (px lógicos): barra 26 · item 22 · ícone 16 · espaço 6. Os plugins
+# (tarefas, spotify-media) usam os mesmos marcadores; glifos nativos já são 16.
 #
 # Uma única barra ("estacao") no topo. Visibilidade controlada por workspace:
 #   workspace 1  -> oculta  (a central de operações ocupa a tela)
@@ -13,7 +17,10 @@
 # Grupos (esquerda -> direita):
 #   CONTEXTO      menu ☭ · workspaces · overview · aplicativos (favoritos + abertos; ponto = app ativo)
 #   MONITORAMENTO CPU % T° · RAM % · GPU % T° VRAM · NET ↓ ↑ · [inspeção]   (centro)
-#   UTILIDADES    Spotify · │ Firefox · osu! │ bandeja · notificações · volume │ clima RJ · relógio · control center
+#   UTILIDADES    Spotify · Firefox · osu! · bandeja · notificações · volume · clima RJ · relógio · control center
+#
+# Sem separadores: a seção `end` só tem o espaço entre o fim do centro e a borda e
+# corta à esquerda o que exceder (a capa do Spotify aparecia "comprimida" por isso).
 
 [bar]
 order = ["@BAR_NAME@"]
@@ -21,7 +28,7 @@ order = ["@BAR_NAME@"]
 [bar.@BAR_NAME@]
 enabled = true
 position = "top"
-thickness = 26
+thickness = @BAR_THICKNESS@
 layer = "top"
 reserve_space = true
 auto_hide = false
@@ -29,7 +36,8 @@ smart_auto_hide = false
 margin_edge = 0
 margin_ends = 0
 padding = 6
-widget_spacing = 6
+widget_spacing = @GAP@
+capsule_thickness = @CAPSULE_THICKNESS@   # cápsulas com a altura de um item
 background_opacity = 1.0
 border = "outline"
 border_width = 1.0
@@ -43,7 +51,7 @@ font_weight = 500
 color = "on_surface"
 icon_color = "secondary"
 
-start   = ["menu", "workspaces", "overview", "sep", "apps"]
+start   = ["menu", "workspaces", "overview", "apps"]
 center  = ["group:sensores", "inspecao"]
 end     = @BAR_END@
 
@@ -54,8 +62,8 @@ members = @SENSOR_MEMBERS@
 fill = "surface_variant"
 border = "outline"
 radius = 0
-padding = 6
-widget_spacing = 7
+padding = @GAP@
+widget_spacing = @GAP@
 
 [bar.@BAR_NAME@.dead_zone.actions]
 right = "panel-toggle control-center"
@@ -99,12 +107,6 @@ tooltip = "Overview dos workspaces"
 [widget.overview.actions]
 left = "exec omarchy-shell shell toggle moorgrove.overview '{}'"
 middle = "none"
-
-[widget.sep]
-type = "text"
-text = "│"
-color = "outline"
-interactive = false
 
 # Favoritos fixos (escurecidos quando fechados) + aplicativos abertos.
 [widget.apps]

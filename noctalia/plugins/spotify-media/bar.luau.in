@@ -6,7 +6,10 @@
 --   * texto rolante mais estreito (11 caracteres, 92 px; upstream 16/136) para caber
 --     na faixa direita da barra de 1440 px lógicos;
 --   * removido `align` dos ui.button (a API instalada não tem essa prop: gerava
---     ~25 avisos/s no journal a cada render do marquee; sem efeito visual).
+--     ~25 avisos/s no journal a cada render do marquee; sem efeito visual);
+--   * MODELO (bar.luau.in): tamanhos da grade única da barra (marcadores ITEM e ICON
+--     de lib/ts-lib.sh); a capa fica numa caixa fixa ITEM×ITEM que não encolhe
+--     (no upstream a imagem clicável era comprimida pelo layout da linha).
 -- Tudo o mais (MPRIS via playerctl, foco via hyprctl, marquee) é o upstream.
 
 local title = "Spotify"
@@ -24,11 +27,12 @@ local scrollTick = 0
 local lastDisplayText = ""
 
 local SCROLL_WIDTH = 11
+local ITEM, ICON = @ITEM@, @ICON@   -- grade da barra (lib/ts-lib.sh)
 local SCROLL_SPEED_TICKS = 2
 local METADATA_TICKS = 4
 
 local dataDir = noctalia.pluginDataDir()
-local spotifyIcon = noctalia.appIconPath("spotify", 18)
+local spotifyIcon = noctalia.appIconPath("spotify", ICON)
 
 local SEP = string.char(31)
 
@@ -134,6 +138,12 @@ function nextTrack()
 end
 
 
+-- Clique no widget fora dos botões (a capa): o mesmo que clicar no título.
+function onClick()
+  openSpotify()
+end
+
+
 function openSpotify()
   noctalia.runAsync({
     "hyprctl",
@@ -174,14 +184,14 @@ local function render()
       icon = ui.image({
         key = "spotify-icon",
         path = spotifyIcon,
-        width = 18,
-        height = 18,
+        width = ICON,
+        height = ICON,
         fit = "contain",
       })
     else
       icon = ui.glyph({
         name = "brand-spotify",
-        size = 16,
+        size = ICON,
         color = "primary",
       })
     end
@@ -219,14 +229,25 @@ local function render()
       gap = 0,
       align = "center",
     }, {
-      ui.image({
-        key = "cover",
-        path = imagePath,
-        width = 20,
-        height = 20,
-        radius = 0,
-        fit = "cover",
-        onClick = "openSpotify",
+      -- Caixa fixa ITEM×ITEM (width/height viram min=max no Flex): a capa nunca
+      -- encolhe. Sem onClick aqui: um nó clicável ganha um wrapper de entrada que o
+      -- layout mede com o tamanho anterior, e o botão do título acabava por cima da
+      -- metade direita da capa. O clique na capa chega ao onClick() do widget.
+      ui.row({
+        key = "cover-box",
+        width = ITEM,
+        height = ITEM,
+        align = "center",
+        justify = "center",
+      }, {
+        ui.image({
+          key = "cover",
+          path = imagePath,
+          width = ITEM,
+          height = ITEM,
+          radius = 0,
+          fit = "cover",
+        }),
       }),
 
       ui.button({
@@ -234,7 +255,7 @@ local function render()
         text = scrollingText(displayText),
         variant = "ghost",
         contentAlign = "start",
-        height = 22,
+        height = ITEM,
         width = 92,
         tooltip = displayText,
         onClick = "openSpotify",
@@ -244,10 +265,10 @@ local function render()
     ui.button({
       key = "previous",
       glyph = "caret-left-filled",
-      glyphSize = 16,
+      glyphSize = ICON,
       variant = "ghost",
-      width = 22,
-      height = 22,
+      width = ITEM,
+      height = ITEM,
       tooltip = "Previous",
       onClick = "previousTrack",
     }),
@@ -255,10 +276,10 @@ local function render()
     ui.button({
       key = "playpause",
       glyph = playing and "player-pause-filled" or "player-play-filled",
-      glyphSize = 14,
+      glyphSize = ICON,
       variant = "ghost",
-      width = 22,
-      height = 22,
+      width = ITEM,
+      height = ITEM,
       tooltip = playing and "Pause" or "Play",
       onClick = "togglePlayback",
     }),
@@ -266,10 +287,10 @@ local function render()
     ui.button({
       key = "next",
       glyph = "caret-right-filled",
-      glyphSize = 16,
+      glyphSize = ICON,
       variant = "ghost",
-      width = 22,
-      height = 22,
+      width = ITEM,
+      height = ITEM,
       tooltip = "Next",
       onClick = "nextTrack",
     }),
