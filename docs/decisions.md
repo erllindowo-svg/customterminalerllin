@@ -144,3 +144,21 @@ Ver `THIRD_PARTY.md`.
 * `[system.monitor]` desligado: nada na barra usa o sysmon. Só a aba "System"
   do control center depende dele.
 * **Limite**: luz noturna e cafeína são `custom_button`, sem estado visível.
+
+## D12. Música: a barra é o player; Web API do Spotify opcional, só para busca
+
+* **Contexto**: o fork `spotify-media` não usava a Web API, só o MPRIS local. A
+  barra agora finge ser o próprio player: sem ícone do Spotify, última faixa
+  sempre visível, Spotify aberto oculto (`special:musica`), painel com busca.
+* **Escolha**: o MPRIS só lista o que está tocando; para listar resultados de
+  busca no painel é preciso a Web API. Ela é usada **só para buscar**, com
+  client credentials (sem login de usuário), e tocar continua local
+  (`playerctl open spotify:track:ID`). As credenciais ficam fora do repositório,
+  em `~/.config/terminal-soviet/spotify.env` com permissão 600. Sem elas, a
+  busca abre no próprio app (`spotify:search:…`).
+* **Descartado**: OAuth de usuário (refresh token guardado, escopos amplos para
+  só buscar); controlar a reprodução pela Web API (exige Premium e rede para algo
+  que o MPRIS faz localmente).
+* **Limite**: a busca depende da política de apps de desenvolvedor do Spotify.
+  O Spotify define a classe da janela tarde, e por isso o `tocar.sh` também move
+  a janela.

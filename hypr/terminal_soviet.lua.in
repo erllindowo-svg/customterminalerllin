@@ -18,6 +18,10 @@ o.exec_on_start(soviet_bin .. "soviet-ops --login")
 o.window("^soviet-ops-(btop|fetch|clock|shell)$", { workspace = "@HIDDEN_WORKSPACE@ silent" })
 o.window("^soviet-ops-(btop|fetch|clock)$", { tag = "-default-opacity", opacity = "1 1" })
 
+-- Spotify: a barra é o player (erllan/spotify-media); a janela nasce escondida no
+-- workspace especial "musica" e só aparece pelo painel do player ("Mostrar o app").
+o.window("^[Ss]potify$", { workspace = "special:musica silent" })
+
 -- Inspeção flutuante (soviet-inspect): centralizada no workspace atual.
 o.window("^soviet-inspect$", {
   float = true,

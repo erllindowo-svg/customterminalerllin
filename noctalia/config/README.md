@@ -22,7 +22,7 @@ gerados/copiados por `install.sh`: edite no repositório, não aqui.
 | Plugin | Função |
 |---|---|
 | `erllan/audio` | ícone fone × alto-falante + volume; popup com volume, mudo e saídas; dir. = alterna a saída, meio = mudo; um `pactl subscribe` (service) |
-| `erllan/spotify-media` | Spotify na barra: capa, artista/título rolando, ⏮ ⏯ ⏭, foca/abre o Spotify. Fork local de `azokyen/spotify-media` |
+| `erllan/spotify-media` | a barra é o player: última faixa sempre visível (capa, artista – título), ⏮ ⏯ ⏭, play abre o Spotify oculto; clique = painel com progresso e busca. Fork local de `azokyen/spotify-media` |
 | `erllan/tarefas` | estilo Windows: `abertos` (esquerda) e `fixados` (direita, `fixados.json` no `pluginDataDir`), fora do WS 1, ícones reais, traço = em execução/focado, clique direito = mini-menu fixar/desafixar; um service com um `socat` (eventos do socket2) |
 
 Cada um tem um README no próprio diretório.

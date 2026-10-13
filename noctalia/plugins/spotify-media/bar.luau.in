@@ -1,38 +1,45 @@
 -- Terminal Soviético — fork local de azokyen/spotify-media 0.1.1 (MIT), community-plugins
--- rev. em upstream/REVISION; original intocado em upstream/bar.luau. Alterações:
---   * abre o Spotify nativo instalado (/usr/bin/spotify via uwsm-app) em vez de
---     spotify-launcher, que não está instalado (é outro cliente);
---   * capa com cantos retos (radius 0), como o resto da barra;
---   * texto rolante mais estreito (11 caracteres, 92 px; upstream 16/136) para caber
---     na faixa direita da barra de 1440 px lógicos;
---   * removido `align` dos ui.button (a API instalada não tem essa prop: gerava
---     ~25 avisos/s no journal a cada render do marquee; sem efeito visual);
---   * MODELO (bar.luau.in): tamanhos da grade única da barra (marcadores ITEM e ICON
---     de lib/ts-lib.sh); a capa fica numa caixa fixa ITEM×ITEM que não encolhe
---     (no upstream a imagem clicável era comprimida pelo layout da linha).
--- Tudo o mais (MPRIS via playerctl, foco via hyprctl, marquee) é o upstream.
+-- rev. em upstream/REVISION; original intocado em upstream/bar.luau. MODELO: install.sh
+-- gera bar.luau (marcadores ITEM e ICON da grade da barra, lib/ts-lib.sh).
+--
+-- A barra É o player: nada de ícone do Spotify.
+--   * Mostra sempre a última música tocada (capa, artista – título), mesmo com o
+--     Spotify fechado logo após ligar o PC: título, artista, capa e mpris:trackid
+--     ficam em pluginDataDir()/ultima.json a cada troca de faixa.
+--   * Play com o Spotify fechado: tocar.sh abre o Spotify sem mostrar a janela
+--     (workspace especial "musica", regra em terminal_soviet.lua) e retoma a
+--     última faixa (playerctl open spotify:track:…).
+--   * Clique na capa/título: painel erllan/spotify-media:player (capa grande,
+--     controles, progresso, busca).
+--   * Metadados por evento: um `playerctl --follow metadata` (runStream) no lugar
+--     do `playerctl metadata` a cada 1 s do upstream. O tick de 250 ms só existe
+--     enquanto o texto rola.
+-- Outras diferenças do upstream: capa com cantos retos numa caixa fixa ITEM×ITEM;
+-- texto rolante de 11 caracteres / 92 px (upstream 16/136); sem a prop `align` nos
+-- ui.button (a API 5.0.1 não a tem). O marquee (utf8Chars, charWidth,
+-- scrollingText) e stripNewline são do upstream sem mudança.
+-- O estado vai para o painel por noctalia.state "musica".
 
-local title = "Spotify"
+local ITEM, ICON = @ITEM@, @ICON@   -- grade da barra (lib/ts-lib.sh)
+local SCROLL_WIDTH = 11
+local SCROLL_TICK_MS = 500          -- upstream: 2 ticks de 250 ms
+local IDLE_TICK_MS = 60000
+
+local title = ""
 local artist = ""
 local status = "Stopped"
+local trackid = ""
 local artUrl = ""
 local artPath = nil
 local playerAvailable = false
 
-local requestInFlight = false
 local coverRevision = 0
-
 local scrollOffset = 1
-local scrollTick = 0
 local lastDisplayText = ""
 
-local SCROLL_WIDTH = 11
-local ITEM, ICON = @ITEM@, @ICON@   -- grade da barra (lib/ts-lib.sh)
-local SCROLL_SPEED_TICKS = 2
-local METADATA_TICKS = 4
-
 local dataDir = noctalia.pluginDataDir()
-local spotifyIcon = noctalia.appIconPath("spotify", ICON)
+local LAST_FILE = dataDir and (dataDir .. "/ultima.json") or nil
+local TOCAR = (noctalia.pluginDir() or ".") .. "/tocar.sh"
 
 local SEP = string.char(31)
 
@@ -114,198 +121,139 @@ local function stripNewline(value)
 end
 
 
-local function runPlayerctl(command)
-  noctalia.runAsync({
-    "playerctl",
-    "--player=spotify",
-    command,
+-- spotify:track:ID a partir do mpris:trackid ("/com/spotify/track/ID" ou já um URI).
+local function trackUri(id)
+  if id == nil or id == "" then return nil end
+  if string.sub(id, 1, 8) == "spotify:" then return id end
+  local tid = string.match(id, "/track/([%w]+)$")
+  return tid and ("spotify:track:" .. tid) or nil
+end
+
+local function displayText()
+  if title == "" then return "" end
+  if artist ~= "" then return artist .. " - " .. title end
+  return title
+end
+
+local function publish()
+  noctalia.state.set("musica", {
+    title = title, artist = artist, status = status, trackid = trackid,
+    artPath = artPath or "", disponivel = playerAvailable,
   })
+end
+
+local function saveLast()
+  if not LAST_FILE or title == "" then return end
+  noctalia.writeFile(LAST_FILE, noctalia.json.encode({
+    title = title, artist = artist, trackid = trackid, artUrl = artUrl, artPath = artPath or "",
+  }))
+end
+
+local function loadLast()
+  local raw = LAST_FILE and noctalia.fileExists(LAST_FILE) and noctalia.readFile(LAST_FILE) or nil
+  local last = raw and noctalia.json.decode(raw) or nil
+  if type(last) ~= "table" then return end
+  title = last.title or ""
+  artist = last.artist or ""
+  trackid = last.trackid or ""
+  artUrl = last.artUrl or ""
+  if last.artPath and last.artPath ~= "" and noctalia.fileExists(last.artPath) then artPath = last.artPath end
 end
 
 
 function previousTrack()
-  runPlayerctl("previous")
-end
-
-
-function togglePlayback()
-  runPlayerctl("play-pause")
+  noctalia.runAsync({ "playerctl", "--player=spotify", "previous" })
 end
 
 
 function nextTrack()
-  runPlayerctl("next")
+  noctalia.runAsync({ "playerctl", "--player=spotify", "next" })
+end
+
+
+-- Com o Spotify aberto: play-pause. Fechado: abre oculto e retoma a última faixa.
+function togglePlayback()
+  if playerAvailable then
+    noctalia.runAsync({ "playerctl", "--player=spotify", "play-pause" })
+  else
+    local args = { "bash", TOCAR }
+    local uri = trackUri(trackid)
+    if uri then table.insert(args, uri) end
+    noctalia.runAsync(args, nil, 45000)
+  end
+end
+
+
+function openPlayer()
+  noctalia.togglePanel("erllan/spotify-media:player")
 end
 
 
 -- Clique no widget fora dos botões (a capa): o mesmo que clicar no título.
 function onClick()
-  openSpotify()
-end
-
-
-function openSpotify()
-  noctalia.runAsync({
-    "hyprctl",
-    "clients",
-    "-j",
-  }, function(result)
-    local clients = result.stdout or ""
-    local spotifyClass = nil
-
-    if string.find(clients, '"class"%s*:%s*"spotify"') then
-      spotifyClass = "spotify"
-    elseif string.find(clients, '"class"%s*:%s*"Spotify"') then
-      spotifyClass = "Spotify"
-    end
-
-    if spotifyClass ~= nil then
-      noctalia.runAsync({
-        "hyprctl",
-        "dispatch",
-        'hl.dsp.focus({ window = "class:^' .. spotifyClass .. '$" })',
-      })
-    else
-      noctalia.runAsync({ "uwsm-app", "--", "spotify" })
-    end
-  end)
+  openPlayer()
 end
 
 
 local function render()
   local playing = status == "Playing"
-  local container = barWidget.isVertical() and ui.column or ui.row
+  local vertical = barWidget.isVertical()
+  local container = vertical and ui.column or ui.row
+  local text = displayText()
 
-  -- Spotify not running: collapse to icon only
-  if not playerAvailable then
-    local icon
+  -- Caixa fixa ITEM×ITEM (width/height viram min=max no Flex): a capa nunca encolhe.
+  -- Sem onClick aqui (o clique chega ao onClick() do widget); sem capa, glifo de música.
+  local cover = ui.row({
+    key = "cover-box", width = ITEM, height = ITEM, align = "center", justify = "center",
+  }, {
+    (artPath and artPath ~= "")
+      and ui.image({ key = "cover", path = artPath, width = ITEM, height = ITEM, radius = 0, fit = "cover" })
+      or ui.glyph({ key = "cover-glyph", name = "music", size = ICON, color = "primary" }),
+  })
 
-    if spotifyIcon ~= nil then
-      icon = ui.image({
-        key = "spotify-icon",
-        path = spotifyIcon,
-        width = ICON,
-        height = ICON,
-        fit = "contain",
-      })
-    else
-      icon = ui.glyph({
-        name = "brand-spotify",
-        size = ICON,
-        color = "primary",
-      })
-    end
+  local playButton = ui.button({
+    key = "playpause",
+    glyph = playing and "player-pause-filled" or "player-play-filled",
+    glyphSize = ICON, variant = "ghost", width = ITEM, height = ITEM,
+    tooltip = playing and "Pausar" or "Tocar",
+    onClick = "togglePlayback",
+  })
 
-    barWidget.render(container({
-      align = "center",
-      onClick = "openSpotify",
-    }, {
-      icon,
-    }))
-
+  -- Barra vertical: capa + play empilhados; o texto vira tooltip do play.
+  if vertical then
+    barWidget.render(container({ gap = 0, align = "center" }, { cover, playButton }))
     return
   end
 
-  local displayText = title
-
-  if artist ~= "" then
-    displayText = artist .. " - " .. title
+  local children = { cover }
+  if text ~= "" then
+    table.insert(children, ui.button({
+      key = "track", text = scrollingText(text), variant = "ghost", contentAlign = "start",
+      height = ITEM, width = 92, tooltip = text, onClick = "openPlayer",
+    }))
   end
-
-
-  local imagePath = artPath
-
-  if imagePath == nil or imagePath == "" then
-    imagePath = spotifyIcon
-  end
-
-  barWidget.render(container({
-    gap = 0,
-    align = "center"
-  }, {
-    -- Artwork + song info
-    ui.row({
-      key = "track-info",
-      gap = 0,
-      align = "center",
-    }, {
-      -- Caixa fixa ITEM×ITEM (width/height viram min=max no Flex): a capa nunca
-      -- encolhe. Sem onClick aqui: um nó clicável ganha um wrapper de entrada que o
-      -- layout mede com o tamanho anterior, e o botão do título acabava por cima da
-      -- metade direita da capa. O clique na capa chega ao onClick() do widget.
-      ui.row({
-        key = "cover-box",
-        width = ITEM,
-        height = ITEM,
-        align = "center",
-        justify = "center",
-      }, {
-        ui.image({
-          key = "cover",
-          path = imagePath,
-          width = ITEM,
-          height = ITEM,
-          radius = 0,
-          fit = "cover",
-        }),
-      }),
-
-      ui.button({
-        key = "track",
-        text = scrollingText(displayText),
-        variant = "ghost",
-        contentAlign = "start",
-        height = ITEM,
-        width = 92,
-        tooltip = displayText,
-        onClick = "openSpotify",
-      }),
-    }),
-
-    ui.button({
-      key = "previous",
-      glyph = "caret-left-filled",
-      glyphSize = ICON,
-      variant = "ghost",
-      width = ITEM,
-      height = ITEM,
-      tooltip = "Previous",
-      onClick = "previousTrack",
-    }),
-
-    ui.button({
-      key = "playpause",
-      glyph = playing and "player-pause-filled" or "player-play-filled",
-      glyphSize = ICON,
-      variant = "ghost",
-      width = ITEM,
-      height = ITEM,
-      tooltip = playing and "Pause" or "Play",
-      onClick = "togglePlayback",
-    }),
-
-    ui.button({
-      key = "next",
-      glyph = "caret-right-filled",
-      glyphSize = ICON,
-      variant = "ghost",
-      width = ITEM,
-      height = ITEM,
-      tooltip = "Next",
-      onClick = "nextTrack",
-    }),
+  table.insert(children, ui.button({
+    key = "previous", glyph = "caret-left-filled", glyphSize = ICON, variant = "ghost",
+    width = ITEM, height = ITEM, tooltip = "Anterior", onClick = "previousTrack",
   }))
+  table.insert(children, playButton)
+  table.insert(children, ui.button({
+    key = "next", glyph = "caret-right-filled", glyphSize = ICON, variant = "ghost",
+    width = ITEM, height = ITEM, tooltip = "Próxima", onClick = "nextTrack",
+  }))
+  barWidget.render(container({ gap = 0, align = "center" }, children))
 end
 
-local function updateArtwork(newUrl)
-  if newUrl == nil or newUrl == "" then
-    artUrl = ""
-    artPath = nil
-    render()
-    return
-  end
 
-  if newUrl == artUrl then
+-- Só rola (e só re-renderiza a cada tick) quando o texto não cabe.
+local function scheduleTicks()
+  local long = utf8.len(displayText()) or 0
+  noctalia.setUpdateInterval((long > SCROLL_WIDTH and not barWidget.isVertical()) and SCROLL_TICK_MS or IDLE_TICK_MS)
+end
+
+
+local function updateArtwork(newUrl)
+  if newUrl == nil or newUrl == "" or newUrl == artUrl then
     return
   end
 
@@ -313,127 +261,96 @@ local function updateArtwork(newUrl)
 
   if string.sub(newUrl, 1, 7) == "file://" then
     artPath = noctalia.string.urlDecode(string.sub(newUrl, 8))
-    render()
+    saveLast(); publish(); render()
     return
   end
 
-  if not string.match(newUrl, "^https?://") then
-    artPath = nil
-    render()
-    return
-  end
-
-  if dataDir == nil then
+  if not string.match(newUrl, "^https?://") or dataDir == nil then
     return
   end
 
   coverRevision = coverRevision + 1
-
   local revision = coverRevision
-  local destination =
-    dataDir .. "/cover-" .. tostring(revision % 2) .. ".jpg"
+  local destination = dataDir .. "/capa-" .. tostring(revision % 2) .. ".jpg"
 
   noctalia.download(newUrl, destination, function(ok)
-    if not ok then
+    if not ok or revision ~= coverRevision then
       return
     end
-
-    if revision ~= coverRevision then
-      return
-    end
-
     artPath = destination
-    render()
+    saveLast(); publish(); render()
   end)
 end
 
 
-local function refreshMetadata()
-  if requestInFlight then
+-- Uma linha por mudança (playerctl --follow). Linha vazia = o Spotify fechou: a
+-- barra continua mostrando a última faixa, só o estado vira "parado".
+local function onMetadata(line)
+  local output = stripNewline(line or "")
+  local newStatus, newTitle, newArtist, newTrackid, newArtUrl =
+    string.match(output, "^(.-)" .. SEP .. "(.-)" .. SEP .. "(.-)" .. SEP .. "(.-)" .. SEP .. "(.*)$")
+
+  if newStatus == nil then
+    playerAvailable = false
+    status = "Stopped"
+    publish(); render(); scheduleTicks()
     return
   end
 
-  requestInFlight = true
-
-  local format =
-    "{{status}}" .. SEP ..
-    "{{title}}" .. SEP ..
-    "{{artist}}" .. SEP ..
-    "{{mpris:artUrl}}"
-
-  noctalia.runAsync({
-    "playerctl",
-    "--player=spotify",
-    "metadata",
-    "--format",
-    format,
-  }, function(result)
-    requestInFlight = false
-
-    if result.exitCode ~= 0 then
-      playerAvailable = false
-      title = "Spotify"
-      artist = ""
-      status = "Stopped"
-      artUrl = ""
-      artPath = nil
-      render()
-      return
-    end
-
-    playerAvailable = true
-
-    local output = stripNewline(result.stdout)
-
-    local newStatus, newTitle, newArtist, newArtUrl =
-      string.match(
-        output,
-        "^(.-)" .. SEP ..
-        "(.-)" .. SEP ..
-        "(.-)" .. SEP ..
-        "(.*)$"
-      )
-
-    if newStatus == nil then
-      return
-    end
-
-    status = newStatus
-    title = newTitle ~= "" and newTitle or "Spotify"
+  playerAvailable = true
+  status = newStatus
+  local changed = newTitle ~= "" and (newTitle ~= title or newArtist ~= artist or newTrackid ~= trackid)
+  if newTitle ~= "" then
+    title = newTitle
     artist = newArtist or ""
-
-    render()
-    updateArtwork(newArtUrl or "")
-  end)
+    trackid = newTrackid or ""
+  end
+  if changed then saveLast() end
+  publish(); render(); scheduleTicks()
+  updateArtwork(newArtUrl or "")
 end
+
+
+local streaming = false
+local function startStream()
+  if streaming or not noctalia.commandExists("playerctl") then return end
+  streaming = true
+  local format = "{{status}}" .. SEP .. "{{title}}" .. SEP .. "{{artist}}" .. SEP
+    .. "{{mpris:trackid}}" .. SEP .. "{{mpris:artUrl}}"
+  -- runStream recebe uma linha de shell; o formato não tem aspas simples.
+  noctalia.runStream("exec playerctl --player=spotify --follow metadata --format '" .. format .. "'", onMetadata)
+end
+
+
+-- Pedidos do painel (state "musica-pedido" = { op, uri, n }).
+local lastPedido = nil
+noctalia.state.watch("musica-pedido", function(p)
+  if type(p) ~= "table" or p.n == lastPedido then return end
+  lastPedido = p.n
+  if p.op == "tocar" then
+    togglePlayback()
+  elseif p.op == "abrir" and p.uri then
+    noctalia.runAsync({ "bash", TOCAR, p.uri }, nil, 45000)
+  end
+end)
 
 
 function update()
-  noctalia.setUpdateInterval(250)
-
-  scrollTick = scrollTick + 1
-
-  local displayText = title
-
-  if artist ~= "" then
-    displayText = artist .. " - " .. title
-  end
-
-  if displayText ~= lastDisplayText then
-    lastDisplayText = displayText
+  local text = displayText()
+  if text ~= lastDisplayText then
+    lastDisplayText = text
     scrollOffset = 1
-    scrollTick = 0
-    render()
-  elseif scrollTick % SCROLL_SPEED_TICKS == 0 then
+  elseif (utf8.len(text) or 0) > SCROLL_WIDTH then
     scrollOffset = scrollOffset + 1
-    render()
   end
-
-  if scrollTick % METADATA_TICKS == 0 then
-    refreshMetadata()
-  end
+  render()
+  scheduleTicks()
+  startStream()
 end
 
 
+loadLast()
+publish()
 render()
-refreshMetadata()
+scheduleTicks()
+startStream()

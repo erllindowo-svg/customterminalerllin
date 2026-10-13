@@ -2,7 +2,7 @@
 # Ver bar.luau (cabeçalho) e upstream/ para o original e as diferenças.
 id = "erllan/spotify-media"
 name = "Spotify Media"
-version = "0.1.101"   # 0.1.1 upstream + patch local (ver cabeçalho)
+version = "0.2.0"   # 0.1.1 upstream + fork local (ver cabeçalho do bar.luau.in)
 plugin_api = 24
 author = "azokyen"
 license = "MIT"
@@ -10,15 +10,27 @@ license = "MIT"
 dependencies = [
   "playerctl",
   "hyprctl",
+  "jq",
   "spotify",
 ]
 
 icon = "brand-spotify"
 
-description = "Compact Spotify now-playing widget with playback controls."
+description = "A barra é o player: última música sempre visível, Spotify oculto, painel com busca."
 
 tags = ["bar", "media", "music", "hyprland"]
 
 [[widget]]
 id = "bar"
 entry = "bar.luau"
+# Painel do player (clique na capa/título): capa grande, controles, progresso, busca.
+[[panel]]
+id = "player"
+entry = "player.luau"
+width = 400
+height = 520
+placement = "attached"
+position = "auto"
+open_near_click = true
+keyboard_focus = "exclusive"   # o campo de busca recebe o teclado ao abrir
+capture_keys = ["escape"]

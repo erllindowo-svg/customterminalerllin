@@ -40,7 +40,8 @@ customterminalerllin/
 │       │                           fixados.json), widgets abertos/fixados.luau, comum.luau.in,
 │       │                           mini-menu menu.luau, desktop-id.sh
 │       ├── audio/                  ícone da saída, popup (volume, mudo, saídas), troca fone ↔ alto-falante
-│       └── spotify-media/          fork MIT (bar.luau.in, LICENSE, upstream/, README.soviet.md)
+│       └── spotify-media/          fork MIT: player na barra (bar.luau.in), painel player.luau,
+│                                   tocar.sh (abre oculto + toca), LICENSE, upstream/, README.soviet.md
 ├── omarchy/
 │   ├── plugins/erllan.sem-barra/   → ~/.config/omarchy/plugins (barra nula: Bar.qml, manifest.json)
 │   ├── themes/soviet-terminal/     → ~/.config/omarchy/themes (colors.toml, btop.theme, hyprland.lua,
@@ -93,6 +94,8 @@ customterminalerllin/
 | `~/.local/state/terminal-soviet/install/` | — | L | manifesto, backups, `shelljson.prev` |
 | `~/.local/state/terminal-soviet/arte.conf`, `arte-selecao` | — | L | modo de cores, política, conjunto da sessão |
 | `~/.local/state/noctalia/plugins/data/erllan/tarefas/fixados.json` | semente: `FAVORITES` | L | apps fixados (clique direito → fixar/desafixar) |
+| `~/.local/state/noctalia/plugins/data/erllan/spotify-media/ultima.json`, `capa-*.jpg` | — | L | última música mostrada na barra |
+| `~/.config/terminal-soviet/spotify.env` | — | L | opcional, chmod 600: credenciais da Web API (só busca); nunca versionado |
 | `~/.cache/terminal-soviet/arte-indice.tsv` | — | L | índice da coleção |
 | `$XDG_RUNTIME_DIR/terminal-soviet/` | — | L | PID/área do painel, travas, árvore temporária do arttime, log de artes |
 | `~/.local/state/noctalia/settings.toml` | — | L | ajustes feitos pela GUI do Noctalia (**vencem** os arquivos) |

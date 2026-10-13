@@ -25,6 +25,16 @@ pertencem ao projeto, na sessão atual.
 | Qualquer outro | **visível**: menu, workspaces, overview, apps abertos · ações · Spotify, apps fixados, bandeja, notificações, volume, clima, relógio, control center |
 | Troca de foco no mesmo workspace | nada muda |
 
+### Música (a barra é o player)
+
+* Mostra sempre a última música (capa, artista – título), mesmo com o Spotify
+  fechado. ⏮ ⏯ ⏭ controlam o Spotify; **play com ele fechado** abre o app
+  escondido (workspace especial `musica`) e retoma a última faixa.
+* **Clique na capa ou no título**: painel com capa grande, controles,
+  progresso, **Mostrar o app** e **busca** (Enter). Com
+  `~/.config/terminal-soviet/spotify.env` (chmod 600), os resultados aparecem no
+  painel; sem ele, a busca abre no app.
+
 ### Áudio
 
 O ícone mostra a saída ativa: **fone** ou **alto-falante** (riscado e vermelho no mudo).
