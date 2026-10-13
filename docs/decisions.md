@@ -118,8 +118,9 @@ de fontes diferentes nem se escrevem frases novas.
 
 * Vários monitores: barra única que segue o monitor focado. Não testado com
   hardware real.
-* Sensores NVIDIA: preferência opcional, omitida quando ausente
-  (`GPU_SENSORS=auto`). Firefox e osu! são fixados comuns (sem lançador próprio).
+* Sem sensores na barra: o centro tem ações (D14). Firefox e osu! são fixados
+  comuns (sem lançador próprio). O jogo da barra (`GAME_DESKTOP`) é omitido
+  quando o `.desktop` não existe.
 * Teclas físicas e cliques reais não são automatizáveis aqui (o `wtype` não
   aciona atalhos globais). Os comandos que cada tecla/botão executa são testados.
 
@@ -128,3 +129,18 @@ de fontes diferentes nem se escrevem frases novas.
 Fotos CC BY/BY-SA de monumentos soviéticos; as esculturas podem ter direitos
 próprios. `scripts/fetch-backgrounds.sh` baixa do Commons e confere o SHA-1.
 Ver `THIRD_PARTY.md`.
+
+## D14. Centro da barra: ações no lugar dos sensores
+
+* **Contexto**: o grupo CPU/RAM/GPU/NET ocupava ~520 px no centro. A seção da
+  direita do Noctalia só recebe o espaço entre o fim do centro e a borda e corta
+  à esquerda o que não cabe; com os fixados à direita, o player sumia.
+* **Escolha**: só o ícone de inspeção (btop) fica, mais ações tiradas do que
+  ficava escondido no control center: captura, luz noturna, cafeína, perfil de
+  energia e um jogo. O que é do Omarchy chama o Omarchy (captura, hyprsunset,
+  idle do shell); o perfil de energia é o widget nativo (power-profiles-daemon
+  via D-Bus, que não é serviço do shell Omarchy). Wi-Fi e Bluetooth ficaram de
+  fora: esta máquina não tem nenhum dos dois.
+* `[system.monitor]` desligado: nada na barra usa o sysmon. Só a aba "System"
+  do control center depende dele.
+* **Limite**: luz noturna e cafeína são `custom_button`, sem estado visível.

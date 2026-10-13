@@ -15,7 +15,7 @@ shell do Omarchy: usa só os pontos de extensão do usuário (`~/.config`,
                        │                     └ o.bind           SUPER+M, SUPER+CTRL+M, SUPER+ALT+A, painéis        │
                        │                                                                                         │
  systemd --user        │  graphical-session.target                                                               │
-   noctalia.service ───┤    ├ noctalia ─────────── barra "estacao" + control center + clima + sysmon             │
+   noctalia.service ───┤    ├ noctalia ─────────── barra "estacao" + control center + clima (sysmon desligado)│
    soviet-bar-sync ────┤    │    ├ plugin erllan/tarefas ── service: socat (socket2) → hyprctl│jq (sob evento)  │
                        │    │    ├ plugin erllan/spotify-media, erllan/volume-slider                              │
                        │    │    └ hook started → soviet-bar-sync --apply                                        │
@@ -30,7 +30,7 @@ shell do Omarchy: usa só os pontos de extensão do usuário (`~/.config`,
 
 | Componente | Tipo | Vida | Papel |
 |---|---|---|---|
-| `noctalia` | serviço do usuário | permanente | a **única barra** (topo, 26 px), control center, launcher alternativo, clima (Open-Meteo), sysmon |
+| `noctalia` | serviço do usuário | permanente | a **única barra** (topo, 26 px), control center, launcher alternativo, clima (Open-Meteo); sysmon desligado |
 | `soviet-bar-sync` | serviço do usuário (bash + socat) | permanente | oculta a barra no workspace da central (e onde houver janela de `COLLAPSE_CLASSES`), mostra nos demais. Orientado a eventos do socket2; só envia `bar-hide`/`bar-show` quando o estado desejado muda; nunca alterna às cegas |
 | `erllan/tarefas` | plugin Luau do Noctalia | permanente (dentro do noctalia) | apps abertos (esq.) e fixados (dir.) fora do WS da central, com o ícone real; fixar/desafixar pelo clique direito. Um service com um `socat` no socket2 lê `hyprctl clients` só em eventos de janela/foco/workspace (1 leitura de segurança a cada 30 s) e alimenta os dois widgets |
 | `erllan.sem-barra` | plugin QML do shell Omarchy | permanente (dentro do quickshell) | "barra nula" selecionada por `bar.id`: tira a barra do Omarchy e mantém o resto do shell |

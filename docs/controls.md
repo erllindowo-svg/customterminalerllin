@@ -22,8 +22,21 @@ pertencem ao projeto, na sessão atual.
 |---|---|
 | Workspace da central (`HIDDEN_WORKSPACE`, padrão 1) | **oculta** |
 | Workspace com janela de classe em `COLLAPSE_CLASSES` (padrão `^firefox$`) | **oculta** |
-| Qualquer outro | **visível**: menu, workspaces, overview, apps abertos · CPU/RAM/GPU/NET, inspeção · Spotify, apps fixados, bandeja, notificações, volume, clima, relógio, control center |
+| Qualquer outro | **visível**: menu, workspaces, overview, apps abertos · ações · Spotify, apps fixados, bandeja, notificações, volume, clima, relógio, control center |
 | Troca de foco no mesmo workspace | nada muda |
+
+### Ações (centro)
+
+| Ícone | Clique | Clique direito |
+|---|---|---|
+| batimento | btop flutuante (= `SUPER+M`) | — |
+| captura | `omarchy-capture-screenshot` | gravar/parar (`omarchy-capture-screenrecording`) |
+| lua | luz noturna (`omarchy-toggle-nightlight`, hyprsunset) | — |
+| café | cafeína: manter acordado (`omarchy-toggle-idle`) | — |
+| perfil de energia | próximo perfil (power-profiles-daemon) | perfil anterior |
+| jogo (`GAME_DESKTOP`) | abre o jogo pelo `.desktop` | — |
+
+Luz noturna e cafeína são botões sem estado: o ícone não mostra se estão ligadas.
 
 ### Aplicativos (estilo Windows)
 

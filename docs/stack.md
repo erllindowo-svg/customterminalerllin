@@ -72,7 +72,6 @@ faltam com o comando `omarchy pkg add …`.
 | `systemctl` | systemd | core | sim | serviços do usuário | — |
 | `playerctl` | playerctl 2.4.1-5 | extra | não | widget do Spotify | `playerctl -l` |
 | `fzf` | fzf 0.74.3-1 | extra | não | tecla `x` do arttime | — |
-| `nvidia-smi` | nvidia-utils | extra | não | sensores de GPU na barra (`GPU_SENSORS=auto`) | — |
 | `luac`, `luajit`, `python3`, `wtype`, `grim` | lua, luajit, python, wtype, grim | extra | só testes | sintaxe, pty, teclas, capturas | — |
 | `shellcheck` | shellcheck | extra | só testes (opcional) | análise dos scripts; **não instalado** hoje | — |
 

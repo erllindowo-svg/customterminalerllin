@@ -1,7 +1,7 @@
 # Terminal Soviético — barra do Noctalia (substitui a barra do Omarchy)
 #
 # MODELO: install.sh gera ~/.config/noctalia/20-barra.toml trocando os marcadores BIN,
-# BAR_NAME, BAR_END e SENSOR_MEMBERS (com/sem GPU) conforme config/terminal-soviet.conf,
+# BAR_NAME, BAR_END, ACOES_MEMBERS e GAME_* (jogo instalado) conforme config/terminal-soviet.conf,
 # e os da grade (BAR_THICKNESS, GAP, CAPSULE_THICKNESS), fixos em lib/ts-lib.sh.
 #
 # Grade única (px lógicos): barra 26 · item 22 · ícone 16 · espaço 6. Os plugins
@@ -15,7 +15,7 @@
 #
 # Grupos (esquerda -> direita):
 #   CONTEXTO      menu ☭ · workspaces · overview · apps ABERTOS não fixados
-#   MONITORAMENTO CPU % T° · RAM % · GPU % T° VRAM · NET ↓ ↑ · [inspeção]   (centro)
+#   AÇÕES         inspeção (btop) · captura · luz noturna · cafeína · perfil de energia · jogo   (centro)
 #   UTILIDADES    Spotify · apps FIXADOS · bandeja · notificações · volume · clima RJ · relógio · control center
 #
 # Aplicativos estilo Windows (plugin erllan/tarefas): abertos à esquerda, fixados à
@@ -54,13 +54,14 @@ color = "on_surface"
 icon_color = "secondary"
 
 start   = ["menu", "workspaces", "overview", "abertos"]
-center  = ["group:sensores", "inspecao"]
+center  = ["group:acoes"]
 end     = @BAR_END@
 
-# Bloco de instrumentos: moldura fina, sem preenchimento chamativo.
+# Ações: moldura fina, sem preenchimento chamativo. O que é do Omarchy (captura,
+# hyprsunset, idle) chama o Omarchy (ver 00-coexistencia-omarchy.toml).
 [[bar.@BAR_NAME@.capsule_group]]
-id = "sensores"
-members = @SENSOR_MEMBERS@
+id = "acoes"
+members = @ACOES_MEMBERS@
 fill = "surface_variant"
 border = "outline"
 radius = 0
@@ -145,114 +146,8 @@ color = "on_surface"
 [widget.weather.actions]
 left = "panel-toggle control-center weather"
 
-# ---------------------------------------------------------------- MONITORAMENTO
-# Dados nativos do Noctalia: /proc, hwmon k10temp (Tctl) e NVML da NVIDIA.
-# Valor em fósforo; ao passar do limiar de atividade tinge para vermelho, que
-# só fica pleno no limiar crítico (limiares em 30-monitoramento.toml).
-
-[widget.cpu]
-type = "sysmon"
-stat = "cpu_usage"
-visualization = "none"
-show_glyph = false
-label_min_width = 24
-color = "primary"
-highlight_color = "error"
-
-[widget.cpu_temp]
-type = "sysmon"
-stat = "cpu_temp"
-visualization = "none"
-show_glyph = true
-glyph = "temperature"
-label_min_width = 24
-color = "primary"
-highlight_color = "error"
-
-[widget.ram]
-type = "sysmon"
-stat = "ram_pct"
-visualization = "none"
-show_glyph = false
-label_min_width = 24
-color = "primary"
-highlight_color = "error"
-
-[widget.gpu]
-type = "sysmon"
-stat = "gpu_usage"
-visualization = "none"
-show_glyph = false
-label_min_width = 24
-color = "primary"
-highlight_color = "error"
-
-[widget.gpu_temp]
-type = "sysmon"
-stat = "gpu_temp"
-visualization = "none"
-show_glyph = true
-glyph = "temperature"
-label_min_width = 24
-color = "primary"
-highlight_color = "error"
-
-[widget.vram]
-type = "sysmon"
-stat = "gpu_vram"
-visualization = "none"
-show_glyph = true
-glyph = "stack-2"
-label_min_width = 24
-color = "primary"
-highlight_color = "error"
-
-[widget.net_down]
-type = "sysmon"
-stat = "net_rx"
-visualization = "none"
-show_glyph = true
-glyph = "arrow-down"
-network_speed_compact = true
-label_min_width = 34
-color = "on_surface"
-highlight_color = "tertiary"
-
-[widget.net_up]
-type = "sysmon"
-stat = "net_tx"
-visualization = "none"
-show_glyph = true
-glyph = "arrow-up"
-network_speed_compact = true
-label_min_width = 34
-color = "on_surface"
-highlight_color = "tertiary"
-
-# Rótulos dos instrumentos (oliva, não interativos).
-[widget.l_cpu]
-type = "text"
-text = "CPU"
-color = "secondary"
-interactive = false
-
-[widget.l_ram]
-type = "text"
-text = "RAM"
-color = "secondary"
-interactive = false
-
-[widget.l_gpu]
-type = "text"
-text = "GPU"
-color = "secondary"
-interactive = false
-
-[widget.l_net]
-type = "text"
-text = "NET"
-color = "secondary"
-interactive = false
+# ---------------------------------------------------------------- AÇÕES
+# Sem sensores na barra (CPU/RAM/GPU/NET): o btop da inspeção mostra tudo isso.
 
 # Mesmo mecanismo do atalho SUPER+M: ~/.local/bin/soviet-inspect (abre/fecha).
 [widget.inspecao]
@@ -262,6 +157,50 @@ tooltip = "Inspeção: btop flutuante (SUPER+M)"
 icon_color = "primary"
 [widget.inspecao.actions]
 left = "exec @BIN@/soviet-inspect"
+middle = "none"
+
+# Captura do Omarchy: esq. = captura (smart: região/janela), dir. = gravação de tela
+# (a mesma tecla para; omarchy-capture-screenrecording alterna).
+[widget.captura]
+type = "custom_button"
+glyph = "screenshot"
+tooltip = "Captura de tela  (dir.: gravar/parar gravação)"
+[widget.captura.actions]
+left = "exec omarchy-capture-screenshot"
+right = "exec omarchy-capture-screenrecording"
+middle = "none"
+
+# Luz noturna = hyprsunset do Omarchy (a do Noctalia está desligada).
+[widget.luz_noturna]
+type = "custom_button"
+glyph = "moon"
+tooltip = "Luz noturna (liga/desliga)"
+[widget.luz_noturna.actions]
+left = "exec omarchy-toggle-nightlight"
+middle = "none"
+
+# Cafeína = "stay awake" do idle do shell Omarchy (sem tela de descanso nem bloqueio).
+[widget.cafeina]
+type = "custom_button"
+glyph = "coffee"
+tooltip = "Cafeína: manter acordado (liga/desliga)"
+[widget.cafeina.actions]
+left = "exec omarchy-toggle-idle"
+middle = "none"
+
+# Perfil de energia (power-profiles-daemon via D-Bus): esq. avança, dir. volta.
+[widget.energia]
+type = "power_profile"
+
+# Jogo (GAME_DESKTOP): abre pelo .desktop; omitido se não estiver instalado.
+[widget.jogo]
+type = "custom_button"
+glyph = "device-gamepad-2"
+custom_image = "@GAME_ICON@"
+custom_image_colorize = false
+tooltip = "@GAME_NAME@"
+[widget.jogo.actions]
+left = "exec uwsm-app -- @GAME_DESKTOP@.desktop"
 middle = "none"
 
 # ---------------------------------------------------------------- UTILIDADES

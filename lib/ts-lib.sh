@@ -16,7 +16,7 @@ die()  { err "$*"; exit 1; }
 
 # ------------------------------------------------------------------ configuração
 CONF_KEYS=(HIDDEN_WORKSPACE COLLAPSE_CLASSES BAR_NAME WEATHER_ADDRESS KEY_INSPECT KEY_OPS
-           KEY_ARTE FAVORITES GPU_SENSORS)
+           KEY_ARTE FAVORITES GAME_DESKTOP)
 
 # Lê VAR="valor" sem executar o arquivo (só chaves conhecidas).
 load_conf() {
@@ -40,7 +40,7 @@ validate_conf() {
   [[ $HIDDEN_WORKSPACE =~ ^[1-9][0-9]?$ ]] || die "HIDDEN_WORKSPACE deve ser um número (1-99)"
   [[ $BAR_NAME =~ ^[a-z][a-z0-9_-]*$ ]] || die "BAR_NAME inválido: $BAR_NAME"
   [[ $WEATHER_ADDRESS != *\\* ]] || die "WEATHER_ADDRESS não pode conter \\"
-  [[ $GPU_SENSORS =~ ^(auto|yes|no)$ ]] || die "GPU_SENSORS deve ser auto, yes ou no"
+  [[ $GAME_DESKTOP =~ ^[A-Za-z0-9._-]*$ ]] || die "GAME_DESKTOP inválido: $GAME_DESKTOP (desktop-id sem .desktop)"
   local k
   for k in KEY_INSPECT KEY_OPS KEY_ARTE; do
     [[ ${!k} =~ ^(SUPER|SHIFT|CTRL|ALT)( \+ (SUPER|SHIFT|CTRL|ALT))*( \+ [A-Z0-9]+)$ ]] \
@@ -53,7 +53,7 @@ validate_conf() {
 }
 
 # ------------------------------------------------------------------ marcadores
-# Valores derivados que dependem da máquina (GPU) e a grade da barra.
+# Valores derivados que dependem da máquina (jogo instalado) e a grade da barra.
 compute_tokens() {
   T_HOME=$HOME
   T_BIN="$HOME/.local/bin"
@@ -70,13 +70,18 @@ compute_tokens() {
   # Seção da direita: player, fixados (erllan/tarefas:fixados) e utilidades.
   T_BAR_END='["spotify", "fixados", "tray", "notificacoes", "volume", "weather", "clock", "control-center"]'
 
-  local gpu=0
-  case $GPU_SENSORS in yes) gpu=1 ;; auto) command -v nvidia-smi >/dev/null && gpu=1 ;; esac
-  if (( gpu )); then
-    T_SENSOR_MEMBERS='["l_cpu", "cpu", "cpu_temp", "l_ram", "ram", "l_gpu", "gpu", "gpu_temp", "vram", "l_net", "net_down", "net_up"]'
-  else
-    T_SENSOR_MEMBERS='["l_cpu", "cpu", "cpu_temp", "l_ram", "ram", "l_net", "net_down", "net_up"]'
+  # Centro: ações (grupo "acoes"); o botão do jogo só entra se o .desktop existir.
+  T_ACOES_MEMBERS='["inspecao", "captura", "luz_noturna", "cafeina", "energia"'
+  T_GAME_NAME="" T_GAME_ICON=""
+  local desk
+  desk=$(desktop_file "$GAME_DESKTOP")
+  if [[ -n $desk ]]; then
+    T_GAME_NAME=$(sed -n 's/^Name=//p' "$desk" | head -1)
+    T_GAME_ICON=$(icon_path "$(sed -n 's/^Icon=//p' "$desk" | head -1)")
+    T_ACOES_MEMBERS+=', "jogo"'
   fi
+  T_ACOES_MEMBERS+="]"
+  T_GAME_NAME=${T_GAME_NAME:-$GAME_DESKTOP} T_GAME_NAME=${T_GAME_NAME//\"/}
 
   local pins="" f id classes c list l
   for f in $FAVORITES; do
@@ -88,13 +93,39 @@ compute_tokens() {
   T_PINNED_LUA=${pins%$'\n'}
 }
 
+# Caminho do <id>.desktop nos diretórios XDG de aplicativos (usuário primeiro), ou nada.
+desktop_file() {
+  [[ -n $1 ]] || return 0
+  local d
+  for d in "${XDG_DATA_HOME:-$HOME/.local/share}" ${XDG_DATA_DIRS//:/ } /usr/local/share /usr/share; do
+    [[ -f $d/applications/$1.desktop ]] && { echo "$d/applications/$1.desktop"; return; }
+  done
+}
+
+# Arquivo de ícone para um Icon= de .desktop (caminho absoluto ou nome no tema
+# hicolor/pixmaps); vazio se não achar (a barra usa o glifo).
+icon_path() {
+  local icon=$1 base s f
+  [[ -z $icon ]] && return 0
+  [[ $icon == /* ]] && { [[ -f $icon ]] && echo "$icon"; return 0; }
+  for base in "${XDG_DATA_HOME:-$HOME/.local/share}/icons/hicolor" /usr/share/icons/hicolor; do
+    for s in scalable 48x48 64x64 32x32 128x128 256x256; do
+      for f in "$base/$s/apps/$icon.svg" "$base/$s/apps/$icon.png"; do
+        [[ -f $f ]] && { echo "$f"; return 0; }
+      done
+    done
+  done
+  for f in /usr/share/pixmaps/"$icon".{svg,png}; do [[ -f $f ]] && { echo "$f"; return 0; }; done
+}
+
 # render <origem> <destino>: *.in -> troca @TOKEN@; outros -> cópia exata.
 render() {
   local src=$1 dst=$2
   mkdir -p "$(dirname "$dst")"
   if [[ $src == *.in ]]; then
     TS_HOME="$T_HOME" TS_BIN="$T_BIN" TS_BAR_NAME="$BAR_NAME" TS_BAR_END="$T_BAR_END" \
-    TS_SENSOR_MEMBERS="$T_SENSOR_MEMBERS" TS_WEATHER_ADDRESS="$WEATHER_ADDRESS" \
+    TS_ACOES_MEMBERS="$T_ACOES_MEMBERS" TS_WEATHER_ADDRESS="$WEATHER_ADDRESS" \
+    TS_GAME_DESKTOP="$GAME_DESKTOP" TS_GAME_NAME="$T_GAME_NAME" TS_GAME_ICON="$T_GAME_ICON" \
     TS_KEY_INSPECT="$KEY_INSPECT" TS_KEY_OPS="$KEY_OPS" TS_KEY_ARTE="$KEY_ARTE" \
     TS_HIDDEN_WORKSPACE="$HIDDEN_WORKSPACE" TS_PINNED_LUA="$T_PINNED_LUA" \
     TS_BAR_THICKNESS="$T_BAR_THICKNESS" TS_ITEM="$T_ITEM" TS_ICON="$T_ICON" TS_GAP="$T_GAP" \
