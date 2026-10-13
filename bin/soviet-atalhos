@@ -1,0 +1,141 @@
+#!/bin/bash
+# Terminal Soviético — atalhos de teclado de cada app/comando, para os tooltips
+# da barra ("Firefox — SUPER + SHIFT + B").
+#
+# Com a configuração do Hyprland em Lua, `hyprctl binds -j` só mostra tecla e
+# descrição (dispatcher "__lua"), não o comando. Então:
+#   1. a própria configuração (~/.config/hypr/hyprland.lua, com os padrões do
+#      Omarchy) é avaliada num Lua isolado em que `hl` só REGISTRA bind/unbind e
+#      `os.execute`/`io.popen` não fazem nada: sai tecla + descrição + comando;
+#   2. fica só o que o `hyprctl binds -j` confirma ativo (tecla e descrição);
+#   3. o comando vira app pelos .desktop instalados: URL do webapp no Exec,
+#      navegador/terminal padrão para omarchy-launch-browser/-terminal, e o resto
+#      pelos tokens do comando (desktop-id, executável, StartupWMClass).
+# Nada de tabela fixa de apps no código.
+#
+# Saída (JSON): { "apps":  { "<desktop-id ou classe, minúsculas>": "TECLAS" },
+#                 "cmds":  { "<executável>": "TECLAS" },
+#                 "nomes": { "<desktop-id ou classe, minúsculas>": "Nome legível" } }
+# Vários atalhos para o mesmo alvo saem juntos: "SUPER + RETURN · SUPER + ALT + RETURN".
+# Uso: soviet-atalhos
+set -uo pipefail
+HYPR_MAIN="${XDG_CONFIG_HOME:-$HOME/.config}/hypr/hyprland.lua"
+OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
+VAZIO='{"apps":{},"cmds":{},"nomes":{}}'
+[[ -r $HYPR_MAIN ]] || { echo "$VAZIO"; exit 0; }
+command -v lua >/dev/null && command -v hyprctl >/dev/null || { echo "$VAZIO"; exit 0; }
+
+tsv=$(HYPR_MAIN=$HYPR_MAIN OMARCHY_PATH=$OMARCHY_PATH lua - 2>/dev/null <<'LUA'
+-- `hl` falso: qualquer campo é uma função/tabela inerte; bind/unbind registram.
+local binds, order = {}, {}
+local function inert()
+  local t = {}
+  return setmetatable(t, {
+    __index = function(_, _) return inert() end,
+    __call = function() return inert() end,
+  })
+end
+local dsp = setmetatable({}, { __index = function(_, k)
+  if k == "exec_cmd" then return function(cmd) return { __cmd = cmd } end end
+  return setmetatable({}, { __index = function() return function() return { __dsp = k } end end,
+                            __call = function() return { __dsp = k } end })
+end })
+local function norm(keys) return (keys:gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "")) end
+hl = setmetatable({
+  dsp = dsp,
+  bind = function(keys, d, opts)
+    keys = norm(keys)
+    if not binds[keys] then table.insert(order, keys) end
+    local cmd = type(d) == "table" and (d.__cmd or (d.__dsp and ("hl.dsp." .. d.__dsp))) or tostring(d)
+    binds[keys] = { desc = (type(opts) == "table" and opts.description) or "", cmd = cmd or "" }
+  end,
+  unbind = function(keys) binds[norm(keys)] = nil end,
+}, { __index = function(_, _) return function() return inert() end end })
+os.execute = function() return true end
+io.popen = function() return { read = function() return "" end, close = function() return true end, lines = function() return function() end end } end
+pcall(dofile, os.getenv("HYPR_MAIN"))
+for _, k in ipairs(order) do
+  local b = binds[k]
+  if b then io.write(k, "\t", b.desc:gsub("[\t\n]", " "), "\t", (b.cmd or ""):gsub("[\t\n]", " "), "\n") end
+end
+LUA
+)
+
+BINDS=$(hyprctl binds -j 2>/dev/null || echo '[]') \
+BROWSER=$(xdg-settings get default-web-browser 2>/dev/null) \
+TERMINAL=$(xdg-terminal-exec --print-id 2>/dev/null) \
+DIRS="${XDG_DATA_HOME:-$HOME/.local/share}/applications:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}" \
+exec perl -CSDA -MJSON::PP - "$tsv" <<'PERL'
+use strict; use warnings;
+my ($tsv) = @ARGV;
+my %MASK = (SHIFT => 1, CAPS => 2, CTRL => 4, CONTROL => 4, ALT => 8, MOD2 => 16, MOD3 => 32, SUPER => 64, MOD4 => 64, WIN => 64, MOD5 => 128);
+
+# Ativos de verdade: (modmask, tecla, descrição) do hyprctl.
+my %ativo;
+for my $b (@{ JSON::PP->new->decode($ENV{BINDS}) }) {
+  $ativo{ join "\x1f", $b->{modmask}, uc($b->{key} // ''), $b->{description} // '' } = 1;
+}
+
+# .desktop: id, Exec, StartupWMClass (o primeiro diretório vence).
+my (@apps, %visto);
+for my $dir (map { s{/applications$}{}r . '/applications' } split /:/, $ENV{DIRS}) {
+  opendir(my $dh, $dir) or next;
+  for my $f (grep { /\.desktop$/ } readdir $dh) {
+    (my $id = $f) =~ s/\.desktop$//;
+    next if $visto{$id}++;
+    open(my $fh, '<:encoding(UTF-8)', "$dir/$f") or next;
+    my %k; my $sec = '';
+    while (<$fh>) { chomp; if (/^\[(.+)\]$/) { $sec = $1; next } next unless $sec eq 'Desktop Entry'; $k{$1} //= $2 if /^([A-Za-z]+)=(.*)$/ }
+    my ($bin) = ($k{Exec} // '') =~ /^\s*"?([^"\s]+)/; $bin //= ''; $bin =~ s{.*/}{};
+    push @apps, { id => $id, exec => $k{Exec} // '', bin => lc $bin, classe => lc($k{StartupWMClass} // ''),
+                  nome => $k{Name} // $id, oculto => (($k{NoDisplay} // '') =~ /^true$/i ? 1 : 0) };
+  }
+}
+(my $browser = $ENV{BROWSER} // '') =~ s/\.desktop$//;
+(my $terminal = $ENV{TERMINAL} // '') =~ s/\.desktop$//;
+
+sub alvo {
+  my ($cmd) = @_;
+  return undef if $cmd =~ /^\S+\s+msg\b/;      # IPC (noctalia msg …) não abre app
+  if ($cmd =~ m{(https?://[^\s"']+)}) {          # webapp: o .desktop com a mesma URL
+    (my $url = $1) =~ s{/+$}{};
+    for my $a (@apps) { return $a->{id} if index($a->{exec}, $url) >= 0 }
+    return undef;
+  }
+  return $browser  if $cmd =~ /^omarchy-launch-browser\b/ && $browser ne '' && $cmd !~ /--private/;
+  return $terminal if $cmd =~ /^(omarchy-launch-terminal|xdg-terminal-exec)\s*$/ && $terminal ne '';
+  my @tok = map { lc } grep { $_ ne '' } map { s/^["'^]+|["'\$]+$//gr =~ s{.*/}{}r =~ s/\.desktop$//r }
+            split /\s+/, $cmd =~ s/^omarchy-launch-(?!or-focus|webapp|tui|floating)//r;
+  for my $t (@tok) {
+    next if $t =~ /^(uwsm-app|--|setsid|exec|env)$/ || $t =~ /^-/;
+    for my $a (@apps) { return $a->{id} if lc $a->{id} eq $t || $a->{bin} eq $t || ($a->{classe} ne '' && $a->{classe} eq $t) }
+  }
+  return undef;
+}
+
+my (%apps, %cmds);
+sub junta { my ($h, $k, $v) = @_; return if !defined $k || $k eq ''; $h->{$k} = $h->{$k} ? ($h->{$k} =~ /\Q$v\E/ ? $h->{$k} : "$h->{$k} · $v") : $v }
+for my $l (split /\n/, $tsv) {
+  my ($keys, $desc, $cmd) = split /\t/, $l, 3;
+  next unless defined $cmd;
+  my ($m, $key) = (0, '');
+  for my $p (map { uc } split /\s*\+\s*/, $keys) { if (exists $MASK{$p}) { $m |= $MASK{$p} } else { $key = $p } }
+  next unless $ativo{ join "\x1f", $m, $key, $desc };
+  my $a = alvo($cmd);
+  if (defined $a) {
+    junta(\%apps, lc $a, $keys);
+    for my $x (@apps) { junta(\%apps, $x->{classe}, $keys) if $x->{id} eq $a && $x->{classe} ne '' }
+  }
+  my ($bin) = $cmd =~ /^\s*"?([^"\s]+)/;
+  $bin = ($bin // '') =~ s{.*/}{}r;
+  junta(\%cmds, $bin, $keys) unless $bin =~ /^hl\.dsp|:$|^(uwsm-app|setsid|env|exec|pkill|function)$/;
+}
+# Nomes legíveis (Name=) por desktop-id e classe, para o tooltip sem atalho.
+my %nomes;
+for my $a (@apps) {
+  next if $a->{oculto};
+  $nomes{lc $a->{id}} //= $a->{nome};
+  $nomes{$a->{classe}} //= $a->{nome} if $a->{classe} ne '';
+}
+print JSON::PP->new->canonical->encode({ apps => \%apps, cmds => \%cmds, nomes => \%nomes }), "\n";
+PERL

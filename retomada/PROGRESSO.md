@@ -1,7 +1,7 @@
 # Progresso — barra v2
 
 ## Onde parei
-Item 4 implementado: bin/soviet-grupos + plugin erllan/grupos (painel com arrasto, menu de contexto API 28, criar/renomear/apagar, classificar novos) + ícone "grupos" no centro. grupos.json NÃO foi gravado (aguarda aprovação da tabela retomada/grupos-proposta.txt). Não testado ao vivo (exige install).
+Item 5, parte 1: bin/soviet-atalhos pronto (avalia hyprland.lua num Lua isolado com hl falso + cruza com hyprctl binds -j + resolve comando → app pelos .desktop). Achado: hyprctl binds -j só mostra dispatcher "__lua" (sem comando) na config Lua. Parte 2: service do tarefas consome e widgets mostram no hover; tooltips dos nativos via install.sh.
 
 ## Próximo passo exato
 Item 5 (atalho no hover): bin/soviet-atalhos → JSON {chave → "SUPER + SHIFT + B"}
@@ -67,6 +67,7 @@ Instalado no sistema: tudo acima (a partir do checkout principal, branch redesen
   "pressionar + mover" na barra.
 
 ## Decisões
+- Atalhos: `hyprctl binds -j` não traz o comando (dispatcher "__lua"); a config é avaliada num Lua isolado (hl falso só registra bind/unbind; os.execute/io.popen inertes) e cruzada com o hyprctl (só binds ativos).
 - KEY_PIN = SUPER + ALT + P (SUPER + ALT + F já é "Full width" do Omarchy; P livre em hyprctl binds).
 - Base da branch: redesenho-barra (não main), porque o pedido continua aquele trabalho.
 - Google Maps: removido no arquivo pessoal ~/.config/hypr/bindings.lua (não é do projeto).
