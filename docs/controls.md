@@ -25,6 +25,21 @@ pertencem ao projeto, na sessão atual.
 | Qualquer outro | **visível**: menu, workspaces, overview, apps abertos · ações · Spotify, apps fixados, bandeja, notificações, volume, clima, relógio, control center |
 | Troca de foco no mesmo workspace | nada muda |
 
+### Posição da barra
+
+**Clique direito numa área vazia da barra** → painel com uma mini-tela: arraste
+a barrinha até uma das 4 bordas (ou use os botões ←↑→↓). A barra é recriada na
+borda escolhida, e a escolha persiste (`~/.local/state/terminal-soviet/barra-posicao`
+→ `~/.config/noctalia/90-posicao-barra.toml`). Linha de comando:
+`soviet-bar-pos top|bottom|left|right|--status`.
+
+Se a GUI do Noctalia tiver gravado `position` em
+`~/.local/state/noctalia/settings.toml`, ela vence: o `soviet-bar-pos` avisa
+qual linha remover e não aplica. O `./install.sh check` também avisa.
+
+Na vertical, os plugins viram coluna: apps empilhados, o player só com capa e
+⏯ (o título vai para o tooltip), o áudio só com o glifo.
+
 ### Música (a barra é o player)
 
 * Mostra sempre a última música (capa, artista – título), mesmo com o Spotify

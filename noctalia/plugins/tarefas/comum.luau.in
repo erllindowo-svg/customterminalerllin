@@ -1,7 +1,7 @@
 --!nonstrict
 -- Terminal Soviético — tarefas: render comum aos widgets `abertos` e `fixados`.
 -- MODELO: install.sh gera comum.luau (marcadores ITEM e ICON da grade da barra,
--- definidos em lib/ts-lib.sh). Carregado com require("./comum.luau").
+-- definidos em lib/ts-lib.sh, e BAR_NAME). Carregado com require("./comum.luau").
 --
 -- Um bloco por aplicativo, com o ícone real (appIconPath pelo desktop id ou pela
 -- classe):
@@ -22,6 +22,17 @@ local MARK_H = 2
 local PAD = math.floor((ITEM - ICON) / 2) - MARK_H
 
 local M = {}
+
+-- Barra vertical? barWidget.isVertical() do 5.0.1 compara altura × largura do
+-- CONTEÚDO do widget (um item de 22 px numa barra de 26 conta como horizontal, e
+-- uma linha larga se perpetua). A posição efetiva da barra (inclui o
+-- 90-posicao-barra.toml do soviet-bar-pos) é a fonte confiável.
+local function barraVertical(bar)
+  local pos = noctalia.getSetting("bar.@BAR_NAME@.position")
+  if pos == "left" or pos == "right" then return true end
+  if pos == "top" or pos == "bottom" then return false end
+  return bar.isVertical()
+end
 
 -- group: "abertos" | "fixados" (chave em state "modelo"); bar: o barWidget da entrada.
 function M.widget(group, bar)
@@ -85,7 +96,7 @@ function M.widget(group, bar)
         ui.box({ width = (#a.windows > 1) and 12 or 8, height = MARK_H, fill = mark }),
       }))
     end
-    local container = bar.isVertical() and ui.column or ui.row
+    local container = barraVertical(bar) and ui.column or ui.row
     -- Sem gap: cada item tem ITEM de largura, então os ícones já ficam ITEM - ICON (= GAP) apartados.
     bar.render(container({ gap = 0, align = "center" }, items))
   end
@@ -102,6 +113,12 @@ function M.widget(group, bar)
   setModel(noctalia.state.get("modelo"))
 
   local self = {}
+
+  -- Rede de segurança: re-render periódico (ex.: posição da barra mudou).
+  function self.update()
+    noctalia.setUpdateInterval(60000)
+    render()
+  end
 
   -- Clique direito: abre o mini-menu para o ícone sob o ponteiro (ou para `key`,
   -- vindo do IPC: noctalia msg plugin erllan/tarefas:<widget> focused menu <key>).

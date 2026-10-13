@@ -82,7 +82,7 @@ live_session() { (( ! NO_ACTIVATE )) && [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]
 
 # ------------------------------------------------------------------ manifesto
 # kind \t destino(relativo a $HOME) \t sha256 \t backup(relativo a $STATE ou -)
-declare -A M_SHA M_BAK M_KIND
+declare -A M_SHA=() M_BAK=() M_KIND=()   # =(): sob set -u, vazio ≠ não definido
 read_manifest() {
   [[ -r $MANIFEST ]] || return 0
   local kind rel s b
@@ -148,6 +148,11 @@ check_legacy() {
     die "nada foi alterado"
   fi
   ok "nenhuma configuração do projeto fora do módulo gerenciado"
+  # Posição da barra fixada pela GUI do Noctalia (vence soviet-bar-pos).
+  local conflito
+  conflito=$(BAR_NAME=$BAR_NAME "$ROOT/bin/soviet-bar-pos" --status 2>/dev/null | sed -n 's/^CONFLITO: //p')
+  [[ -n $conflito ]] && warn "posição da barra: $conflito — o painel de posição não terá efeito até remover essa linha"
+  return 0
 }
 
 # Atalhos novos não podem tomar teclas de outros recursos.
@@ -500,10 +505,12 @@ cmd_uninstall() {
       *:REMOVER) rm -f "$HOME/$r" ;;
     esac
   done
+  # Estado gerado em tempo de execução por soviet-bar-pos (fora do manifesto).
+  rm -f "$HOME/.config/noctalia/90-posicao-barra.toml"
   # Diretórios do projeto que ficaram vazios.
   local d
   for d in .local/share/terminal-soviet/arte .local/share/terminal-soviet .config/terminal-soviet \
-           .local/share/noctalia/plugins/tarefas .local/share/noctalia/plugins/audio \
+           .local/share/noctalia/plugins/tarefas .local/share/noctalia/plugins/audio .local/share/noctalia/plugins/barra \
            .local/share/noctalia/plugins/spotify-media .config/omarchy/plugins/erllan.sem-barra \
            .config/noctalia/palettes .config/noctalia; do
     [[ -d $HOME/$d ]] && find "$HOME/$d" -depth -type d -empty -delete 2>/dev/null || true

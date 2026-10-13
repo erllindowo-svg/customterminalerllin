@@ -1,12 +1,23 @@
 --!nonstrict
 -- Terminal Soviético — áudio na barra: glifo da saída ativa (fone × alto-falante)
--- e o volume. MODELO: install.sh gera bar.luau (marcador ICON da grade da barra).
+-- e o volume. MODELO: install.sh gera bar.luau (marcadores ICON e BAR_NAME).
 --   esquerdo = popup (volume, mudo, saídas)   direito = alterna fone ↔ alto-falante
 --   meio     = mudo                           rolagem = ±5 %
 -- Mudo: glifo riscado em vermelho. Dados: service `fonte` (state "audio").
 
 local ICON = @ICON@
 local estado = noctalia.state.get("audio") or {}
+
+-- Barra vertical? barWidget.isVertical() do 5.0.1 compara altura × largura do
+-- CONTEÚDO do widget (um item de 22 px numa barra de 26 conta como horizontal, e
+-- uma linha larga se perpetua). A posição efetiva da barra (inclui o
+-- 90-posicao-barra.toml do soviet-bar-pos) é a fonte confiável.
+local function barraVertical()
+  local pos = noctalia.getSetting("bar.@BAR_NAME@.position")
+  if pos == "left" or pos == "right" then return true end
+  if pos == "top" or pos == "bottom" then return false end
+  return barWidget and barWidget.isVertical() or false
+end
 
 local function pedir(op, arg)
   noctalia.state.set("pedido", { op = op, arg = arg, n = noctalia.nowMs() })
@@ -17,9 +28,10 @@ local function render()
   local glifo = fone and "headphones" or "device-speaker"
   if estado.mudo then glifo = glifo .. "-off" end
   local cor = estado.mudo and "error" or "on_surface"
-  local container = barWidget.isVertical() and ui.column or ui.row
+  local vertical = barraVertical()
+  local container = vertical and ui.column or ui.row
   local filhos = { ui.glyph({ name = glifo, size = ICON, color = cor }) }
-  if not barWidget.isVertical() then
+  if not vertical then
     table.insert(filhos, ui.label({ text = tostring(estado.vol or 0) .. "%", color = cor }))
   end
   barWidget.render(container({ gap = 4, align = "center" }, filhos))
@@ -28,6 +40,12 @@ end
 noctalia.state.watch("audio", function(v)
   if type(v) == "table" then estado = v; render() end
 end)
+
+-- Rede de segurança: re-render periódico (a orientação vem de barraVertical()).
+function update()
+  noctalia.setUpdateInterval(60000)
+  render()
+end
 
 function onClick()
   noctalia.togglePanel("erllan/audio:painel")

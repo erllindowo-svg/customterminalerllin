@@ -5,6 +5,10 @@
 local tarefas = require("./comum.luau")
 local widget = tarefas.widget("fixados", barWidget)
 
+function update()
+  widget.update()
+end
+
 function onRightClick()
   widget.menu()
 end

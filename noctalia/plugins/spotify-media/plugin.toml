@@ -3,7 +3,7 @@
 id = "erllan/spotify-media"
 name = "Spotify Media"
 version = "0.2.0"   # 0.1.1 upstream + fork local (ver cabeçalho do bar.luau.in)
-plugin_api = 24
+plugin_api = 26   # noctalia.getSetting (posição da barra)
 author = "azokyen"
 license = "MIT"
 

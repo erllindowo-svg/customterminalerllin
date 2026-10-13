@@ -7,7 +7,8 @@
 # Grade única (px lógicos): barra 26 · item 22 · ícone 16 · espaço 6. Os plugins
 # (tarefas, spotify-media) usam os mesmos marcadores; glifos nativos já são 16.
 #
-# Uma única barra ("estacao") no topo. Visibilidade controlada por workspace:
+# Uma única barra ("estacao"), no topo por padrão (borda escolhida pelo clique direito
+# na zona vazia). Visibilidade controlada por workspace:
 #   workspace 1  -> oculta  (a central de operações ocupa a tela)
 #   outros       -> visível
 # quem faz isso é ~/.local/bin/soviet-bar-sync (serviço soviet-bar-sync.service),
@@ -53,6 +54,8 @@ font_weight = 500
 color = "on_surface"
 icon_color = "secondary"
 
+# Na vertical, bin/soviet-bar-pos sobrepõe start/center (ações no fim da start):
+# mantenha as listas em sincronia.
 start   = ["menu", "workspaces", "overview", "abertos"]
 center  = ["group:acoes"]
 end     = @BAR_END@
@@ -68,8 +71,11 @@ radius = 0
 padding = @GAP@
 widget_spacing = @GAP@
 
+# Clique direito na zona vazia: posição da barra (mini-tela com arrasto; plugin
+# erllan/barra). A borda escolhida vai para 90-posicao-barra.toml (soviet-bar-pos),
+# que vence o `position` acima. O control center continua no ícone dele.
 [bar.@BAR_NAME@.dead_zone.actions]
-right = "panel-toggle control-center"
+right = "panel-toggle erllan/barra:posicao"
 
 # ---------------------------------------------------------------- CONTEXTO
 

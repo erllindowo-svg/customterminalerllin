@@ -169,3 +169,28 @@ Ver `THIRD_PARTY.md`.
 * **Limite**: a busca depende da política de apps de desenvolvedor do Spotify.
   O Spotify define a classe da janela tarde, e por isso o `tocar.sh` também move
   a janela.
+
+## D13. Posição da barra: painel com arrasto + config-reload
+
+* **Contexto**: o pedido era arrastar a barra até uma borda, como no Windows.
+  No Noctalia 5.0.1 (API de plugins 3–30), widgets de barra não recebem arrasto
+  nem movimento do ponteiro, `ui.dragSource`/`ui.dropZone` só existem dentro de
+  painéis, e não há IPC para mudar `position`. Um `config-reload` com outro
+  `position` recria a superfície da barra na nova borda
+  (`barConfigSurfaceFieldsEqual` compara `position`, em `src/shell/bar/bar.cpp`).
+* **Escolha**: clique direito na zona vazia → painel `erllan/barra:posicao` com
+  uma mini-tela em que a barrinha é arrastada até a borda (arrasto real, dentro
+  do painel) ou escolhida por botões. `soviet-bar-pos` grava a escolha, gera
+  `~/.config/noctalia/90-posicao-barra.toml` (estado local, fora do manifesto,
+  removido no uninstall), recarrega e reaplica o `soviet-bar-sync`.
+* **settings.toml da GUI**: vence os arquivos. O `soviet-bar-pos` detecta
+  `position` em `[bar.<BAR_NAME>]` e, em vez de falhar calado, avisa e não
+  aplica; o `install.sh check` avisa também.
+* **Vertical**: `barWidget.isVertical()` do 5.0.1 compara altura × largura do
+  *conteúdo* do widget (`PluginWidget::doLayout`). Um item de 22 px numa barra
+  de 26 conta como horizontal, e uma linha larga se perpetua. Os plugins leem a
+  posição efetiva com `noctalia.getSetting("bar.<BAR_NAME>.position")` (API 26).
+  Na vertical (810 px lógicos de altura), o `soviet-bar-pos` também move as
+  ações para a seção de cima e esvazia o centro, para a seção de baixo
+  (player, fixados, utilidades) caber.
+* **Fora**: arrastar a própria barra; posição diferente por monitor.

@@ -1,0 +1,73 @@
+#!/bin/bash
+# Terminal Soviético — borda da tela onde fica a barra do Noctalia.
+#
+# O Noctalia 5.0.1 não tem IPC para mudar `position` em tempo de execução, mas um
+# `config-reload` com outro `position` recria a barra na nova borda. Este script
+# grava a escolha e gera ~/.config/noctalia/90-posicao-barra.toml, mesclado
+# depois dos arquivos do projeto. Esse arquivo é estado local: fica fora do
+# manifesto do install.sh e é removido no uninstall.
+#
+# A GUI do Noctalia grava em ~/.local/state/noctalia/settings.toml, que VENCE os
+# arquivos. Se lá houver `position` para a barra, a troca não teria efeito: o
+# script avisa (notificação + stderr), mostra a linha a remover e não aplica.
+#
+# Uso:
+#   soviet-bar-pos top|bottom|left|right   grava e aplica (painel erllan/barra:posicao)
+#   soviet-bar-pos --status                posição gravada e conflito com a GUI
+set -uo pipefail
+
+TS_CONF="${TS_CONF:-${XDG_CONFIG_HOME:-$HOME/.config}/terminal-soviet/terminal-soviet.conf}"
+# shellcheck source=/dev/null
+[[ -r $TS_CONF ]] && source "$TS_CONF"
+BAR="${BAR_NAME:-estacao}"
+STATE="${XDG_STATE_HOME:-$HOME/.local/state}/terminal-soviet/barra-posicao"
+OUT="${XDG_CONFIG_HOME:-$HOME/.config}/noctalia/90-posicao-barra.toml"
+GUI="${XDG_STATE_HOME:-$HOME/.local/state}/noctalia/settings.toml"
+
+# Linha "N: position = ..." da seção [bar.<BAR>] no settings.toml da GUI, se houver.
+gui_conflict() {
+  [[ -r $GUI ]] || return 1
+  awk -v sec="bar.$BAR" '
+    /^[[:space:]]*\[/ { s = $0; gsub(/^[[:space:]]*\[+|\]+[[:space:]]*$/, "", s); gsub(/"/, "", s); cur = s; next }
+    cur == sec && /^[[:space:]]*position[[:space:]]*=/ { print NR ": " $0; found = 1 }
+    END { exit !found }' "$GUI"
+}
+
+notify() {
+  command -v notify-send >/dev/null && notify-send -a "Terminal Soviético" "Barra" "$1"
+  printf '%s\n' "$1" >&2
+}
+
+case ${1:-} in
+  top|bottom|left|right) pos=$1 ;;
+  --status)
+    echo "gravada: $(cat "$STATE" 2>/dev/null || echo 'top (padrão)')"
+    if line=$(gui_conflict); then echo "CONFLITO: $GUI define a posição ($line)"; fi
+    exit 0 ;;
+  *) echo "uso: soviet-bar-pos top|bottom|left|right|--status" >&2; exit 2 ;;
+esac
+
+if line=$(gui_conflict); then
+  notify "A posição da barra está fixada pela GUI do Noctalia em $GUI (linha $line). Remova essa linha para escolher a borda por aqui."
+  exit 3
+fi
+
+mkdir -p "${STATE%/*}" "${OUT%/*}"
+printf '%s\n' "$pos" > "$STATE"
+if [[ $pos == top ]]; then
+  rm -f "$OUT"   # topo = padrão de 20-barra.toml
+else
+  {
+    printf '# GERADO por soviet-bar-pos (estado local, fora do manifesto do install.sh).\n[bar.%s]\nposition = "%s"\n' "$BAR" "$pos"
+    # Vertical (810 px lógicos de altura aqui): sem centro, o Noctalia dá a seção
+    # `end` (player, fixados, utilidades) por inteiro e corta só o fim da `start`.
+    # As ações vão para o fim da `start`. Mantenha em sincronia com 20-barra.toml.in.
+    if [[ $pos == left || $pos == right ]]; then
+      printf 'start = ["menu", "workspaces", "overview", "abertos", "group:acoes"]\ncenter = []\n'
+    fi
+  } > "$OUT"
+fi
+# A superfície recriada nasce visível: reaplica a regra do workspace da central.
+noctalia msg config-reload >/dev/null 2>&1 || true
+sleep 0.5
+"$(dirname "$(readlink -f "$0")")/soviet-bar-sync" --apply >/dev/null 2>&1 || true

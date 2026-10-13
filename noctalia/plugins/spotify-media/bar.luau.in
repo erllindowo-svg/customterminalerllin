@@ -1,6 +1,6 @@
 -- Terminal Soviético — fork local de azokyen/spotify-media 0.1.1 (MIT), community-plugins
 -- rev. em upstream/REVISION; original intocado em upstream/bar.luau. MODELO: install.sh
--- gera bar.luau (marcadores ITEM e ICON da grade da barra, lib/ts-lib.sh).
+-- gera bar.luau (marcadores ITEM e ICON da grade da barra, lib/ts-lib.sh, e BAR_NAME).
 --
 -- A barra É o player: nada de ícone do Spotify.
 --   * Mostra sempre a última música tocada (capa, artista – título), mesmo com o
@@ -42,6 +42,17 @@ local LAST_FILE = dataDir and (dataDir .. "/ultima.json") or nil
 local TOCAR = (noctalia.pluginDir() or ".") .. "/tocar.sh"
 
 local SEP = string.char(31)
+
+-- Barra vertical? barWidget.isVertical() do 5.0.1 compara altura × largura do
+-- CONTEÚDO do widget (um item de 22 px numa barra de 26 conta como horizontal, e
+-- uma linha larga se perpetua). A posição efetiva da barra (inclui o
+-- 90-posicao-barra.toml do soviet-bar-pos) é a fonte confiável.
+local function barraVertical()
+  local pos = noctalia.getSetting("bar.@BAR_NAME@.position")
+  if pos == "left" or pos == "right" then return true end
+  if pos == "top" or pos == "bottom" then return false end
+  return barWidget and barWidget.isVertical() or false
+end
 
 
 local function utf8Chars(value)
@@ -197,7 +208,7 @@ end
 
 local function render()
   local playing = status == "Playing"
-  local vertical = barWidget.isVertical()
+  local vertical = barraVertical()
   local container = vertical and ui.column or ui.row
   local text = displayText()
 
@@ -248,7 +259,7 @@ end
 -- Só rola (e só re-renderiza a cada tick) quando o texto não cabe.
 local function scheduleTicks()
   local long = utf8.len(displayText()) or 0
-  noctalia.setUpdateInterval((long > SCROLL_WIDTH and not barWidget.isVertical()) and SCROLL_TICK_MS or IDLE_TICK_MS)
+  noctalia.setUpdateInterval((long > SCROLL_WIDTH and not barraVertical()) and SCROLL_TICK_MS or IDLE_TICK_MS)
 end
 
 

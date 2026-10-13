@@ -5,7 +5,7 @@
 id = "erllan/audio"
 name = "Áudio"
 version = "1.0.0"
-plugin_api = 24
+plugin_api = 26   # noctalia.getSetting (posição da barra)
 author = "erllan"
 license = "MIT"
 dependencies = ["pactl", "wpctl", "jq"]
