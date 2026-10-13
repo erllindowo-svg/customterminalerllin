@@ -8,6 +8,8 @@ Configuração pessoal de desktop para o **Omarchy 4** (Hyprland em Lua):
   workspaces, com os apps abertos à esquerda e os fixados à direita (estilo
   Windows, ícones reais; fixar/desafixar pelo clique direito), ações rápidas
   (btop, captura, luz noturna, cafeína, perfil de energia, jogo), clima e relógio;
+* a **central no lugar da tela de descanso**: ocioso pelo tempo da tela de
+  descanso do Omarchy, você volta para o workspace 1 (o bloqueio continua com o Omarchy);
 * um **btop flutuante sob demanda** (`SUPER+M`);
 * a **ilustração** do arttime (arte + frase original, sem relógio), com menu,
   arttime interativo e dois modos de cor (`SUPER+ALT+A`).

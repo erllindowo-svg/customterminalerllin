@@ -194,3 +194,19 @@ Ver `THIRD_PARTY.md`.
   ações para a seção de cima e esvazia o centro, para a seção de baixo
   (player, fixados, utilidades) caber.
 * **Fora**: arrastar a própria barra; posição diferente por monitor.
+
+## D15. Central no lugar da tela de descanso do Omarchy
+
+* **Contexto**: no Omarchy 4, o idle é um serviço do shell (`plugins/services/idle`)
+  que, no tempo de `idle.screensaver`, roda `bash -lc 'omarchy-launch-screensaver'`.
+  Não há hook para isso, e o `PATH` do shell começa por `/usr/share/omarchy/bin`,
+  então um `omarchy-launch-screensaver` em `~/.local/bin` nunca seria chamado
+  (e sobrepor comandos do Omarchy seria frágil). Não há `hypridle` nem `swayidle`.
+* **Escolha**: desligar a tela de descanso pelo flag suportado do Omarchy
+  (`toggles/screensaver-off`) e usar o idle do próprio Noctalia
+  (`[idle.behavior.central]`, `ext_idle_notifier_v1`, respeita inibidores) para
+  rodar `soviet-ops` no mesmo tempo, sem esmaecer antes. O bloqueio segue com o
+  Omarchy. O instalador só religa a tela de descanso no uninstall se foi ele
+  que a desligou (`install/screensaver-off.nosso`).
+* **Limite**: o tempo é lido do `shell.json` na instalação; mudou lá, rode
+  `./install.sh` de novo.

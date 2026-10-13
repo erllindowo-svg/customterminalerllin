@@ -33,7 +33,7 @@ customterminalerllin/
 │   │   ├── 10-tema-sovietico.toml         tema, fonte, cantos
 │   │   ├── 20-barra.toml.in               barra e widgets (lançadores e GPU conforme a máquina)
 │   │   ├── 30-monitoramento-clima.toml.in limiares do sysmon, endereço do clima
-│   │   ├── 40-integracao-hyprland.toml    hook started → soviet-bar-sync --apply
+│   │   ├── 40-integracao-hyprland.toml.in hook started → soviet-bar-sync --apply; idle → central
 │   │   ├── palettes/SovietTerminal.json   paleta
 │   │   └── README.md
 │   └── plugins/                    → ~/.local/share/noctalia/plugins
@@ -97,6 +97,7 @@ customterminalerllin/
 | `~/.local/state/terminal-soviet/arte.conf`, `arte-selecao` | — | L | modo de cores, política, conjunto da sessão |
 | `~/.local/state/noctalia/plugins/data/erllan/tarefas/fixados.json` | semente: `FAVORITES` | L | apps fixados (clique direito → fixar/desafixar) |
 | `~/.local/state/noctalia/plugins/data/erllan/spotify-media/ultima.json`, `capa-*.jpg` | — | L | última música mostrada na barra |
+| `~/.local/state/omarchy/toggles/screensaver-off` | `install.sh` | flag | tela de descanso do Omarchy desligada (religada no uninstall se foi o instalador que desligou) |
 | `~/.local/state/terminal-soviet/barra-posicao`, `~/.config/noctalia/90-posicao-barra.toml` | `soviet-bar-pos` | L | borda da barra escolhida (não versionado; removido no uninstall) |
 | `~/.config/terminal-soviet/spotify.env` | — | L | opcional, chmod 600: credenciais da Web API (só busca); nunca versionado |
 | `~/.cache/terminal-soviet/arte-indice.tsv` | — | L | índice da coleção |

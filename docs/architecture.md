@@ -19,7 +19,8 @@ shell do Omarchy: usa só os pontos de extensão do usuário (`~/.config`,
    soviet-bar-sync ────┤    │    ├ plugin erllan/tarefas ── service: socat (socket2) → hyprctl│jq (sob evento)  │
                        │    │    ├ plugin erllan/audio ── service: pactl subscribe → pactl│jq (sob evento)       │
                        │    │    ├ plugin erllan/spotify-media                                                    │
-                       │    │    └ hook started → soviet-bar-sync --apply                                        │
+                       │    │    ├ hook started → soviet-bar-sync --apply                                        │
+                       │    │    └ idle (tempo da tela de descanso) → soviet-ops: volta à central                 │
                        │    └ soviet-bar-sync ── socat (socket2) → noctalia msg bar-hide|bar-show estacao        │
                        │                                                                                         │
  shell do Omarchy      │  quickshell (omarchy-launch-shell): notificações, lock, OSD, polkit, papel de parede,    │

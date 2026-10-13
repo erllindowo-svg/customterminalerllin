@@ -67,6 +67,11 @@ compute_tokens() {
   T_BAR_THICKNESS=26 T_ITEM=22 T_ICON=16 T_GAP=6
   T_CAPSULE_THICKNESS=$(awk -v i="$T_ITEM" -v b="$T_BAR_THICKNESS" 'BEGIN { printf "%.3f", i / b }')
 
+  # Tempo até a central substituir a tela de descanso: o mesmo do Omarchy
+  # (idle.screensaver em ~/.config/omarchy/shell.json; padrão do shell: 150 s).
+  T_IDLE_CENTRAL=$(jq -r '.idle.screensaver // 150 | numbers' "$HOME/.config/omarchy/shell.json" 2>/dev/null || true)
+  [[ $T_IDLE_CENTRAL =~ ^[0-9]+$ && $T_IDLE_CENTRAL -gt 0 ]] || T_IDLE_CENTRAL=150
+
   # Seção da direita: player, fixados (erllan/tarefas:fixados) e utilidades.
   T_BAR_END='["spotify", "fixados", "tray", "notificacoes", "audio", "weather", "clock", "control-center"]'
 
@@ -98,8 +103,9 @@ desktop_file() {
   [[ -n $1 ]] || return 0
   local d
   for d in "${XDG_DATA_HOME:-$HOME/.local/share}" ${XDG_DATA_DIRS//:/ } /usr/local/share /usr/share; do
-    [[ -f $d/applications/$1.desktop ]] && { echo "$d/applications/$1.desktop"; return; }
+    [[ -f $d/applications/$1.desktop ]] && { echo "$d/applications/$1.desktop"; return 0; }
   done
+  return 0   # nada achado não é erro (o instalador roda com set -e)
 }
 
 # Arquivo de ícone para um Icon= de .desktop (caminho absoluto ou nome no tema
@@ -116,6 +122,7 @@ icon_path() {
     done
   done
   for f in /usr/share/pixmaps/"$icon".{svg,png}; do [[ -f $f ]] && { echo "$f"; return 0; }; done
+  return 0
 }
 
 # render <origem> <destino>: *.in -> troca @TOKEN@; outros -> cópia exata.
@@ -129,7 +136,7 @@ render() {
     TS_KEY_INSPECT="$KEY_INSPECT" TS_KEY_OPS="$KEY_OPS" TS_KEY_ARTE="$KEY_ARTE" \
     TS_HIDDEN_WORKSPACE="$HIDDEN_WORKSPACE" TS_PINNED_LUA="$T_PINNED_LUA" \
     TS_BAR_THICKNESS="$T_BAR_THICKNESS" TS_ITEM="$T_ITEM" TS_ICON="$T_ICON" TS_GAP="$T_GAP" \
-    TS_CAPSULE_THICKNESS="$T_CAPSULE_THICKNESS" \
+    TS_CAPSULE_THICKNESS="$T_CAPSULE_THICKNESS" TS_IDLE_CENTRAL="$T_IDLE_CENTRAL" \
     perl -pe 's/@([A-Z_]+)@/exists $ENV{"TS_$1"} ? $ENV{"TS_$1"} : "\@$1\@"/ge' "$src" > "$dst"
     if grep -qE '@[A-Z][A-Z_]+@' "$dst"; then
       die "marcador sem valor em $src: $(grep -oE '@[A-Z][A-Z_]+@' "$dst" | sort -u | tr '\n' ' ')"

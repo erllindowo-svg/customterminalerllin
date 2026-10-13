@@ -8,7 +8,7 @@ Configuração em arquivos, mesclados em ordem alfabética:
 | `10-tema-sovietico.toml` + `palettes/SovietTerminal.json` | paleta fósforo/oliva/âmbar/vermelho (valores do tema Omarchy soviet-terminal), JetBrainsMono Nerd Font, cantos retos, sem sombras |
 | `20-barra.toml` (modelo `.in`) | barra `estacao` (topo, 26 px) e widgets; grade única: item 22 · ícone 16 · espaço 6 (`lib/ts-lib.sh`) |
 | `30-monitoramento-clima.toml` (modelo `.in`) | sysmon desligado (sem sensores na barra); endereço do clima de `WEATHER_ADDRESS`, métrico |
-| `40-integracao-hyprland.toml` | hook `started` → `soviet-bar-sync --apply` |
+| `40-integracao-hyprland.toml` (modelo `.in`) | hook `started` → `soviet-bar-sync --apply`; idle → `soviet-ops` (central no lugar da tela de descanso do Omarchy) |
 | `90-posicao-barra.toml` | **não versionado**: borda da barra escolhida no painel de posição (gerado por `soviet-bar-pos`) |
 
 Ajustes feitos pela GUI vão para `~/.local/state/noctalia/settings.toml` e

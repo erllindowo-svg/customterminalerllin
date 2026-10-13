@@ -392,12 +392,27 @@ activate() {
   info "  Painéis já abertos da central usam a versão anterior até serem reabertos ($KEY_OPS)."
 }
 
+# Tela de descanso do Omarchy: desligada pelo flag do próprio Omarchy (o mesmo do
+# omarchy-toggle-screensaver); o idle do Noctalia leva à central no lugar dela
+# (40-integracao-hyprland.toml). Só desfazemos no uninstall se fomos nós que ligamos.
+SCREENSAVER_FLAG="$HOME/.local/state/omarchy/toggles/screensaver-off"
+SCREENSAVER_OURS="$STATE/screensaver-off.nosso"
+plan_screensaver() {
+  [[ -f $SCREENSAVER_FLAG ]] || info "  DESLIGAR  toggle    tela de descanso do Omarchy  (~/${SCREENSAVER_FLAG#"$HOME"/})"
+}
+apply_screensaver() {
+  [[ -f $SCREENSAVER_FLAG ]] && return 0
+  mkdir -p "${SCREENSAVER_FLAG%/*}" "$STATE" && touch "$SCREENSAVER_FLAG" "$SCREENSAVER_OURS"
+  ok "tela de descanso do Omarchy desligada: ocioso leva à central de operações"
+}
+
 cmd_install() {
   preflight
   read_manifest
   info "== Plano"
   plan_files; plan_links; plan_block; plan_shelljson; plan_externals
   print_plan
+  plan_screensaver
   if (( CONFLICTS && ! FORCE )); then
     err "$CONFLICTS conflito(s): arquivo existente diferente e não instalado por este projeto (ou editado depois)."
     info "  Compare com 'diff ~/<arquivo> <repo>/...'; para sobrescrever COM backup: --force"
@@ -407,6 +422,7 @@ cmd_install() {
   info "== Aplicando"
   apply_plan
   write_manifest
+  apply_screensaver
   [[ -d $BACKUP_DIR ]] && ok "originais guardados em $BACKUP_DIR"
   install_externals
   activate
@@ -505,6 +521,8 @@ cmd_uninstall() {
       *:REMOVER) rm -f "$HOME/$r" ;;
     esac
   done
+  # Tela de descanso do Omarchy: religada só se fomos nós que a desligamos.
+  if [[ -f $SCREENSAVER_OURS ]]; then rm -f "$SCREENSAVER_FLAG" "$SCREENSAVER_OURS"; fi
   # Estado gerado em tempo de execução por soviet-bar-pos (fora do manifesto).
   rm -f "$HOME/.config/noctalia/90-posicao-barra.toml"
   # Diretórios do projeto que ficaram vazios.
