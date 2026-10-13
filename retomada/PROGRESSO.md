@@ -1,12 +1,13 @@
 # Progresso — barra v2
 
 ## Onde parei
-Passo 0 concluído (worktree + arquivos de retomada). Começando o item 1 (limites da API).
+Item 1 pesquisado (achados abaixo). Começando o item 2 (KEY_PIN).
 
 ## Próximo passo exato
-Item 1: conferir no fonte do Noctalia v5.0.1 (gh api repos/noctalia-dev/noctalia,
-ref v5.0.1) e nas tags 5.1.0/5.2.x o `kCurrentPluginApiVersion` e o que as APIs
-29+ adicionam (docs/plugin-api.json de cada tag). Registrar em "Achados da API".
+Item 2: conferir se SUPER + ALT + F está livre (hyprctl binds -j, mesmo
+critério do install.sh: check_keys em install.sh/lib), adicionar KEY_PIN ao
+conf/ts-lib (CONF_KEYS, validate, render TS_KEY_PIN) e o bind em
+hypr/terminal_soviet.lua.in → `noctalia msg plugin erllan/tarefas:fonte all alternar-fixado`.
 
 ## Estado do pedido anterior (fases 1–7, branch redesenho-barra)
 | Fase | Estado | Commit |
@@ -23,7 +24,7 @@ Instalado no sistema: tudo acima (a partir do checkout principal, branch redesen
 
 ## Checklist deste pedido
 - [x] 0 worktree + retomada/
-- [ ] 1 limites da API (instalada × mais nova) → docs/decisions.md
+- [x] 1 limites da API (achados abaixo; falta registrar em docs/decisions.md junto dos itens)
 - [ ] 2 KEY_PIN (conferir livre) + onIpc + hover + piscar
 - [ ] 3 painel "Editar barra" (abertos/fixados, ordenar, mover) + ordem persistida
 - [ ] 4 Grupos: classificador + tabela p/ aprovação + painel + edição + grupos.json
@@ -37,8 +38,28 @@ Instalado no sistema: tudo acima (a partir do checkout principal, branch redesen
 - No worktree: `tests/static.sh` e `tests/sandbox.sh` (não tocam no sistema).
 - NÃO rodar `./install.sh` do worktree sem aprovação.
 
-## Achados da API (item 1)
-(preencher)
+## Achados da API (item 1) — fonte: gh api noctalia-dev/noctalia, tags v5.0.1/v5.1.0/v5.2.x
+- Instalada: noctalia 5.0.1 (extra tem só 5.0.1). `plugin_api` aceito: 3–30
+  (`kCurrentPluginApiVersion = kPanelLayerPluginApiVersion` = 30).
+- 5.1.0: também 30. 5.2.0/5.2.1: 32 → 31 `noctalia.getColor(role)`, 32 `tooltip`
+  em ui.box/row/column/image (tooltip POR ÍCONE). Não está no `extra` do Arch.
+- drag/drop: `ui.dragSource/dropZone` só em painéis (reconciler rejeita fora:
+  "only supported in plugin panels"). Barra: sem arrasto.
+- `panel.openContextMenu`: API 28 (temos), só painel, só de `ui.button.onRightClick`.
+- `onHover(state, key)` por nó (row/column/box/image/button): API base.
+- `barWidget.setTooltip(text)`: API base; vale para a área do widget INTEIRO
+  (PluginWidget::luaSetTooltip → m_area). Trocar o texto no onHover funciona, mas o
+  balão fica ancorado ao widget, não ao ícone.
+- Callbacks de widget: onClick/onRightClick/onMiddleClick (botões não capturados
+  pelos nós; nós clicáveis só aceitam BTN_LEFT), onHover (widget), onScroll
+  (axis vertical|horizontal), onIpc(event, payload), update(), onExit.
+- IPC: `noctalia msg plugin <autor/plugin:entrada> <alvo> <evento> [payload]`;
+  alvo `all` obrigatório para [[service]]/[[panel]]; `focused` para widget.
+- Posição da barra: é `noctalia.getSetting("bar.<nome>.position")` (API 26), não
+  getConfig (getConfig lê só as settings declaradas do próprio plugin).
+- Arrasto: `ui.graph.onPointerMove` (API 29) dá só posição (sem botão);
+  `onScroll` horizontal existe (touchpad), mas não é arrasto. Nada detecta
+  "pressionar + mover" na barra.
 
 ## Decisões
 - Base da branch: redesenho-barra (não main), porque o pedido continua aquele trabalho.
