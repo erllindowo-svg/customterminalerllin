@@ -130,7 +130,7 @@ classificação automática só toca apps nunca vistos.
   `FAVORITES` (`config/terminal-soviet.conf`) é só a semente da primeira
   execução; apague o arquivo para voltar a ela.
 * Linha de comando: `noctalia msg plugin erllan/tarefas:fonte all <fixar|desafixar|novo|fechar> <app:classe|pin:id>`;
-  `… all alternar-fixado` (o mesmo do `KEY_PIN`).
+  `… all alternar-fixado` (o mesmo do `KEY_PIN`); `… all mover "pin:<id> fixados:<pos>"` (o mesmo do painel Editar barra).
 
 **Vários monitores**: a regra vale para o workspace do **monitor focado**, em
 todas as barras. No Noctalia 5.0.1, ocultar a barra por monitor não funciona.

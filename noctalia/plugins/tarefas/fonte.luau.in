@@ -303,9 +303,11 @@ end
 -- Mesmas operações pela linha de comando (testes, atalhos):
 --   noctalia msg plugin erllan/tarefas:fonte all <fixar|desafixar|novo|fechar> <app:classe|pin:id>
 --   noctalia msg plugin erllan/tarefas:fonte all alternar-fixado      (atalho KEY_PIN)
+--   noctalia msg plugin erllan/tarefas:fonte all mover "pin:id fixados:2"   (como o painel Editar barra)
 function onIpc(event, payload)
   if event == "alternar-fixado" then OPS.alternar(); return end
-  if not apply(event, payload or "") then
+  local key, arg = string.match(payload or "", "^(%S+)%s*(.*)$")
+  if not apply(event, key or "", arg ~= "" and arg or nil) then
     noctalia.log("tarefas: pedido ignorado: " .. tostring(event) .. " " .. tostring(payload))
   end
 end
