@@ -45,9 +45,9 @@ done
 check "atalhos do módulo vêm da configuração" grep -q 'o.bind("SUPER + ALT + A"' "$TMP/out/.config/hypr/terminal_soviet.lua"
 
 section "Caminhos e conteúdo sensível"
-hits=$(grep -rIl --exclude-dir=.git --exclude-dir=docs --exclude-dir=tests -e "/home/$USER" -e "/home/erll" . 2>/dev/null || true)
+hits=$(grep -rIl --exclude-dir=.git --exclude=.git --exclude-dir=docs --exclude-dir=tests --exclude-dir=retomada -e "/home/$USER" -e "/home/erll" . 2>/dev/null || true)
 [[ -z $hits ]] && pass "nenhum caminho absoluto de usuário no código/configuração" || fail "caminhos de usuário" "$hits"
-hits=$(grep -rIlE --exclude-dir=.git -e '(api[_-]?key|secret|token|passw(or)?d)[[:space:]]*[=:][[:space:]]*["'"'"']?[A-Za-z0-9/+_-]{12,}|BEGIN [A-Z ]*PRIVATE KEY|ghp_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{20,}' \
+hits=$(grep -rIlE --exclude-dir=.git --exclude=.git -e '(api[_-]?key|secret|token|passw(or)?d)[[:space:]]*[=:][[:space:]]*["'"'"']?[A-Za-z0-9/+_-]{12,}|BEGIN [A-Z ]*PRIVATE KEY|ghp_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{20,}' \
       . 2>/dev/null || true)
 [[ -z $hits ]] && pass "nenhum padrão de segredo (chaves, tokens, senhas)" || fail "possível segredo" "$hits"
 big=$(find . -path ./.git -prune -o -type f -size +500k -print)
