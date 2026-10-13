@@ -100,23 +100,28 @@ e=$(esp hash "$(conf LIMINE_ORIGEM=arte)") && printf 'x' >> "$e/ts-limine-fonte.
 e=$(esp ausente "$(conf LIMINE_ORIGEM=arte)") && rm "$e/ts-limine-fonte.f14" && capturar fonte-ausente "$e" \
   && check "fonte ausente: capturado (ver a tela)" test -s "$OUT/fonte-ausente.png"
 
-section "Cirílico (CP866)"
-# Fonte CP866 (ter-k14n + ter-i14n) e o nome da entrada gravado em CP866.
-e=$(esp cirilico "$(conf LIMINE_ORIGEM=arte LIMINE_TITULO=)") && {
-  K=/usr/share/kbd/consolefonts
-  python3 -I "$ROOT/scripts/limine-font.py" "$e/ts-limine-fonte.f14" "$K/ter-k14n.psf.gz" "$K/ter-i14n.psf.gz" --pagina cp866 >/dev/null
-  h=$(b2sum "$e/ts-limine-fonte.f14" | cut -d' ' -f1)
-  sed -i "s|^term_font: boot():/ts-limine-fonte.f14#.*|term_font: boot():/ts-limine-fonte.f14#$h|" "$e/limine.conf"
-  python3 -I - "$e/limine.conf" <<'PY'
-import sys
-p = sys.argv[1]
-d = open(p, "rb").read()
-d = d.replace(b"/+Omarchy", "/+ТЕРМИНАЛ СОВЕТСКИЙ".encode("cp866"), 1)
-d = d.replace(b"//linux-omarchy\n", "//Ядро linux-omarchy\n".encode("cp866"), 1)
-open(p, "wb").write(d)
-PY
-  capturar cirilico "$e"
-  check "cirílico CP866: capturado (ver a tela)" test -s "$OUT/cirilico.png"
+section "Texto fora do ASCII"
+# O Limine v12 lê o limine.conf em UTF-8 e converte para CP437 ao desenhar.
+renomear() {  # renomear <limine.conf> <expressão Python que dá os bytes do novo nome>
+  python3 -I -c 'import sys; p = sys.argv[1]; d = open(p, "rb").read()
+d = d.replace(b"/+Omarchy", b"/+" + eval(sys.argv[2]), 1); open(p, "wb").write(d)' "$1" "$2"
 }
+fonte866() {  # fonte866 <esp>: troca a fonte do menu por CP866 e regrava o hash
+  local K=/usr/share/kbd/consolefonts h
+  python3 -I "$ROOT/scripts/limine-font.py" "$1/ts-limine-fonte.f14" "$K/ter-k14n.psf.gz" "$K/ter-i14n.psf.gz" --pagina cp866 >/dev/null
+  h=$(b2sum "$1/ts-limine-fonte.f14" | cut -d' ' -f1)
+  sed -i "s|^term_font: boot():/ts-limine-fonte.f14#.*|term_font: boot():/ts-limine-fonte.f14#$h|" "$1/limine.conf"
+}
+e=$(esp acentos "$(conf LIMINE_ORIGEM=arte LIMINE_TITULO="TERMINAL SOVIÉTICO")") && {
+  renomear "$e/limine.conf" '"Soviético Ñ ç ü".encode("utf-8")'
+  capturar acentos "$e"; check "acentos (UTF-8 → CP437) no menu e no título: capturado" test -s "$OUT/acentos.png"; }
+e=$(esp cirilico-utf8 "$(conf LIMINE_ORIGEM=arte LIMINE_TITULO=)") && {
+  fonte866 "$e"; renomear "$e/limine.conf" '"ТЕРМИНАЛ Ядро".encode("utf-8")'
+  capturar cirilico-utf8 "$e"; check "cirílico em UTF-8 com fonte CP866: capturado (vira blocos)" test -s "$OUT/cirilico-utf8.png"; }
+e=$(esp cirilico-cp866 "$(conf LIMINE_ORIGEM=arte LIMINE_TITULO=)") && {
+  fonte866 "$e"; renomear "$e/limine.conf" '"ТЕРМИНАЛ Ядро".encode("cp866").decode("cp437").encode("utf-8")'
+  capturar cirilico-cp866 "$e"; check "cirílico com fonte CP866 e texto nas posições do CP437: capturado" test -s "$OUT/cirilico-cp866.png"; }
+e=$(esp titulo-cirilico "$(conf LIMINE_ORIGEM=arte LIMINE_TITULO="СОВЕТСКИЙ ТЕРМИНАЛ")") && {
+  capturar titulo-cirilico "$e"; check "título em cirílico no papel de parede (menu em CP437): capturado" test -s "$OUT/titulo-cirilico.png"; }
 
 summary

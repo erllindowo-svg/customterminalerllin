@@ -21,7 +21,7 @@ das caixas e não é tocada.
 Uso:
   limine-wallpaper.py <saída.png> [--origem arte.png | --gerar-do-zero]
                       [--variante fosforo|ambar|fallout] [--resolucao 1920x1080]
-                      [--titulo "TERMINAL SOVIETICO" --fonte fonte.f14]
+                      [--titulo "TERMINAL SOVIETICO" --fonte fonte.f14 [--pagina cp866]]
 Requer Pillow e numpy.
 """
 import argparse
@@ -112,9 +112,9 @@ def ler_fonte(caminho):
     return dados, len(dados) // 256
 
 
-def escrever_titulo(a, texto, fonte, cor, escala):
+def escrever_titulo(a, texto, fonte, cor, escala, pagina="cp437"):
     dados, alt = ler_fonte(fonte)
-    texto = texto.encode("cp437", "replace")
+    texto = texto.encode(pagina, "replace")
     larg = 9 * escala          # 8 px + 1 de espaço, como o term_font_spacing padrão
     x0 = (a.shape[1] - larg * len(texto)) // 2
     y0 = int(a.shape[0] * 0.045)
@@ -137,7 +137,9 @@ def main():
     ap.add_argument("--variante", choices=list(VARIANTES), default="fosforo")
     ap.add_argument("--resolucao", default="1920x1080")
     ap.add_argument("--titulo", default="")
-    ap.add_argument("--fonte", help="fonte crua do boot (para o título)")
+    ap.add_argument("--fonte", help="fonte crua (para o título)")
+    ap.add_argument("--pagina", choices=["cp437", "cp866"], default="cp437",
+                    help="página de código da --fonte (cp866 para título em cirílico)")
     a = ap.parse_args()
 
     try:
@@ -161,7 +163,7 @@ def main():
     if a.titulo:
         cor = VARIANTES[a.variante][1] if VARIANTES[a.variante] else FALLOUT_VERDE
         arr = escrever_titulo(np.asarray(out).astype(float).copy(), a.titulo, a.fonte, cor,
-                              max(1, round(h / 360)))
+                              max(1, round(h / 360)), a.pagina)
         out = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGB")
     out.save(a.saida, optimize=True)
     print(f"{a.saida} {w}x{h} variante={a.variante} pixels_trocados={trocados}")

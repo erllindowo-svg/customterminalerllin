@@ -51,7 +51,9 @@ validate_conf() {
   [[ $LIMINE_ORIGEM =~ ^(arte|zero)$ ]] || die "LIMINE_ORIGEM: arte ou zero"
   [[ $LIMINE_FONTE =~ ^(terminus|phxega)$ ]] || die "LIMINE_FONTE: terminus ou phxega"
   [[ $LIMINE_RESOLUCAO =~ ^[1-9][0-9]{2,3}x[1-9][0-9]{2,3}$ ]] || die "LIMINE_RESOLUCAO: LxA, ex. 1920x1080"
-  [[ -z $(printf '%s' "$LIMINE_TITULO" | LC_ALL=C tr -d ' -~') ]] || die "LIMINE_TITULO: só ASCII (a fonte do boot é CP437)"
+  { printf '%s' "$LIMINE_TITULO" | iconv -f UTF-8 -t CP437 >/dev/null 2>&1 \
+    || printf '%s' "$LIMINE_TITULO" | iconv -f UTF-8 -t CP866 >/dev/null 2>&1; } \
+    || die "LIMINE_TITULO: só caracteres do CP437 (latim com acentos, sem ã/õ) ou do CP866 (cirílico)"
   [[ $LIMINE_TIMEOUT =~ ^[0-9]{1,3}$ ]] || die "LIMINE_TIMEOUT: segundos (0-999)"
   local f
   for f in $FAVORITES; do

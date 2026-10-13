@@ -134,7 +134,17 @@ gerar_ativos() {
   else
     args+=(--gerar-do-zero)
   fi
-  [[ -n $LIMINE_TITULO ]] && args+=(--titulo "$LIMINE_TITULO" --fonte "$TMP/$FONTE")
+  # O título é desenhado no papel de parede, não pelo Limine: se não couber no
+  # CP437 (cirílico), usa uma fonte CP866 só para ele; o menu continua em CP437.
+  if [[ -n $LIMINE_TITULO ]]; then
+    if printf '%s' "$LIMINE_TITULO" | iconv -f UTF-8 -t CP437 >/dev/null 2>&1; then
+      args+=(--titulo "$LIMINE_TITULO" --fonte "$TMP/$FONTE")
+    else
+      local k=${LIMINE_TERMINUS_PSF%/*}
+      python3 -I "$ROOT/scripts/limine-font.py" "$TMP/titulo-866.f14" "$k/ter-k14n.psf.gz" "$LIMINE_TERMINUS_PSF" --pagina cp866 >/dev/null
+      args+=(--titulo "$LIMINE_TITULO" --fonte "$TMP/titulo-866.f14" --pagina cp866)
+    fi
+  fi
   python3 -I "$ROOT/scripts/limine-wallpaper.py" "${args[@]}" >/dev/null
 }
 
