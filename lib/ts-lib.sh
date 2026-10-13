@@ -76,7 +76,7 @@ compute_tokens() {
   T_BAR_END='["spotify", "fixados", "tray", "notificacoes", "audio", "weather", "clock", "control-center"]'
 
   # Centro: ações (grupo "acoes"); o botão do jogo só entra se o .desktop existir.
-  T_ACOES_MEMBERS='["inspecao", "captura", "luz_noturna", "cafeina", "energia"'
+  T_ACOES_MEMBERS='["inspecao", "grupos", "captura", "luz_noturna", "cafeina", "energia"'
   T_GAME_NAME="" T_GAME_ICON=""
   local desk
   desk=$(desktop_file "$GAME_DESKTOP")

@@ -16,7 +16,7 @@
 #
 # Grupos (esquerda -> direita):
 #   CONTEXTO      menu ☭ · workspaces · overview · apps ABERTOS não fixados
-#   AÇÕES         inspeção (btop) · captura · luz noturna · cafeína · perfil de energia · jogo   (centro)
+#   AÇÕES         inspeção (btop) · grupos · captura · luz noturna · cafeína · perfil de energia · jogo   (centro)
 #   UTILIDADES    Spotify · apps FIXADOS · bandeja · notificações · áudio · clima RJ · relógio · control center
 #
 # Aplicativos estilo Windows (plugin erllan/tarefas): abertos à esquerda, fixados à
@@ -163,6 +163,16 @@ tooltip = "Inspeção: btop flutuante (SUPER+M)"
 icon_color = "primary"
 [widget.inspecao.actions]
 left = "exec @BIN@/soviet-inspect"
+middle = "none"
+
+# Grupos: apps instalados por propósito (painel do plugin erllan/grupos;
+# classificação inicial: soviet-grupos classificar).
+[widget.grupos]
+type = "custom_button"
+glyph = "category"
+tooltip = "Grupos de apps"
+[widget.grupos.actions]
+left = "panel-toggle erllan/grupos:painel"
 middle = "none"
 
 # Captura do Omarchy: esq. = captura (smart: região/janela), dir. = gravação de tela

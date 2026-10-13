@@ -43,7 +43,7 @@ enable_community_templates = false
 [plugins]
 auto_update = "none"           # nada é baixado sem ação explícita
 # Plugins locais (~/.local/share/noctalia/plugins/): áudio, player, tarefas e posição da barra.
-enabled = ["erllan/audio", "erllan/spotify-media", "erllan/tarefas", "erllan/barra"]
+enabled = ["erllan/audio", "erllan/spotify-media", "erllan/tarefas", "erllan/barra", "erllan/grupos"]
 
 # Fontes de plugins desativadas: nenhum `git clone` automático ao iniciar.
 # Para navegar no catálogo oficial, reative manualmente (enabled = true).

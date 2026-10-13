@@ -528,7 +528,7 @@ cmd_uninstall() {
   # Diretórios do projeto que ficaram vazios.
   local d
   for d in .local/share/terminal-soviet/arte .local/share/terminal-soviet .config/terminal-soviet \
-           .local/share/noctalia/plugins/tarefas .local/share/noctalia/plugins/audio .local/share/noctalia/plugins/barra \
+           .local/share/noctalia/plugins/tarefas .local/share/noctalia/plugins/audio .local/share/noctalia/plugins/barra .local/share/noctalia/plugins/grupos \
            .local/share/noctalia/plugins/spotify-media .config/omarchy/plugins/erllan.sem-barra \
            .config/noctalia/palettes .config/noctalia; do
     [[ -d $HOME/$d ]] && find "$HOME/$d" -depth -type d -empty -delete 2>/dev/null || true

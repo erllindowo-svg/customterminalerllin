@@ -1,18 +1,18 @@
 # Progresso — barra v2
 
 ## Onde parei
-Item 4, parte 1: bin/soviet-grupos (tabela|classificar|caminho) pronto. Proposta salva em retomada/grupos-proposta.txt, AGUARDANDO aprovação do usuário (não rodar `classificar` antes). Parte 2: plugin erllan/grupos (painel).
+Item 4 implementado: bin/soviet-grupos + plugin erllan/grupos (painel com arrasto, menu de contexto API 28, criar/renomear/apagar, classificar novos) + ícone "grupos" no centro. grupos.json NÃO foi gravado (aguarda aprovação da tabela retomada/grupos-proposta.txt). Não testado ao vivo (exige install).
 
 ## Próximo passo exato
-Item 4, parte 2: plugin noctalia/plugins/grupos (plugin_api 28): [[panel]] "painel"
-(grupos.luau) lê ~/.local/state/terminal-soviet/grupos.json; um bloco por grupo
-(dropZone value=nome) com ícones dragSource (payload "id|grupoOrigem");
-clique = abrir/focar (hyprctl clients|jq pela classe/StartupWMClass/exec; senão
-uwsm-app -- id.desktop); onRightClick num ui.button do app → openContextMenu
-(tirar do grupo, adicionar a…); criar/renomear/apagar grupo com ui.input;
-"Classificar novos" roda soviet-grupos classificar. Escrita atômica do JSON pelo
-próprio painel (writeFile em .tmp + renameFile). Ícone "grupos" no centro
-(custom_button panel-toggle) em 20-barra.toml.in, membro do capsule "acoes".
+Item 5 (atalho no hover): bin/soviet-atalhos → JSON {chave → "SUPER + SHIFT + B"}
+a partir de `hyprctl binds -j` (exec/arg). Resolver: uwsm-app -- X.desktop → X;
+omarchy-launch-or-focus/soviet-launch… → classe; omarchy-launch-browser → navegador
+padrão (xdg-settings get default-web-browser); xdg-terminal-exec/omarchy-launch-
+terminal → terminal padrão; binário simples → binário. Casar com apps por
+desktop-id, classe e Exec. Service do tarefas roda no início e em
+`configreloaded` → state "atalhos"; widgets: onHover → barWidget.setTooltip.
+Nativos: tooltips do 20-barra.toml.in com @KEY_*@ e atalhos do Omarchy lidos
+pelo install.sh (hyprctl binds na sessão).
 
 ## Estado do pedido anterior (fases 1–7, branch redesenho-barra)
 | Fase | Estado | Commit |
@@ -32,7 +32,7 @@ Instalado no sistema: tudo acima (a partir do checkout principal, branch redesen
 - [x] 1 limites da API (achados abaixo; falta registrar em docs/decisions.md junto dos itens)
 - [x] 2 KEY_PIN = SUPER+ALT+P + onIpc alternar-fixado + hover + piscar (doc pendente)
 - [x] 3 painel "Editar barra" (abertos/fixados, ordenar, mover) + ordem persistida (não testado ao vivo: exige install)
-- [ ] 4 Grupos: classificador + tabela p/ aprovação + painel + edição + grupos.json
+- [x] 4 Grupos: classificador + tabela (aguarda aprovação) + painel + edição (grupos.json só após aprovação)
 - [ ] 5 atalhos no hover (hyprctl binds → apps; nativos por marcadores)
 - [ ] 6 arrasto da barra → orientação (verificar; alça ⠿)
 - [ ] 7 avaliação de plugins (tabela)
