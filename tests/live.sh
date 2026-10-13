@@ -38,7 +38,7 @@ done
 n=$(pgrep -xc noctalia); [[ $n == 1 ]] && pass "1 processo noctalia" || fail "processos noctalia" "$n"
 n=$(pgrep -u "$USER" -fc '^/bin/bash .*/soviet-bar-sync$'); [[ $n == 1 ]] && pass "1 soviet-bar-sync" || fail "soviet-bar-sync" "$n"
 npid=$(pgrep -x noctalia)
-n=$(pgrep -P "$npid" -x socat | wc -l); [[ $n == 1 ]] && pass "1 socat do plugin tarefas (filho do noctalia)" || fail "socat do noctalia" "$n"
+n=$(pgrep -P "$npid" -x socat | wc -l); [[ $n == 1 ]] && pass "1 socat do plugin tarefas (service fonte, filho do noctalia)" || fail "socat do noctalia" "$n"
 for c in btop fetch clock shell; do
   n=$(hyprctl clients -j | jq --arg c "soviet-ops-$c" --argjson ws "$HIDDEN_WORKSPACE" '[.[] | select(.class == $c and .workspace.id == $ws)] | length')
   [[ $n == 1 ]] && pass "painel soviet-ops-$c: 1 janela no WS $HIDDEN_WORKSPACE" || fail "painel soviet-ops-$c" "$n"

@@ -127,8 +127,26 @@ grep -q 'edição posterior do usuário' "$C/.config/hypr/hyprland.lua" && ! gre
   && pass "desinstalar remove só o bloco e preserva edições posteriores" || fail "edição posterior perdida"
 
 section "Migração da Fase 1 (cópia dos arquivos reais do Hyprland)"
+# Arquivos da Fase 1: os atuais ou, numa máquina já migrada, os backups da migração
+# (o trecho da Fase 1 no bindings.lua termina no atalho da barra; o que vem depois
+# foi acrescentado pelo usuário).
+P1="$WORK/fase1"; mkdir -p "$P1"
+cp "$REAL_HOME"/.config/hypr/{hyprland,bindings,autostart}.lua "$P1/"
+BK="$REAL_HOME/.local/state/terminal-soviet/install/backups"
+if ! grep -q soviet "$P1/bindings.lua"; then
+  m=$(ls -d "$BK"/migrate-2* 2>/dev/null | head -1); mm=$(ls -d "$BK"/migrate-manual-* 2>/dev/null | head -1)
+  if [[ -n $m && -n $mm ]]; then
+    cp "$m"/{hyprland,autostart}.lua "$P1/"
+    sed '/bar-toggle estacao")$/q' "$mm/bindings.lua" > "$P1/bindings.lua"
+  else
+    P1=""
+  fi
+fi
+if [[ -z $P1 ]]; then
+  skip "migração da Fase 1" "máquina já migrada e sem backups da migração"
+else
 D=$(fresh_home d)
-cp "$REAL_HOME"/.config/hypr/{hyprland,bindings,autostart}.lua "$D/.config/hypr/"
+cp "$P1"/{hyprland,bindings,autostart}.lua "$D/.config/hypr/"
 sd=$(snap "$D")
 out=$(in_home "$D" "$INST" "${OPTS[@]}" --no-externals 2>&1); rc=$?
 [[ $rc != 0 && $(snap "$D") == "$sd" ]] && grep -q 'phase1-inline' <<< "$out" \
@@ -144,10 +162,11 @@ else
   fail "migrate/phase1-inline.sh"
 fi
 echo '-- editado' >> "$D/.config/hypr/bindings.lua"
-E=$(fresh_home e); cp "$REAL_HOME"/.config/hypr/bindings.lua "$E/.config/hypr/"; echo "-- x" >> "$E/.config/hypr/bindings.lua"
+E=$(fresh_home e); cp "$P1"/bindings.lua "$E/.config/hypr/"; echo "-- x" >> "$E/.config/hypr/bindings.lua"
 se=$(snap "$E")
 in_home "$E" "$ROOT/migrate/phase1-inline.sh" >/dev/null 2>&1 && fail "migração aceitou trecho editado" \
   || { [[ $(snap "$E") == "$se" ]] && pass "migração recusa trecho editado sem alterar nada" || fail "migração alterou arquivo editado"; }
+fi
 
 section "Dependências externas fixadas (clones locais, sem rede)"
 if [[ -d $REAL_HOME/.local/src/arttime/.git && -d $REAL_HOME/.config/omarchy/plugins/moorgrove.overview/.git ]] && command -v zsh >/dev/null; then

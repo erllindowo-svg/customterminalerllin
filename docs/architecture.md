@@ -16,7 +16,7 @@ shell do Omarchy: usa só os pontos de extensão do usuário (`~/.config`,
                        │                                                                                         │
  systemd --user        │  graphical-session.target                                                               │
    noctalia.service ───┤    ├ noctalia ─────────── barra "estacao" + control center + clima + sysmon             │
-   soviet-bar-sync ────┤    │    ├ plugin erllan/tarefas ── socat (socket2) → hyprctl clients (sob evento)       │
+   soviet-bar-sync ────┤    │    ├ plugin erllan/tarefas ── service: socat (socket2) → hyprctl│jq (sob evento)  │
                        │    │    ├ plugin erllan/spotify-media, erllan/volume-slider                              │
                        │    │    └ hook started → soviet-bar-sync --apply                                        │
                        │    └ soviet-bar-sync ── socat (socket2) → noctalia msg bar-hide|bar-show estacao        │
@@ -32,7 +32,7 @@ shell do Omarchy: usa só os pontos de extensão do usuário (`~/.config`,
 |---|---|---|---|
 | `noctalia` | serviço do usuário | permanente | a **única barra** (topo, 26 px), control center, launcher alternativo, clima (Open-Meteo), sysmon |
 | `soviet-bar-sync` | serviço do usuário (bash + socat) | permanente | oculta a barra no workspace da central (e onde houver janela de `COLLAPSE_CLASSES`), mostra nos demais. Orientado a eventos do socket2; só envia `bar-hide`/`bar-show` quando o estado desejado muda; nunca alterna às cegas |
-| `erllan/tarefas` | plugin Luau do Noctalia | permanente (dentro do noctalia) | favoritos + apps em execução fora do WS da central, com o ícone real. Um `socat` no socket2 dispara a leitura de `hyprctl clients` só em eventos de janela/foco/workspace; 1 leitura de segurança a cada 30 s |
+| `erllan/tarefas` | plugin Luau do Noctalia | permanente (dentro do noctalia) | apps abertos (esq.) e fixados (dir.) fora do WS da central, com o ícone real; fixar/desafixar pelo clique direito. Um service com um `socat` no socket2 lê `hyprctl clients` só em eventos de janela/foco/workspace (1 leitura de segurança a cada 30 s) e alimenta os dois widgets |
 | `erllan.sem-barra` | plugin QML do shell Omarchy | permanente (dentro do quickshell) | "barra nula" selecionada por `bar.id`: tira a barra do Omarchy e mantém o resto do shell |
 | central (`soviet-ops`) | 4 janelas foot no WS 1 | da sessão | `btop` (soviet-ops-btop), `fastfetch` + **ilustração** (soviet-ops-fetch), relógio/clima (soviet-ops-clock), shell (soviet-ops-shell) |
 | `soviet-inspect` | janela foot flutuante | sob demanda | btop detalhado (`SUPER+M`); abre no workspace atual, fecha com a mesma tecla |

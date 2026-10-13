@@ -21,8 +21,7 @@ customterminalerllin/
 │   ├── soviet-ops-clock            painel: relógio grande, data, clima (cache do Noctalia)
 │   ├── soviet-inspect              btop flutuante sob demanda (abre/fecha/traz)
 │   ├── soviet-arte                 ilustração: seleção, desenho, cores, menu, arttime interativo
-│   ├── soviet-bar-sync             visibilidade da barra por workspace (eventos)
-│   └── soviet-launch-or-focus      foca a janela de classe exata ou abre (lançadores da barra)
+│   └── soviet-bar-sync             visibilidade da barra por workspace (eventos)
 ├── share/terminal-soviet/arte/     → ~/.local/share/terminal-soviet/arte
 │   ├── cores-tema.pl               "Tema do terminal": reescreve cores SGR para a rampa fósforo
 │   └── artprint-shim               bin/artprint da árvore temporária do arttime interativo
@@ -37,7 +36,9 @@ customterminalerllin/
 │   │   ├── palettes/SovietTerminal.json   paleta
 │   │   └── README.md
 │   └── plugins/                    → ~/.local/share/noctalia/plugins
-│       ├── tarefas/                favoritos + apps em execução (bar.luau.in, plugin.toml)
+│       ├── tarefas/                abertos (esq.) + fixados (dir.): service fonte.luau.in (socat,
+│       │                           fixados.json), widgets abertos/fixados.luau, comum.luau.in,
+│       │                           mini-menu menu.luau, desktop-id.sh
 │       ├── volume-slider/          popup com um slider de volume
 │       └── spotify-media/          fork MIT (bar.luau.in, LICENSE, upstream/, README.soviet.md)
 ├── omarchy/
@@ -76,7 +77,7 @@ customterminalerllin/
 | `~/.config/hypr/terminal_soviet.lua` | `hypr/terminal_soviet.lua.in` | G | atalhos e workspace de `config/` |
 | `~/.config/hypr/hyprland.lua` | — | bloco | o instalador acrescenta 3 linhas marcadas (`require`) |
 | `~/.config/noctalia/*.toml`, `palettes/`, `README.md` | `noctalia/config/` | R/G | `20-*` e `30-*` são gerados |
-| `~/.local/share/noctalia/plugins/{tarefas,volume-slider,spotify-media}/` | `noctalia/plugins/` | R/G | `tarefas/bar.luau` e `spotify-media/bar.luau` são gerados (grade da barra) |
+| `~/.local/share/noctalia/plugins/{tarefas,volume-slider,spotify-media}/` | `noctalia/plugins/` | R/G | `tarefas/{fonte,comum}.luau` e `spotify-media/bar.luau` são gerados |
 | `~/.config/omarchy/plugins/erllan.sem-barra/` | `omarchy/plugins/` | R | |
 | `~/.config/omarchy/shell.json` | — | chaves | `bar.id`, `bar.position` via `omarchy bar` |
 | `~/.config/omarchy/themes/soviet-terminal/` | `omarchy/themes/` | R | `backgrounds/`, `preview.png`: **D** (`fetch-backgrounds.sh`) |
@@ -91,6 +92,7 @@ customterminalerllin/
 | `~/.config/omarchy/plugins/moorgrove.overview/` | git fixado | D | omarchy-overview |
 | `~/.local/state/terminal-soviet/install/` | — | L | manifesto, backups, `shelljson.prev` |
 | `~/.local/state/terminal-soviet/arte.conf`, `arte-selecao` | — | L | modo de cores, política, conjunto da sessão |
+| `~/.local/state/noctalia/plugins/data/erllan/tarefas/fixados.json` | semente: `FAVORITES` | L | apps fixados (clique direito → fixar/desafixar) |
 | `~/.cache/terminal-soviet/arte-indice.tsv` | — | L | índice da coleção |
 | `$XDG_RUNTIME_DIR/terminal-soviet/` | — | L | PID/área do painel, travas, árvore temporária do arttime, log de artes |
 | `~/.local/state/noctalia/settings.toml` | — | L | ajustes feitos pela GUI do Noctalia (**vencem** os arquivos) |

@@ -1,15 +1,35 @@
-# Terminal Soviético — taskbar: todas as janelas abertas, exceto as do WS 1
-# (central de operações), mais favoritos fixos. Ícone original do app; traço
-# fósforo = app focado, oliva = em execução. Orientado a eventos (socket2).
+# Terminal Soviético — lista de aplicativos estilo Windows: abertos à esquerda,
+# fixados à direita, fixar/desafixar pelo clique direito. Todas as janelas,
+# exceto as do workspace da central. Um único `socat` (service `fonte`)
+# alimenta os dois widgets por noctalia.state.
 id = "erllan/tarefas"
 name = "Tarefas"
-version = "1.1.0"
+version = "2.0.0"
 plugin_api = 24
 author = "erllan"
 license = "MIT"
-dependencies = ["hyprctl", "socat", "uwsm-app"]
+dependencies = ["hyprctl", "socat", "jq", "uwsm-app"]
 icon = "apps"
-description = "Favoritos + apps em execução, exceto o workspace 1 (eventos do Hyprland)."
+description = "Apps abertos (esquerda) e fixados (direita), exceto o workspace da central; eventos do Hyprland."
+
+[[service]]
+id = "fonte"
+entry = "fonte.luau"
+
 [[widget]]
-id = "bar"
-entry = "bar.luau"
+id = "abertos"
+entry = "abertos.luau"
+
+[[widget]]
+id = "fixados"
+entry = "fixados.luau"
+
+[[panel]]
+id = "menu"
+entry = "menu.luau"
+width = 220
+height = 156
+placement = "attached"
+position = "auto"
+open_near_click = true
+capture_keys = ["escape"]

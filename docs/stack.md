@@ -73,7 +73,6 @@ faltam com o comando `omarchy pkg add …`.
 | `playerctl` | playerctl 2.4.1-5 | extra | não | widget do Spotify | `playerctl -l` |
 | `fzf` | fzf 0.74.3-1 | extra | não | tecla `x` do arttime | — |
 | `nvidia-smi` | nvidia-utils | extra | não | sensores de GPU na barra (`GPU_SENSORS=auto`) | — |
-| `firefox`, `osu-lazer` | firefox 155.0.1; osu-lazer-bin 2026.1005.0 (**AUR**) | extra / AUR | não | lançadores da barra (`BAR_LAUNCHERS`); ausentes = omitidos | — |
 | `luac`, `luajit`, `python3`, `wtype`, `grim` | lua, luajit, python, wtype, grim | extra | só testes | sintaxe, pty, teclas, capturas | — |
 | `shellcheck` | shellcheck | extra | só testes (opcional) | análise dos scripts; **não instalado** hoje | — |
 

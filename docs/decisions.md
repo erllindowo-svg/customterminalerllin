@@ -67,9 +67,23 @@ estado se o Noctalia reiniciar. Sem polling; não há como dessincronizar.
 
 O taskbar do Noctalia 5.0.1 não exclui um workspace (`hidden_workspaces` só
 existe em versões posteriores). O `erllan/tarefas` exclui o workspace da
-central, junta favoritos e apps em execução e reage a eventos. Antes eram
-consultas a cada 1 s com um aviso no log a cada render. **Reavaliar** ao
-atualizar o Noctalia.
+central e reage a eventos. Antes eram consultas a cada 1 s com um aviso no log
+a cada render. **Reavaliar** ao atualizar o Noctalia.
+
+Desde a versão 2.0 ele imita a barra do Windows: dois widgets do mesmo plugin
+(`abertos` à esquerda, `fixados` à direita) e um `[[service]]` (`fonte`), que é
+o **único** `socat` e o único escritor de `fixados.json`. Os widgets recebem o
+modelo por `noctalia.state` (VMs isoladas não compartilham memória). O
+`hyprctl clients -j` passa pelo `jq` antes do Luau, porque decodificar o JSON
+inteiro estourava o orçamento de CPU do callback.
+
+* **Fixar/desafixar**: na API 5.0.1 (níveis 3–30), o menu de contexto nativo
+  (`panel.openContextMenu`) só existe dentro de painéis. Na barra, ícones
+  clicáveis capturam só o botão esquerdo; o direito chega ao `onRightClick()`
+  do widget, e o `onHover` de cada ícone diz qual estava sob o ponteiro. O
+  clique direito abre então um mini-menu (painel `erllan/tarefas:menu`).
+* **Descartado**: `custom_button` por lançador (Firefox, osu) e separadores; a
+  seção `end` da barra corta à esquerda o que não cabe.
 
 ## D7. arttime: instalação externa fixada, sem copiar a coleção
 
@@ -104,8 +118,8 @@ de fontes diferentes nem se escrevem frases novas.
 
 * Vários monitores: barra única que segue o monitor focado. Não testado com
   hardware real.
-* Lançador osu! e sensores NVIDIA: preferências opcionais, omitidas quando
-  ausentes (`BAR_LAUNCHERS`, `GPU_SENSORS=auto`).
+* Sensores NVIDIA: preferência opcional, omitida quando ausente
+  (`GPU_SENSORS=auto`). Firefox e osu! são fixados comuns (sem lançador próprio).
 * Teclas físicas e cliques reais não são automatizáveis aqui (o `wtype` não
   aciona atalhos globais). Os comandos que cada tecla/botão executa são testados.
 

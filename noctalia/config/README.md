@@ -23,6 +23,6 @@ gerados/copiados por `install.sh`: edite no repositório, não aqui.
 |---|---|
 | `erllan/volume-slider` | popup só com o slider de volume (clique no ícone de volume) |
 | `erllan/spotify-media` | Spotify na barra: capa, artista/título rolando, ⏮ ⏯ ⏭, foca/abre o Spotify. Fork local de `azokyen/spotify-media` |
-| `erllan/tarefas` | favoritos (lista `PINNED` em `bar.luau`) + apps em execução fora do WS 1, ícones reais, traço = em execução/focado; atualiza por eventos do socket2 do Hyprland (Fase 1) |
+| `erllan/tarefas` | estilo Windows: `abertos` (esquerda) e `fixados` (direita, `fixados.json` no `pluginDataDir`), fora do WS 1, ícones reais, traço = em execução/focado, clique direito = mini-menu fixar/desafixar; um service com um `socat` (eventos do socket2) |
 
 Cada um tem um README no próprio diretório.

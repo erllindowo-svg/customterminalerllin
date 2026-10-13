@@ -1,9 +1,8 @@
 # Terminal Soviético — barra do Noctalia (substitui a barra do Omarchy)
 #
 # MODELO: install.sh gera ~/.config/noctalia/20-barra.toml trocando os marcadores BIN,
-# BAR_NAME, BAR_END (lançadores instalados) e SENSOR_MEMBERS (com/sem GPU)
-# conforme config/terminal-soviet.conf, e os da grade (BAR_THICKNESS, GAP,
-# CAPSULE_THICKNESS), fixos em lib/ts-lib.sh.
+# BAR_NAME, BAR_END e SENSOR_MEMBERS (com/sem GPU) conforme config/terminal-soviet.conf,
+# e os da grade (BAR_THICKNESS, GAP, CAPSULE_THICKNESS), fixos em lib/ts-lib.sh.
 #
 # Grade única (px lógicos): barra 26 · item 22 · ícone 16 · espaço 6. Os plugins
 # (tarefas, spotify-media) usam os mesmos marcadores; glifos nativos já são 16.
@@ -15,9 +14,12 @@
 # via `noctalia msg bar-hide|bar-show`. Não ligar auto_hide aqui.
 #
 # Grupos (esquerda -> direita):
-#   CONTEXTO      menu ☭ · workspaces · overview · aplicativos (favoritos + abertos; ponto = app ativo)
+#   CONTEXTO      menu ☭ · workspaces · overview · apps ABERTOS não fixados
 #   MONITORAMENTO CPU % T° · RAM % · GPU % T° VRAM · NET ↓ ↑ · [inspeção]   (centro)
-#   UTILIDADES    Spotify · Firefox · osu! · bandeja · notificações · volume · clima RJ · relógio · control center
+#   UTILIDADES    Spotify · apps FIXADOS · bandeja · notificações · volume · clima RJ · relógio · control center
+#
+# Aplicativos estilo Windows (plugin erllan/tarefas): abertos à esquerda, fixados à
+# direita (atenuado = fechado). Clique direito num ícone: fixar/desafixar.
 #
 # Sem separadores: a seção `end` só tem o espaço entre o fim do centro e a borda e
 # corta à esquerda o que exceder (a capa do Spotify aparecia "comprimida" por isso).
@@ -51,7 +53,7 @@ font_weight = 500
 color = "on_surface"
 icon_color = "secondary"
 
-start   = ["menu", "workspaces", "overview", "apps"]
+start   = ["menu", "workspaces", "overview", "abertos"]
 center  = ["group:sensores", "inspecao"]
 end     = @BAR_END@
 
@@ -108,9 +110,13 @@ tooltip = "Overview dos workspaces"
 left = "exec omarchy-shell shell toggle moorgrove.overview '{}'"
 middle = "none"
 
-# Favoritos fixos (escurecidos quando fechados) + aplicativos abertos.
-[widget.apps]
-type = "erllan/tarefas:bar"   # plugin: todas as janelas exceto WS 1 (taskbar nativo não filtra)
+# Apps abertos não fixados (o taskbar nativo do 5.0.1 não exclui o WS da central).
+# Fixados: [widget.fixados], na seção da direita. Mesmo plugin, um só socat.
+[widget.abertos]
+type = "erllan/tarefas:abertos"
+
+[widget.fixados]
+type = "erllan/tarefas:fixados"
 
 [widget.active_window]
 type = "active_window"
@@ -287,26 +293,6 @@ scroll_down = "volume-down 5%"
 # em ~/.local/share/noctalia/plugins/spotify-media. Substitui o widget "media".
 [widget.spotify]
 type = "erllan/spotify-media:bar"
-
-# Launchers fixos (ícones originais coloridos). Reaproveitam a janela existente
-# via ~/.local/bin/soviet-launch-or-focus (classe exata) em vez de abrir outra instância.
-[widget.firefox]
-type = "custom_button"
-custom_image = "/usr/share/icons/hicolor/scalable/apps/firefox.svg"
-custom_image_colorize = false
-tooltip = "Firefox"
-[widget.firefox.actions]
-left = "exec @BIN@/soviet-launch-or-focus firefox firefox"
-middle = "none"
-
-[widget.osu]
-type = "custom_button"
-custom_image = "/usr/share/pixmaps/osu-lazer.png"
-custom_image_colorize = false
-tooltip = "osu!"
-[widget.osu.actions]
-left = "exec @BIN@/soviet-launch-or-focus osu! osu-lazer"
-middle = "none"
 
 [widget.control-center]
 type = "control-center"

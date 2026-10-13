@@ -1,0 +1,230 @@
+--!nonstrict
+-- Terminal Soviético — tarefas: fonte única de dados (service, sem UI).
+-- MODELO: install.sh gera fonte.luau (marcadores HIDDEN_WORKSPACE e PINNED_LUA).
+--
+-- Um único `socat` lê o socket2 do Hyprland; cada evento de janela/workspace agenda
+-- uma leitura coalescida de `hyprctl clients -j`, já reduzida pelo jq aos campos
+-- usados (decodificar o JSON inteiro no Luau estourava o orçamento de CPU do
+-- callback). O resultado vai para os dois widgets por noctalia.state:
+--   "modelo" = { fixados = {...}, abertos = {...} }
+-- Cada app: { key, id, class, windows = { endereços, do foco mais recente ao mais
+-- antigo }, focused }. Um app fixado aparece só em `fixados`, aberto ou não.
+--
+-- Fixados: lista ordenada em pluginDataDir()/fixados.json, da qual este service
+-- é o único escritor. Os widgets e o menu pedem mudanças com
+-- state.set("pedido", { op, key, n }) (op = fixar | desafixar | novo | fechar),
+-- ou pelo IPC (onIpc, abaixo).
+-- Na primeira execução, sem arquivo, a semente é FAVORITES de terminal-soviet.conf.
+
+local HIDDEN_WS = @HIDDEN_WORKSPACE@
+local SEED = {
+@PINNED_LUA@
+}
+-- Nunca listadas: o Spotify é o player da barra (erllan/spotify-media) e a tela
+-- de descanso do Omarchy é transitória.
+local EXCLUDED = { ["spotify"] = true, ["org.omarchy.screensaver"] = true }
+
+local dataDir = noctalia.pluginDataDir()
+local PINS_FILE = dataDir and (dataDir .. "/fixados.json") or nil
+local DESKTOP_ID = (noctalia.pluginDir() or ".") .. "/desktop-id.sh"
+
+local pins = {}        -- { { id, classes = { ... } } }
+local clients = {}     -- última leitura reduzida do hyprctl
+local busy, pending, streaming = false, false, false
+local lastPedido = nil
+
+local function copyPins(list)
+  local out = {}
+  for _, p in ipairs(list) do
+    local classes = {}
+    for _, c in ipairs(p.classes or {}) do table.insert(classes, string.lower(c)) end
+    if p.id and p.id ~= "" and #classes > 0 then table.insert(out, { id = p.id, classes = classes }) end
+  end
+  return out
+end
+
+local function loadPins()
+  local raw = PINS_FILE and noctalia.fileExists(PINS_FILE) and noctalia.readFile(PINS_FILE) or nil
+  local decoded = raw and noctalia.json.decode(raw) or nil
+  if type(decoded) == "table" then
+    pins = copyPins(decoded)
+  else
+    pins = copyPins(SEED)
+    if PINS_FILE then noctalia.writeFile(PINS_FILE, noctalia.json.encode(pins)) end
+  end
+end
+
+local function savePins()
+  if PINS_FILE then noctalia.writeFile(PINS_FILE, noctalia.json.encode(pins)) end
+end
+
+local function publish()
+  local classToPin = {}
+  local fixados, abertos, byKey = {}, {}, {}
+  for i, p in ipairs(pins) do
+    local a = { key = "pin:" .. p.id, id = p.id, class = p.classes[1], windows = {}, focused = false }
+    for _, c in ipairs(p.classes) do classToPin[c] = a end
+    byKey[a.key] = a
+    fixados[i] = a
+  end
+  local rank = {}
+  for _, c in ipairs(clients) do
+    local lc = c.c
+    if lc ~= "" and c.w ~= HIDDEN_WS and not EXCLUDED[lc] then
+      local a = classToPin[lc] or byKey["app:" .. lc]
+      if not a then
+        a = { key = "app:" .. lc, id = c.class, class = c.class, windows = {}, focused = false }
+        byKey[a.key] = a
+        rank[a.key] = (c.w < 0 and 99 or c.w)
+        table.insert(abertos, a)
+      end
+      a.rec = a.rec or {}
+      table.insert(a.rec, { addr = c.a, h = c.h })
+      if c.h == 0 then a.focused = true end
+    end
+  end
+  for _, a in pairs(byKey) do
+    if a.rec then
+      table.sort(a.rec, function(x, y) return x.h < y.h end)
+      for _, w in ipairs(a.rec) do table.insert(a.windows, w.addr) end
+      a.rec = nil
+    end
+  end
+  table.sort(abertos, function(x, y)
+    if rank[x.key] ~= rank[y.key] then return rank[x.key] < rank[y.key] end
+    return x.key < y.key
+  end)
+  noctalia.state.set("modelo", { fixados = fixados, abertos = abertos })
+end
+
+-- Campos mínimos: endereço, classe (original e minúscula), workspace, ordem de foco.
+local JQ = '[.[] | select(.mapped and (.class // "") != "") | '
+  .. '{a: .address, class: .class, c: (.class | ascii_downcase), w: .workspace.id, h: (.focusHistoryID // 999)}]'
+
+local function refresh()
+  if busy then pending = true; return end
+  busy = true
+  noctalia.runAsync({ "sh", "-c", "hyprctl clients -j | jq -c '" .. JQ .. "'" }, function(r)
+    busy = false
+    local list = noctalia.json.decode(r.stdout or "")
+    if type(list) == "table" then
+      clients = list
+      publish()
+    end
+    if pending then pending = false; refresh() end
+  end, 2000)
+end
+
+local function findApp(key)
+  local m = noctalia.state.get("modelo") or {}
+  for _, group in ipairs({ m.fixados or {}, m.abertos or {} }) do
+    for _, a in ipairs(group) do
+      if a.key == key then return a end
+    end
+  end
+  return nil
+end
+
+-- Desktop id de uma classe (abrir nova janela, fixar um app aberto); em cache.
+local desktopIds = {}
+local function withDesktopId(class, fn)
+  local lc = string.lower(class)
+  if desktopIds[lc] then fn(desktopIds[lc]); return end
+  noctalia.runAsync({ "bash", DESKTOP_ID, class }, function(r)
+    local id = string.match(r.stdout or "", "^%s*(%S+)") or class
+    desktopIds[lc] = id
+    fn(id)
+  end, 3000)
+end
+
+local function launch(id)
+  noctalia.runAsync({ "uwsm-app", "--", id .. ".desktop" })
+end
+
+local OPS = {}
+
+function OPS.fixar(a)
+  local pinned = string.sub(a.key, 1, 4) == "pin:"
+  if pinned then return end
+  withDesktopId(a.class, function(id)
+    for _, p in ipairs(pins) do
+      if p.id == id then
+        table.insert(p.classes, string.lower(a.class))
+        savePins(); publish(); return
+      end
+    end
+    table.insert(pins, { id = id, classes = { string.lower(a.class) } })
+    savePins(); publish()
+  end)
+end
+
+function OPS.desafixar(a)
+  for i, p in ipairs(pins) do
+    if "pin:" .. p.id == a.key then
+      table.remove(pins, i)
+      savePins(); publish(); return
+    end
+  end
+end
+
+function OPS.novo(a)
+  if string.sub(a.key, 1, 4) == "pin:" then launch(a.id); return end
+  withDesktopId(a.class, launch)
+end
+
+function OPS.fechar(a)
+  for _, addr in ipairs(a.windows or {}) do
+    noctalia.runAsync({ "hyprctl", "dispatch", 'hl.dsp.window.close({ window = "address:' .. addr .. '" })' })
+  end
+end
+
+local function apply(opName, key)
+  local a = findApp(key)
+  local op = OPS[opName]
+  if a and op then op(a); return true end
+  return false
+end
+
+noctalia.state.watch("pedido", function(p)
+  if type(p) ~= "table" or p.n == lastPedido then return end
+  lastPedido = p.n
+  apply(p.op, p.key)
+end)
+
+-- Mesmas operações pela linha de comando (testes, atalhos):
+--   noctalia msg plugin erllan/tarefas:fonte all <fixar|desafixar|novo|fechar> <app:classe|pin:id>
+function onIpc(event, payload)
+  if not apply(event, payload or "") then
+    noctalia.log("tarefas: pedido ignorado: " .. tostring(event) .. " " .. tostring(payload))
+  end
+end
+
+local EVENTS = {
+  openwindow = true, closewindow = true, movewindowv2 = true, activewindowv2 = true,
+  workspacev2 = true, focusedmonv2 = true, configreloaded = true,
+}
+
+local function startStream()
+  if streaming then return end
+  local sig = noctalia.getenv("HYPRLAND_INSTANCE_SIGNATURE")
+  local run = noctalia.getenv("XDG_RUNTIME_DIR")
+  if not sig or not run or not noctalia.commandExists("socat") then return end
+  streaming = true
+  noctalia.runStream("exec socat -u UNIX-CONNECT:" .. run .. "/hypr/" .. sig .. "/.socket2.sock -",
+    function(line)
+      local ev = string.match(line or "", "^(%w+)>>")
+      if ev and EVENTS[ev] then refresh() end
+    end)
+end
+
+-- Rede de segurança: uma leitura a cada 30 s, mesmo sem eventos.
+function update()
+  noctalia.setUpdateInterval(30000)
+  startStream()
+  refresh()
+end
+
+loadPins()
+publish()
+startStream()
+refresh()

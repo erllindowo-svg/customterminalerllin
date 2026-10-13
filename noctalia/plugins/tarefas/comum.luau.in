@@ -1,0 +1,125 @@
+--!nonstrict
+-- Terminal Soviético — tarefas: render comum aos widgets `abertos` e `fixados`.
+-- MODELO: install.sh gera comum.luau (marcadores ITEM e ICON da grade da barra,
+-- definidos em lib/ts-lib.sh). Carregado com require("./comum.luau").
+--
+-- Um bloco por aplicativo, com o ícone real (appIconPath pelo desktop id ou pela
+-- classe):
+--   traço fósforo (primary)   = aplicativo da janela focada
+--   traço oliva (secondary)   = aplicativo em execução (traço largo: 2+ janelas)
+--   sem traço, ícone atenuado = fixado e fechado
+-- Clique esquerdo: em execução -> foca a janela mais recente (cliques seguidos
+-- alternam entre as janelas do app; o foco leva ao workspace dela); fechado ->
+-- abre pelo .desktop (uwsm-app).
+-- Clique direito: mini-menu (painel erllan/tarefas:menu). Ícones clicáveis só
+-- capturam o botão esquerdo; o direito chega ao onRightClick() do widget, e o
+-- onHover de cada ícone diz qual estava sob o ponteiro.
+
+local ITEM, ICON = @ITEM@, @ICON@
+-- Coluna de altura ITEM com o ícone no centro: o traço (2 px + 1 de folga) embaixo
+-- é compensado por um vão igual em cima, para o ícone ficar na linha dos glifos.
+local MARK_H = 2
+local PAD = math.floor((ITEM - ICON) / 2) - MARK_H
+
+local M = {}
+
+-- group: "abertos" | "fixados" (chave em state "modelo"); bar: o barWidget da entrada.
+function M.widget(group, bar)
+  local apps = {}
+  local cycle = {}
+  local hovered = nil
+
+  -- appIconPath é caro (varre temas de ícones): uma busca por app, em cache.
+  local icons = {}
+  local function iconFor(a)
+    local v = icons[a.key]
+    if v == nil then
+      v = noctalia.appIconPath(a.id, ICON)
+      if not v and a.class and a.class ~= a.id then v = noctalia.appIconPath(string.lower(a.class), ICON) end
+      icons[a.key] = v or false
+    end
+    return v or nil
+  end
+
+  local function find(key)
+    for _, a in ipairs(apps) do
+      if a.key == key then return a end
+    end
+    return nil
+  end
+
+  local function activate(key)
+    local a = find(key)
+    if not a then return end
+    if #a.windows == 0 then
+      noctalia.runAsync({ "uwsm-app", "--", a.id .. ".desktop" })
+      return
+    end
+    local i = 1
+    if a.focused and #a.windows > 1 then i = ((cycle[key] or 1) % #a.windows) + 1 end
+    cycle[key] = i
+    noctalia.runAsync({ "hyprctl", "dispatch",
+      'hl.dsp.focus({ window = "address:' .. a.windows[i] .. '" })' })
+  end
+
+  local function render()
+    local items = {}
+    for _, a in ipairs(apps) do
+      local key = a.key
+      local path = iconFor(a)
+      local node = path and ui.image({ path = path, width = ICON, height = ICON, fit = "contain" })
+        or ui.glyph({ name = "app-window", size = ICON, color = "on_surface" })
+      local mark = "#00000000"
+      if a.focused then mark = "primary" elseif #a.windows > 0 then mark = "secondary" end
+      table.insert(items, ui.column({
+        key = key, gap = PAD, align = "center", justify = "center",
+        width = ITEM, height = ITEM,
+        opacity = (#a.windows == 0) and 0.55 or 1.0,
+        onClick = function() activate(key) end,
+        onHover = function(state)
+          if state == "true" then hovered = key elseif hovered == key then hovered = nil end
+        end,
+      }, {
+        ui.box({ width = 1, height = MARK_H, fill = "#00000000" }),
+        node,
+        ui.box({ width = (#a.windows > 1) and 12 or 8, height = MARK_H, fill = mark }),
+      }))
+    end
+    local container = bar.isVertical() and ui.column or ui.row
+    -- Sem gap: cada item tem ITEM de largura, então os ícones já ficam ITEM - ICON (= GAP) apartados.
+    bar.render(container({ gap = 0, align = "center" }, items))
+  end
+
+  local function setModel(m)
+    apps = (type(m) == "table" and m[group]) or {}
+    local alive = {}
+    for _, a in ipairs(apps) do alive[a.key] = true end
+    for k in pairs(cycle) do if not alive[k] then cycle[k] = nil end end
+    render()
+  end
+
+  noctalia.state.watch("modelo", setModel)
+  setModel(noctalia.state.get("modelo"))
+
+  local self = {}
+
+  -- Clique direito: abre o mini-menu para o ícone sob o ponteiro (ou para `key`,
+  -- vindo do IPC: noctalia msg plugin erllan/tarefas:<widget> focused menu <key>).
+  function self.menu(key)
+    key = key or hovered
+    local a = key and find(key)
+    if not a then return end
+    noctalia.state.set("menu", {
+      key = a.key,
+      nome = a.id,
+      fixado = string.sub(a.key, 1, 4) == "pin:",
+      janelas = #a.windows,
+      n = noctalia.nowMs(),
+    })
+    noctalia.togglePanel("erllan/tarefas:menu")
+  end
+
+  return self
+end
+
+return M

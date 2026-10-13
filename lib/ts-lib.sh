@@ -16,7 +16,7 @@ die()  { err "$*"; exit 1; }
 
 # ------------------------------------------------------------------ configuração
 CONF_KEYS=(HIDDEN_WORKSPACE COLLAPSE_CLASSES BAR_NAME WEATHER_ADDRESS KEY_INSPECT KEY_OPS
-           KEY_ARTE FAVORITES BAR_LAUNCHERS GPU_SENSORS)
+           KEY_ARTE FAVORITES GPU_SENSORS)
 
 # Lê VAR="valor" sem executar o arquivo (só chaves conhecidas).
 load_conf() {
@@ -48,12 +48,12 @@ validate_conf() {
   done
   local f
   for f in $FAVORITES; do
-    [[ $f =~ ^[A-Za-z0-9._-]+:[a-z0-9._,-]+$ ]] || die "FAVORITES: item inválido '$f' (desktop-id:classe1,classe2)"
+    [[ $f =~ ^[A-Za-z0-9._-]+:[a-z0-9._,!-]+$ ]] || die "FAVORITES: item inválido '$f' (desktop-id:classe1,classe2)"
   done
 }
 
 # ------------------------------------------------------------------ marcadores
-# Valores derivados que dependem da máquina (lançadores instalados, GPU).
+# Valores derivados que dependem da máquina (GPU) e a grade da barra.
 compute_tokens() {
   T_HOME=$HOME
   T_BIN="$HOME/.local/bin"
@@ -67,17 +67,8 @@ compute_tokens() {
   T_BAR_THICKNESS=26 T_ITEM=22 T_ICON=16 T_GAP=6
   T_CAPSULE_THICKNESS=$(awk -v i="$T_ITEM" -v b="$T_BAR_THICKNESS" 'BEGIN { printf "%.3f", i / b }')
 
-  local launchers=() l
-  for l in $BAR_LAUNCHERS; do
-    case $l in
-      firefox) command -v firefox >/dev/null && launchers+=('"firefox"') ;;
-      osu)     command -v osu-lazer >/dev/null && launchers+=('"osu"') ;;
-      *) die "BAR_LAUNCHERS: lançador desconhecido '$l' (firefox, osu)" ;;
-    esac
-  done
-  local end='["spotify", '
-  (( ${#launchers[@]} )) && end+="$(IFS=,; echo "${launchers[*]}" | sed 's/,/, /g'), "
-  T_BAR_END="$end\"tray\", \"notificacoes\", \"volume\", \"weather\", \"clock\", \"control-center\"]"
+  # Seção da direita: player, fixados (erllan/tarefas:fixados) e utilidades.
+  T_BAR_END='["spotify", "fixados", "tray", "notificacoes", "volume", "weather", "clock", "control-center"]'
 
   local gpu=0
   case $GPU_SENSORS in yes) gpu=1 ;; auto) command -v nvidia-smi >/dev/null && gpu=1 ;; esac
@@ -87,7 +78,7 @@ compute_tokens() {
     T_SENSOR_MEMBERS='["l_cpu", "cpu", "cpu_temp", "l_ram", "ram", "l_net", "net_down", "net_up"]'
   fi
 
-  local pins="" f id classes c list
+  local pins="" f id classes c list l
   for f in $FAVORITES; do
     id=${f%%:*} classes=${f#*:} list=""
     IFS=, read -r -a c <<< "$classes"

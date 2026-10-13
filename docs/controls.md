@@ -22,12 +22,24 @@ pertencem ao projeto, na sessão atual.
 |---|---|
 | Workspace da central (`HIDDEN_WORKSPACE`, padrão 1) | **oculta** |
 | Workspace com janela de classe em `COLLAPSE_CLASSES` (padrão `^firefox$`) | **oculta** |
-| Qualquer outro | **visível**: menu, workspaces, overview, favoritos + apps abertos, CPU/RAM/GPU/NET, inspeção, Spotify, lançadores, bandeja, notificações, volume, clima, relógio, control center |
+| Qualquer outro | **visível**: menu, workspaces, overview, apps abertos · CPU/RAM/GPU/NET, inspeção · Spotify, apps fixados, bandeja, notificações, volume, clima, relógio, control center |
 | Troca de foco no mesmo workspace | nada muda |
 
-Na lista de aplicativos: o traço **fósforo** marca o app focado, o **oliva**
-um app em execução (traço largo = 2+ janelas), e um ícone atenuado sem traço é
-um favorito fechado. Clique: foca (cliques seguidos alternam as janelas) ou abre.
+### Aplicativos (estilo Windows)
+
+* **Esquerda**: apps **abertos** que não estão fixados (fora do workspace da
+  central). **Direita**: apps **fixados**, na ordem em que foram fixados; um
+  fixado aberto fica só à direita.
+* Traço **fósforo** = app focado; **oliva** = em execução (traço largo = 2+
+  janelas); ícone atenuado sem traço = fixado e fechado.
+* **Clique**: foca a janela mais recente, o que leva ao workspace dela; cliques
+  seguidos alternam entre as janelas do app. Fixado fechado: abre o app.
+* **Clique direito**: mini-menu com **Fixar na barra** (à esquerda) ou
+  **Desafixar** (à direita), **Nova janela** e **Fechar janela(s)**.
+* Os fixados ficam em `~/.local/state/noctalia/plugins/data/erllan/tarefas/fixados.json`.
+  `FAVORITES` (`config/terminal-soviet.conf`) é só a semente da primeira
+  execução; apague o arquivo para voltar a ela.
+* Linha de comando: `noctalia msg plugin erllan/tarefas:fonte all <fixar|desafixar|novo|fechar> <app:classe|pin:id>`.
 
 **Vários monitores**: a regra vale para o workspace do **monitor focado**, em
 todas as barras. No Noctalia 5.0.1, ocultar a barra por monitor não funciona.

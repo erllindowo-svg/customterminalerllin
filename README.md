@@ -5,8 +5,8 @@ Configuração pessoal de desktop para o **Omarchy 4** (Hyprland em Lua):
 * uma **central de operações** no workspace 1: btop, fastfetch com uma ilustração
   do arttime, relógio e clima do Rio, e um shell, em verde fósforo sobre grafite;
 * uma **barra única** (Noctalia) que some na central e aparece nos demais
-  workspaces, com os favoritos e os apps abertos (ícones reais), sensores,
-  clima e relógio;
+  workspaces, com os apps abertos à esquerda e os fixados à direita (estilo
+  Windows, ícones reais; fixar/desafixar pelo clique direito), sensores, clima e relógio;
 * um **btop flutuante sob demanda** (`SUPER+M`);
 * a **ilustração** do arttime (arte + frase original, sem relógio), com menu,
   arttime interativo e dois modos de cor (`SUPER+ALT+A`).
@@ -37,7 +37,7 @@ Passo a passo, pré-requisitos e migração desta máquina:
 | `SUPER+CTRL+M` | recompor a central do workspace 1 |
 | `SUPER+SHIFT+SPACE` | mostrar/ocultar a barra manualmente |
 
-Preferências (atalhos, clima, workspace da central, favoritos, lançadores,
+Preferências (atalhos, clima, workspace da central, semente dos fixados,
 sensores de GPU) ficam em [`config/terminal-soviet.conf`](config/terminal-soviet.conf).
 Depois de editar, rode `./install.sh`. Tudo sobre os controles:
 [`docs/controls.md`](docs/controls.md).
