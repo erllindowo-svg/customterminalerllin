@@ -1,6 +1,7 @@
 # Progresso — barra v2
 
 ## Onde parei
+(Também: cherry-pick do fix da espessura da barra, px físicos inteiros — redesenho-barra 102f272, já instalado.)
 Itens 0–7 FEITOS e DOCS FEITAS (decisions D16–D18, controls, file-map,
 noctalia/config/README, README, grupos/README). static 57/0, sandbox 41/0.
 Nada instalado no sistema.
