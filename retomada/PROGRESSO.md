@@ -1,18 +1,34 @@
 # Progresso — barra v2
 
 ## Onde parei
-Item 5, parte 1: bin/soviet-atalhos pronto (avalia hyprland.lua num Lua isolado com hl falso + cruza com hyprctl binds -j + resolve comando → app pelos .desktop). Achado: hyprctl binds -j só mostra dispatcher "__lua" (sem comando) na config Lua. Parte 2: service do tarefas consome e widgets mostram no hover; tooltips dos nativos via install.sh.
+Item 5, parte 2 (plugin) FEITA: service do tarefas roda ~/.local/bin/soviet-atalhos
+no início e em `configreloaded` (state "atalhos"); comum.luau.in troca o tooltip
+do widget (barWidget.setTooltip) no onHover do ícone: "Nome — TECLAS".
+FALTA no item 5: tooltips dos widgets NATIVOS em noctalia/config/20-barra.toml.in
+(linhas com `tooltip = `: menu, overview, inspecao "SUPER+M" fixo, captura, luz
+noturna, cafeína, notificações).
 
 ## Próximo passo exato
-Item 5 (atalho no hover): bin/soviet-atalhos → JSON {chave → "SUPER + SHIFT + B"}
-a partir de `hyprctl binds -j` (exec/arg). Resolver: uwsm-app -- X.desktop → X;
-omarchy-launch-or-focus/soviet-launch… → classe; omarchy-launch-browser → navegador
-padrão (xdg-settings get default-web-browser); xdg-terminal-exec/omarchy-launch-
-terminal → terminal padrão; binário simples → binário. Casar com apps por
-desktop-id, classe e Exec. Service do tarefas roda no início e em
-`configreloaded` → state "atalhos"; widgets: onHover → barWidget.setTooltip.
-Nativos: tooltips do 20-barra.toml.in com @KEY_*@ e atalhos do Omarchy lidos
-pelo install.sh (hyprctl binds na sessão).
+1. lib/ts-lib.sh compute_tokens: `at=$("${ROOT:-.}/bin/soviet-atalhos" 2>/dev/null)`;
+   helper que pega `.cmds["<cmd>"]`, 1º atalho antes de " · ", e gera sufixo
+   " — TECLAS" (vazio se não houver). Marcadores: AT_MENU (omarchy-menu),
+   AT_CAPTURA (omarchy-capture-screenshot), AT_GRAVAR (omarchy-capture-screenrecording),
+   AT_NOTURNA (omarchy-toggle-nightlight), AT_CAFEINA (omarchy-toggle-idle),
+   AT_NOTIF (omarchy-toggle-notification-silencing). Inspeção: usar @KEY_INSPECT@.
+   Passar TS_AT_* no env do render(). Documentar: nativos só mudam com ./install.sh.
+2. Editar os `tooltip = ` do 20-barra.toml.in para usar esses marcadores.
+3. tests/static.sh (bash -n já cobre bin/soviet-*), commit wip.
+4. Item 6 (alça "⠿" na barra: widget erllan/barra:alca → panel-toggle erllan/barra:posicao;
+   dead_zone right já abre o painel de orientação desde a fase 6 anterior).
+5. Item 7 (tabela de plugins: gh api nos catálogos community-plugins/official-plugins,
+   plugin.toml de cada um: plugin_api, dependencies; nada instalado).
+6. DOCS PENDENTES (não feitas ainda, fazer no fim): docs/decisions.md (achados da
+   API, KEY_PIN, Editar barra, Grupos, atalhos via Lua isolado, tooltip preso ao
+   widget, sem arrasto na barra), docs/controls.md (KEY_PIN, clique direito fora de
+   ícone = Editar barra, Grupos, tooltips), docs/file-map.md (soviet-grupos,
+   soviet-atalhos, plugins grupos, editar.luau, grupos.json, fixados.json v2),
+   noctalia/config/README.md, README.md (tabela de atalhos).
+7. Resumo final ao usuário + `git log --oneline redesenho-barra..barra-v2`.
 
 ## Estado do pedido anterior (fases 1–7, branch redesenho-barra)
 | Fase | Estado | Commit |
@@ -33,7 +49,7 @@ Instalado no sistema: tudo acima (a partir do checkout principal, branch redesen
 - [x] 2 KEY_PIN = SUPER+ALT+P + onIpc alternar-fixado + hover + piscar (doc pendente)
 - [x] 3 painel "Editar barra" (abertos/fixados, ordenar, mover) + ordem persistida (não testado ao vivo: exige install)
 - [x] 4 Grupos: classificador + tabela (aguarda aprovação) + painel + edição (grupos.json só após aprovação)
-- [ ] 5 atalhos no hover (hyprctl binds → apps; nativos por marcadores)
+- [~] 5 atalhos no hover: soviet-atalhos + plugin feitos; nativos (20-barra.toml.in) pendentes
 - [ ] 6 arrasto da barra → orientação (verificar; alça ⠿)
 - [ ] 7 avaliação de plugins (tabela)
 - [ ] testes, docs, validate, capturas, resumo final

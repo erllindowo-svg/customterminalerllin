@@ -54,6 +54,19 @@ function M.widget(group, bar)
     return v or nil
   end
 
+  -- Tooltip do widget = o do ícone sob o mouse: "Firefox — SUPER + SHIFT + B".
+  -- A API 5.0.1 só tem tooltip por WIDGET (barWidget.setTooltip; por nó é API 32),
+  -- então o texto acompanha o ícone, mas o balão fica ancorado ao widget.
+  local function tooltip(a)
+    if not a then bar.clearTooltip(); return end
+    local at = noctalia.state.get("atalhos") or {}
+    local nomes, apps = at.nomes or {}, at.apps or {}
+    local id, cl = string.lower(a.id or ""), string.lower(a.class or "")
+    local nome = nomes[id] or nomes[cl] or a.id
+    local teclas = apps[id] or apps[cl]
+    bar.setTooltip(teclas and (nome .. " — " .. teclas) or nome)
+  end
+
   local function find(key)
     for _, a in ipairs(apps) do
       if a.key == key then return a end
@@ -96,7 +109,10 @@ function M.widget(group, bar)
           if state == "true" then hovered = key elseif hovered == key then hovered = nil end
           -- O service usa isto no atalho KEY_PIN (ícone sob o mouse). Uma chave por
           -- widget: a saída de um e a entrada no outro não se atropelam.
-          if hovered ~= antes then noctalia.state.set("hover-" .. group, hovered or "") end
+          if hovered ~= antes then
+            noctalia.state.set("hover-" .. group, hovered or "")
+            tooltip(hovered and find(hovered))
+          end
         end,
       }, {
         ui.box({ width = 1, height = MARK_H, fill = "#00000000" }),

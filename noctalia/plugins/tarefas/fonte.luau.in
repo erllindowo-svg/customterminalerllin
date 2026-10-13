@@ -310,6 +310,20 @@ function onIpc(event, payload)
   end
 end
 
+-- Atalhos de teclado por app (tooltip dos ícones): soviet-atalhos lê a config do
+-- Hyprland; refeito no início e a cada configreloaded. state "atalhos".
+local ATALHOS = noctalia.expandPath("~/.local/bin/soviet-atalhos")
+local lendoAtalhos = false
+local function lerAtalhos()
+  if lendoAtalhos or not noctalia.fileExists(ATALHOS) then return end
+  lendoAtalhos = true
+  noctalia.runAsync({ ATALHOS }, function(r)
+    lendoAtalhos = false
+    local at = noctalia.json.decode(r.stdout or "")
+    if type(at) == "table" then noctalia.state.set("atalhos", at) end
+  end, 15000)
+end
+
 local EVENTS = {
   openwindow = true, closewindow = true, movewindowv2 = true, activewindowv2 = true,
   workspacev2 = true, focusedmonv2 = true, configreloaded = true,
@@ -325,6 +339,7 @@ local function startStream()
     function(line)
       local ev = string.match(line or "", "^(%w+)>>")
       if ev and EVENTS[ev] then refresh() end
+      if ev == "configreloaded" then lerAtalhos() end
     end)
 end
 
@@ -339,3 +354,4 @@ loadPins()
 publish()
 startStream()
 refresh()
+lerAtalhos()
