@@ -1,7 +1,7 @@
 # Progresso — barra v2
 
 ## Onde parei
-Item 2 implementado (conf, instalador, Hyprland, plugin: hover publicado, onIpc alternar-fixado, piscar). Falta só a doc do item 2 (controls/decisions), que faço junto com o item 3.
+Item 3: service pronto (fixados.json esquema 2 com ordemAbertos; OPS.mover). Falta o painel editar.luau, o [[panel]] no plugin.toml e a abertura (clique direito fora de ícone + item no mini-menu).
 
 ## Próximo passo exato
 Item 3: painel "Editar barra" no plugin tarefas (novo [[panel]] "editar",

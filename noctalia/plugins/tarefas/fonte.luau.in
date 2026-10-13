@@ -43,19 +43,34 @@ local function copyPins(list)
   return out
 end
 
-local function loadPins()
-  local raw = PINS_FILE and noctalia.fileExists(PINS_FILE) and noctalia.readFile(PINS_FILE) or nil
-  local decoded = raw and noctalia.json.decode(raw) or nil
-  if type(decoded) == "table" then
-    pins = copyPins(decoded)
-  else
-    pins = copyPins(SEED)
-    if PINS_FILE then noctalia.writeFile(PINS_FILE, noctalia.json.encode(pins)) end
+-- fixados.json, esquema 2: { versao = 2, fixados = [{ id, classes }], ordemAbertos = [classe] }.
+-- O esquema 1 (só a lista de fixados) é lido e regravado como 2.
+-- ordemAbertos: ordem escolhida no painel "Editar barra" para os abertos; classes
+-- fora dela vêm depois, por workspace.
+local ordemAbertos = {}
+
+local function savePins()
+  if PINS_FILE then
+    noctalia.writeFile(PINS_FILE, noctalia.json.encode({ versao = 2, fixados = pins, ordemAbertos = ordemAbertos }))
   end
 end
 
-local function savePins()
-  if PINS_FILE then noctalia.writeFile(PINS_FILE, noctalia.json.encode(pins)) end
+local function loadPins()
+  local raw = PINS_FILE and noctalia.fileExists(PINS_FILE) and noctalia.readFile(PINS_FILE) or nil
+  local decoded = raw and noctalia.json.decode(raw) or nil
+  if type(decoded) == "table" and decoded.versao == 2 then
+    pins = copyPins(decoded.fixados or {})
+    ordemAbertos = {}
+    for _, c in ipairs(decoded.ordemAbertos or {}) do
+      if type(c) == "string" then table.insert(ordemAbertos, string.lower(c)) end
+    end
+  elseif type(decoded) == "table" then
+    pins = copyPins(decoded)   -- esquema 1
+    savePins()
+  else
+    pins = copyPins(SEED)
+    savePins()
+  end
 end
 
 local function publish()
@@ -75,7 +90,7 @@ local function publish()
       if not a then
         a = { key = "app:" .. lc, id = c.class, class = c.class, windows = {}, focused = false }
         byKey[a.key] = a
-        rank[a.key] = (c.w < 0 and 99 or c.w)
+        rank[a.key] = 1000 + (c.w < 0 and 99 or c.w)
         table.insert(abertos, a)
       end
       a.rec = a.rec or {}
@@ -89,6 +104,9 @@ local function publish()
       for _, w in ipairs(a.rec) do table.insert(a.windows, w.addr) end
       a.rec = nil
     end
+  end
+  for i, lc in ipairs(ordemAbertos) do
+    if rank["app:" .. lc] then rank["app:" .. lc] = i end
   end
   table.sort(abertos, function(x, y)
     if rank[x.key] ~= rank[y.key] then return rank[x.key] < rank[y.key] end
@@ -189,18 +207,71 @@ function OPS.fechar(a)
   end
 end
 
-local function apply(opName, key)
+local function apply(opName, key, arg)
   local a = findApp(key)
   local op = OPS[opName]
-  if a and op then op(a); return true end
+  if a and op then op(a, arg); return true end
   return false
 end
 
 noctalia.state.watch("pedido", function(p)
   if type(p) ~= "table" or p.n == lastPedido then return end
   lastPedido = p.n
-  apply(p.op, p.key)
+  apply(p.op, p.key, p.arg)
 end)
+
+local function moveItem(list, from, to)
+  local item = table.remove(list, from)
+  to = math.max(1, math.min(to, #list + 1))
+  table.insert(list, to, item)
+end
+
+-- Painel "Editar barra": arg = "fixados:<pos>" ou "abertos:<pos>" (posição de
+-- inserção, 1 = início, na lista como o painel a mostra).
+--   fixados -> fixados: reordena      abertos -> fixados: fixa na posição
+--   fixados -> abertos: desafixa       abertos -> abertos: reordena (ordemAbertos)
+function OPS.mover(a, arg)
+  local lado, pos = string.match(arg or "", "^(%a+):(%d+)$")
+  pos = tonumber(pos)
+  if not lado or not pos then return end
+  local pinned = string.sub(a.key, 1, 4) == "pin:"
+  if lado == "fixados" then
+    if pinned then
+      for i, p in ipairs(pins) do
+        if "pin:" .. p.id == a.key then
+          moveItem(pins, i, (i < pos) and (pos - 1) or pos)
+          savePins(); publish(); piscar(a.key); return
+        end
+      end
+    else
+      withDesktopId(a.class, function(id)
+        local lc = string.lower(a.class)
+        for _, p in ipairs(pins) do
+          if p.id == id then table.insert(p.classes, lc); savePins(); publish(); piscar("pin:" .. id); return end
+        end
+        table.insert(pins, math.max(1, math.min(pos, #pins + 1)), { id = id, classes = { lc } })
+        savePins(); publish(); piscar("pin:" .. id)
+      end)
+    end
+  elseif lado == "abertos" then
+    if pinned then
+      OPS.desafixar(a)
+      return
+    end
+    -- Ordem atual dos abertos (a que o painel mostra) com o item movido.
+    local m = noctalia.state.get("modelo") or {}
+    local ordem, de = {}, nil
+    for i, x in ipairs(m.abertos or {}) do
+      local lc = string.sub(x.key, 5)
+      table.insert(ordem, lc)
+      if x.key == a.key then de = i end
+    end
+    if not de then return end
+    moveItem(ordem, de, (de < pos) and (pos - 1) or pos)
+    ordemAbertos = ordem
+    savePins(); publish(); piscar(a.key)
+  end
+end
 
 -- Atalho KEY_PIN: o ícone sob o mouse (state hover-abertos/hover-fixados, gravado
 -- pelos widgets no onHover) ou, sem ícone sob o mouse, o app da janela em foco.
