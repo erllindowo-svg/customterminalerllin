@@ -1,12 +1,10 @@
 # Progresso — tema de boot do Limine
 
 ## Onde parei
-Pesquisa feita e plano escrito em `retomada/PLANO.md`. **Aguardando aprovação do
-usuário** (e respostas Q1–Q5 do plano). Nada implementado; nada tocado em /boot.
+Plano APROVADO (respostas em "Decisões"). Implementando: passo 2 (fonte).
 Também na branch: cherry-pick do fix da espessura da barra (`102f272` da redesenho-barra).
 
 ## Próximo passo exato
-1. Se aprovado: instalar dependências de teste (Q1) — o usuário roda o `sudo pacman`.
 2. `scripts/limine-font.py` (PSF+Unicode → raw CP437/CP866) + teste.
 3. `scripts/limine-wallpaper.py` (remoção do Vault Boy/texto, recolor, `--gerar-do-zero`).
 4. `scripts/install-limine-theme.sh` + `tests/fixtures/limine.conf` + `tests/limine.sh`.
@@ -16,7 +14,7 @@ Também na branch: cherry-pick do fix da espessura da barra (`102f272` da redese
 ## Checklist
 - [x] worktree `../customterminalerllin-limine` (branch `limine`, base redesenho-barra) + ESPEC
 - [x] leitura das referências e do sistema (achados em PLANO.md)
-- [ ] aprovação do plano
+- [x] aprovação do plano
 - [ ] fonte · papel de parede · instalador · testes sandbox · VM e capturas · docs
 - [ ] (nunca) --install no /boot real sem aprovação das capturas
 
@@ -30,8 +28,12 @@ Também na branch: cherry-pick do fix da espessura da barra (`102f272` da redese
   Fallout_limine/PHXEGA8.F14 4811ac4edd9c2d5996131ec416b1c50ce8f94cbafea82b70069eedea91622537
   Fallout_limine/background.jpg 5f0d400f0dc6419fbde91c6cd2a82837f6cb3aa05acbd8be6ae603848146fd2f
 
-## Decisões
-(propostas em PLANO.md; registrar aqui as aprovadas)
+## Decisões (aprovadas pelo usuário em 2026-10-13)
+- Plano aprovado. Q1: dependências de teste instaladas (qemu-base, edk2-ovmf, pillow,
+  numpy, terminus-font, shellcheck). Q2: fonte padrão Terminus, `phxega` opcional.
+  Q3: sudo também para LER /boot no --plan/--status. Q4: NÃO forçar
+  interface_resolution. Q5: timeout 15 s.
+- O --install no /boot REAL continua dependendo de o usuário ver as capturas da VM.
 
 ## Decisões em aberto (dependem do usuário)
-Q1–Q5 em PLANO.md.
+- Aprovar as capturas da VM antes do --install real.
