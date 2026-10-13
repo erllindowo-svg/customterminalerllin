@@ -2,7 +2,7 @@
 # Terminal Soviético — visibilidade da barra do Noctalia conforme o workspace.
 #
 #   workspace 1 ativo                         -> bar-hide   (central de operações)
-#   workspace ativo contém janela do Firefox  -> bar-hide   (navegação em tela cheia)
+#   workspace com janela de COLLAPSE_CLASSES  -> bar-hide   (opcional; padrão: nenhuma)
 #   qualquer outro caso                       -> bar-show
 #
 # Orientado a eventos: lê o socket de eventos do Hyprland (.socket2.sock) e só
@@ -26,7 +26,7 @@ TS_CONF="${TS_CONF:-${XDG_CONFIG_HOME:-$HOME/.config}/terminal-soviet/terminal-s
 [[ -r $TS_CONF ]] && source "$TS_CONF"
 BAR="${BAR_NAME:-estacao}"                    # barra em ~/.config/noctalia/20-barra.toml
 HIDDEN_WORKSPACE="${HIDDEN_WORKSPACE:-1}"      # workspace da central de operações
-COLLAPSE_CLASSES="${COLLAPSE_CLASSES-^firefox$}" # classes que colapsam a barra (vazio = nenhuma)
+COLLAPSE_CLASSES="${COLLAPSE_CLASSES-}"        # classes que colapsam a barra (vazio = nenhuma)
 
 log() { printf '%s\n' "$*" >&2; }
 
@@ -41,7 +41,7 @@ collapse_windows_on() {
     '[.[] | select(.workspace.id == $ws and (.class | test($re)))] | length'
 }
 
-# Estado desejado e motivo ("hide central", "hide firefox", "show").
+# Estado desejado e motivo ("hide central", "hide colapsar", "show").
 desired_for() {
   if [[ $1 == "$HIDDEN_WORKSPACE" ]]; then echo "hide central"
   elif [[ -n $COLLAPSE_CLASSES ]] && (( $(collapse_windows_on "$1" || echo 0) > 0 )); then echo "hide colapsar"

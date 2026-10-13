@@ -21,7 +21,7 @@ pertencem ao projeto, na sessão atual.
 | Situação | Barra |
 |---|---|
 | Workspace da central (`HIDDEN_WORKSPACE`, padrão 1) | **oculta** |
-| Workspace com janela de classe em `COLLAPSE_CLASSES` (padrão `^firefox$`) | **oculta** |
+| Workspace com janela de classe em `COLLAPSE_CLASSES` (padrão: vazio, nenhuma; ex.: `^firefox$`) | **oculta** |
 | Qualquer outro | **visível**: menu, workspaces, overview, apps abertos · ações · Spotify, apps fixados, bandeja, notificações, volume, clima, relógio, control center |
 | Troca de foco no mesmo workspace | nada muda |
 

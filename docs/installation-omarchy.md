@@ -28,7 +28,7 @@ aponta os que faltam):
 
 ```bash
 omarchy pkg add noctalia zsh socat jq fastfetch playerctl fzf git
-# opcionais: firefox (lançador da barra), nvidia-utils (sensores de GPU)
+# opcionais: firefox e osu-lazer (fixados na barra por padrão)
 # opcional, AUR: omarchy pkg aur add osu-lazer-bin
 ```
 
@@ -164,7 +164,7 @@ Visual e controles (detalhes em `docs/controls.md`):
 |---|---|
 | Workspace 1 | 4 painéis (btop, sistema + ilustração, relógio/clima, shell); **sem barra** |
 | Workspace 2 | barra no topo: favoritos com ícones reais, CPU/RAM/(GPU)/NET, clima, relógio |
-| Workspace com Firefox | barra oculta (`COLLAPSE_CLASSES`) |
+| Workspace com Firefox | barra visível (só oculta se a classe estiver em `COLLAPSE_CLASSES`) |
 | `SUPER+M` | btop flutuante no workspace atual; de novo, fecha |
 | `SUPER+ALT+A` | menu da ilustração; `Enter` abre o arttime; `c` → Cores da ilustração |
 | `SUPER+CTRL+M` | recompõe a central |

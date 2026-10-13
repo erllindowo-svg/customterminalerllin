@@ -30,7 +30,10 @@ time_format = "{:%H:%M}"
 
 [shell.animation]
 enabled = true
-speed = 1.6                                # animações curtas, só funcionais
+# 1.0 = durações padrão. É a única forma de suavizar o hide/show da barra no
+# 5.0.1: o slide do bar-hide/bar-show usa Style::animNormal (200 ms) × speed, sem
+# ajuste por barra (era 1.6 → 125 ms, brusco). Vale para todos os painéis.
+speed = 1.0
 
 [shell.panel]
 shadow = false

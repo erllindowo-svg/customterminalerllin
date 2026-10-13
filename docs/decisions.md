@@ -61,6 +61,13 @@ Cada item traz o contexto, a escolha, as alternativas descartadas e o limite con
 `soviet-bar-sync` lê o socket2 do Hyprland e envia `bar-hide`/`bar-show`
 explícitos só quando o estado desejado muda. O hook `started` reaplica o
 estado se o Noctalia reiniciar. Sem polling; não há como dessincronizar.
+
+Transição: o Noctalia 5.0.1 já anima o `bar-hide/bar-show` (slide de
+`Style::animNormal` = 200 ms × `shell.animation.speed`, `EaseInQuad` ao
+ocultar, `EaseOutCubic` ao mostrar; `src/shell/bar/bar.cpp`). Não há duração
+nem curva por barra, só a velocidade global. Ela era 1.6 (125 ms) e passou a
+1.0. O espaço reservado é liberado no início do hide, e o Hyprland anima o
+reajuste das janelas. O Firefox mostra a barra (`COLLAPSE_CLASSES` vazio).
 **Limite**: com vários monitores, a barra segue o monitor focado (D10).
 
 ## D6. Plugin próprio de tarefas em vez do taskbar nativo
