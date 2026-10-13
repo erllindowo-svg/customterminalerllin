@@ -96,6 +96,30 @@ compute_tokens() {
     pins+="  { id = \"$id\", classes = { ${list%, } } },"$'\n'
   done
   T_PINNED_LUA=${pins%$'\n'}
+
+  # Atalhos nos tooltips dos widgets nativos ("Luz noturna — SUPER + CTRL + N"),
+  # lidos dos binds ativos por bin/soviet-atalhos. Ficam fixos no TOML: mudar um
+  # atalho só aparece aqui depois de rodar ./install.sh de novo (os ícones de apps
+  # do plugin de tarefas, ao contrário, releem a cada `configreloaded`).
+  local at
+  at=$("${ROOT:-.}/bin/soviet-atalhos" 2>/dev/null) || at=""
+  T_AT_MENU=$(atalho_de "$at" "omarchy-menu toggle")
+  T_AT_CAPTURA=$(atalho_de "$at" "omarchy-capture-screenshot")
+  T_AT_GRAVAR=$(atalho_de "$at" "omarchy-capture-screenrecording")
+  T_AT_NOTURNA=$(atalho_de "$at" "omarchy-toggle-nightlight")
+  T_AT_CAFEINA=$(atalho_de "$at" "omarchy-toggle-idle")
+  T_AT_NOTIF=$(atalho_de "$at" "omarchy-shell notifications showHistory")
+  T_AT_SILENCIO=$(atalho_de "$at" "omarchy-toggle-notification-silencing")
+}
+
+# atalho_de <json do soviet-atalhos> <comando>: " — TECLAS" do primeiro atalho do
+# comando exato (linhas) ou, sem ele, do executável (cmds); vazio se não houver.
+atalho_de() {
+  local k
+  k=$(jq -r --arg c "$2" '(.linhas[$c] // .cmds[$c | split(" ")[0]] // "") | split(" · ")[0]' \
+        <<< "${1:-{\}}" 2>/dev/null) || k=""
+  [[ -n $k ]] && printf ' — %s' "$k"
+  return 0
 }
 
 # Caminho do <id>.desktop nos diretórios XDG de aplicativos (usuário primeiro), ou nada.
@@ -137,6 +161,9 @@ render() {
     TS_HIDDEN_WORKSPACE="$HIDDEN_WORKSPACE" TS_PINNED_LUA="$T_PINNED_LUA" \
     TS_BAR_THICKNESS="$T_BAR_THICKNESS" TS_ITEM="$T_ITEM" TS_ICON="$T_ICON" TS_GAP="$T_GAP" \
     TS_CAPSULE_THICKNESS="$T_CAPSULE_THICKNESS" TS_IDLE_CENTRAL="$T_IDLE_CENTRAL" \
+    TS_AT_MENU="$T_AT_MENU" TS_AT_CAPTURA="$T_AT_CAPTURA" TS_AT_GRAVAR="$T_AT_GRAVAR" \
+    TS_AT_NOTURNA="$T_AT_NOTURNA" TS_AT_CAFEINA="$T_AT_CAFEINA" TS_AT_NOTIF="$T_AT_NOTIF" \
+    TS_AT_SILENCIO="$T_AT_SILENCIO" \
     perl -pe 's/@([A-Z_]+)@/exists $ENV{"TS_$1"} ? $ENV{"TS_$1"} : "\@$1\@"/ge' "$src" > "$dst"
     if grep -qE '@[A-Z][A-Z_]+@' "$dst"; then
       die "marcador sem valor em $src: $(grep -oE '@[A-Z][A-Z_]+@' "$dst" | sort -u | tr '\n' ' ')"

@@ -15,13 +15,16 @@
 #
 # Saída (JSON): { "apps":  { "<desktop-id ou classe, minúsculas>": "TECLAS" },
 #                 "cmds":  { "<executável>": "TECLAS" },
+#                 "linhas": { "<comando completo, espaços normalizados>": "TECLAS" },
 #                 "nomes": { "<desktop-id ou classe, minúsculas>": "Nome legível" } }
+# "linhas" separa comandos com argumentos ("omarchy-menu toggle" × "omarchy-menu
+# toggle apps"); os widgets nativos da barra (install.sh) procuram ali primeiro.
 # Vários atalhos para o mesmo alvo saem juntos: "SUPER + RETURN · SUPER + ALT + RETURN".
 # Uso: soviet-atalhos
 set -uo pipefail
 HYPR_MAIN="${XDG_CONFIG_HOME:-$HOME/.config}/hypr/hyprland.lua"
 OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
-VAZIO='{"apps":{},"cmds":{},"nomes":{}}'
+VAZIO='{"apps":{},"cmds":{},"linhas":{},"nomes":{}}'
 [[ -r $HYPR_MAIN ]] || { echo "$VAZIO"; exit 0; }
 command -v lua >/dev/null && command -v hyprctl >/dev/null || { echo "$VAZIO"; exit 0; }
 
@@ -113,7 +116,7 @@ sub alvo {
   return undef;
 }
 
-my (%apps, %cmds);
+my (%apps, %cmds, %linhas);
 sub junta { my ($h, $k, $v) = @_; return if !defined $k || $k eq ''; $h->{$k} = $h->{$k} ? ($h->{$k} =~ /\Q$v\E/ ? $h->{$k} : "$h->{$k} · $v") : $v }
 for my $l (split /\n/, $tsv) {
   my ($keys, $desc, $cmd) = split /\t/, $l, 3;
@@ -121,6 +124,8 @@ for my $l (split /\n/, $tsv) {
   my ($m, $key) = (0, '');
   for my $p (map { uc } split /\s*\+\s*/, $keys) { if (exists $MASK{$p}) { $m |= $MASK{$p} } else { $key = $p } }
   next unless $ativo{ join "\x1f", $m, $key, $desc };
+  # Nomes de tecla do xkb que leem mal no tooltip.
+  $keys =~ s/\bcomma\b/,/gi; $keys =~ s/\bperiod\b/./gi; $keys =~ s/\bslash\b/\//gi;
   my $a = alvo($cmd);
   if (defined $a) {
     junta(\%apps, lc $a, $keys);
@@ -128,6 +133,7 @@ for my $l (split /\n/, $tsv) {
   }
   my ($bin) = $cmd =~ /^\s*"?([^"\s]+)/;
   $bin = ($bin // '') =~ s{.*/}{}r;
+  junta(\%linhas, join(' ', split ' ', $cmd), $keys);
   junta(\%cmds, $bin, $keys) unless $bin =~ /^hl\.dsp|:$|^(uwsm-app|setsid|env|exec|pkill|function)$/;
 }
 # Nomes legíveis (Name=) por desktop-id e classe, para o tooltip sem atalho.
@@ -137,5 +143,5 @@ for my $a (@apps) {
   $nomes{lc $a->{id}} //= $a->{nome};
   $nomes{$a->{classe}} //= $a->{nome} if $a->{classe} ne '';
 }
-print JSON::PP->new->canonical->encode({ apps => \%apps, cmds => \%cmds, nomes => \%nomes }), "\n";
+print JSON::PP->new->canonical->encode({ apps => \%apps, cmds => \%cmds, linhas => \%linhas, nomes => \%nomes }), "\n";
 PERL

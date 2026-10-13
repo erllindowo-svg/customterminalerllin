@@ -83,7 +83,7 @@ right = "panel-toggle erllan/barra:posicao"
 type = "custom_button"
 glyph = "star-filled"       # estrela (☭ não existe na fonte de ícones Tabler)
 label = ""
-tooltip = "Menu Omarchy  (dir.: launcher do Noctalia)"
+tooltip = "Menu Omarchy@AT_MENU@  (dir.: launcher do Noctalia)"
 icon_color = "primary"
 [widget.menu.actions]
 left = "exec omarchy-menu toggle"
@@ -159,7 +159,7 @@ left = "panel-toggle control-center weather"
 [widget.inspecao]
 type = "custom_button"
 glyph = "activity-heartbeat"
-tooltip = "Inspeção: btop flutuante (SUPER+M)"
+tooltip = "Inspeção: btop flutuante — @KEY_INSPECT@"
 icon_color = "primary"
 [widget.inspecao.actions]
 left = "exec @BIN@/soviet-inspect"
@@ -180,7 +180,7 @@ middle = "none"
 [widget.captura]
 type = "custom_button"
 glyph = "screenshot"
-tooltip = "Captura de tela  (dir.: gravar/parar gravação)"
+tooltip = "Captura de tela@AT_CAPTURA@  (dir.: gravar/parar gravação@AT_GRAVAR@)"
 [widget.captura.actions]
 left = "exec omarchy-capture-screenshot"
 right = "exec omarchy-capture-screenrecording"
@@ -190,7 +190,7 @@ middle = "none"
 [widget.luz_noturna]
 type = "custom_button"
 glyph = "moon"
-tooltip = "Luz noturna (liga/desliga)"
+tooltip = "Luz noturna (liga/desliga)@AT_NOTURNA@"
 [widget.luz_noturna.actions]
 left = "exec omarchy-toggle-nightlight"
 middle = "none"
@@ -199,7 +199,7 @@ middle = "none"
 [widget.cafeina]
 type = "custom_button"
 glyph = "coffee"
-tooltip = "Cafeína: manter acordado (liga/desliga)"
+tooltip = "Cafeína: manter acordado (liga/desliga)@AT_CAFEINA@"
 [widget.cafeina.actions]
 left = "exec omarchy-toggle-idle"
 middle = "none"
@@ -228,7 +228,7 @@ type = "tray"
 [widget.notificacoes]
 type = "custom_button"
 glyph = "bell"
-tooltip = "Notificações: histórico  (dir.: não perturbe)"
+tooltip = "Notificações: histórico@AT_NOTIF@  (dir.: não perturbe@AT_SILENCIO@)"
 [widget.notificacoes.actions]
 left = "exec omarchy-shell notifications showHistory"
 right = "exec omarchy-toggle-notification-silencing"
