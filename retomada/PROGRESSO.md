@@ -1,11 +1,11 @@
 # Progresso — tema de boot do Limine
 
 ## Onde parei
-Plano APROVADO (respostas em "Decisões"). Implementando: passo 2 (fonte).
+Plano APROVADO (respostas em "Decisões"). Implementando: passo 3 (papel de parede).
 Também na branch: cherry-pick do fix da espessura da barra (`102f272` da redesenho-barra).
 
 ## Próximo passo exato
-2. `scripts/limine-font.py` (PSF+Unicode → raw CP437/CP866) + teste.
+2. (FEITO) scripts/limine-font.py: ter-i14n → CP437 0 ausentes; ter-k14n+ter-i14n → CP866 8 ausentes.
 3. `scripts/limine-wallpaper.py` (remoção do Vault Boy/texto, recolor, `--gerar-do-zero`).
 4. `scripts/install-limine-theme.sh` + `tests/fixtures/limine.conf` + `tests/limine.sh`.
 5. `tests/vm-limine.sh` (QEMU/OVMF/vvfat) → capturas das 3 variantes → mostrar.
