@@ -1,14 +1,18 @@
 # Progresso — barra v2
 
 ## Onde parei
-Item 2: KEY_PIN feito no conf/ts-lib/install.sh/hypr/testes. Falta o lado do plugin (onIpc alternar-fixado, hover publicado, piscar).
+Item 2 implementado (conf, instalador, Hyprland, plugin: hover publicado, onIpc alternar-fixado, piscar). Falta só a doc do item 2 (controls/decisions), que faço junto com o item 3.
 
 ## Próximo passo exato
-Item 2, plugin: em noctalia/plugins/tarefas/comum.luau.in publicar
-state "hover-<grupo>" (key ou "") no onHover; em fonte.luau.in, onIpc
-"alternar-fixado": key = hover-abertos/hover-fixados ou app da janela focada
-(clients com h == 0); fixar/desafixar; state "piscar" {key, n}; widgets
-realçam o item ~0,7 s (runAsync sleep como timer).
+Item 3: painel "Editar barra" no plugin tarefas (novo [[panel]] "editar",
+editar.luau): duas listas (Abertos, Fixados) com ui.dragSource por ícone e
+ui.dropZone de inserção entre ícones (expandOnDrag/hitSlop); onDrop(payload=key,
+value="fixados|<pos>" ou "abertos|<pos>") → state "pedido" {op="mover", key, arg}.
+Service: OPS.mover (reordenar fixados; abertos→fixados = fixar na posição;
+fixados→abertos = desafixar; ordem dos abertos persistida em ordemAbertos).
+fixados.json passa a {versao=2, fixados=[...], ordemAbertos=[...]} (ler o v1 = array).
+Abrir: clique direito fora de ícone (widget onRightClick sem hover) + item
+"Editar barra…" no mini-menu.
 
 ## Estado do pedido anterior (fases 1–7, branch redesenho-barra)
 | Fase | Estado | Commit |
@@ -26,7 +30,7 @@ Instalado no sistema: tudo acima (a partir do checkout principal, branch redesen
 ## Checklist deste pedido
 - [x] 0 worktree + retomada/
 - [x] 1 limites da API (achados abaixo; falta registrar em docs/decisions.md junto dos itens)
-- [ ] 2 KEY_PIN (conferir livre) + onIpc + hover + piscar
+- [x] 2 KEY_PIN = SUPER+ALT+P + onIpc alternar-fixado + hover + piscar (doc pendente)
 - [ ] 3 painel "Editar barra" (abertos/fixados, ordenar, mover) + ordem persistida
 - [ ] 4 Grupos: classificador + tabela p/ aprovação + painel + edição + grupos.json
 - [ ] 5 atalhos no hover (hyprctl binds → apps; nativos por marcadores)

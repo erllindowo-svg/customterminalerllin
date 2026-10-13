@@ -141,6 +141,10 @@ local function launch(id)
   noctalia.runAsync({ "uwsm-app", "--", id .. ".desktop" })
 end
 
+local function piscar(key)
+  noctalia.state.set("piscar", { key = key, n = noctalia.nowMs() })
+end
+
 local OPS = {}
 
 function OPS.fixar(a)
@@ -150,11 +154,11 @@ function OPS.fixar(a)
     for _, p in ipairs(pins) do
       if p.id == id then
         table.insert(p.classes, string.lower(a.class))
-        savePins(); publish(); return
+        savePins(); publish(); piscar("pin:" .. id); return
       end
     end
     table.insert(pins, { id = id, classes = { string.lower(a.class) } })
-    savePins(); publish()
+    savePins(); publish(); piscar("pin:" .. id)
   end)
 end
 
@@ -162,7 +166,14 @@ function OPS.desafixar(a)
   for i, p in ipairs(pins) do
     if "pin:" .. p.id == a.key then
       table.remove(pins, i)
-      savePins(); publish(); return
+      savePins(); publish()
+      -- Aberto, ele reaparece à esquerda com a chave da classe da janela.
+      for _, c in ipairs(clients) do
+        for _, pc in ipairs(p.classes) do
+          if c.c == pc then piscar("app:" .. c.c); return end
+        end
+      end
+      return
     end
   end
 end
@@ -191,9 +202,38 @@ noctalia.state.watch("pedido", function(p)
   apply(p.op, p.key)
 end)
 
+-- Atalho KEY_PIN: o ícone sob o mouse (state hover-abertos/hover-fixados, gravado
+-- pelos widgets no onHover) ou, sem ícone sob o mouse, o app da janela em foco.
+function OPS.alternar()
+  local key = nil
+  for _, g in ipairs({ "hover-fixados", "hover-abertos" }) do
+    local h = noctalia.state.get(g)
+    if type(h) == "string" and h ~= "" then key = h; break end
+  end
+  if not key then
+    for _, c in ipairs(clients) do
+      if c.h == 0 then
+        if c.w == HIDDEN_WS or EXCLUDED[c.c] then return end
+        local a = nil
+        local m = noctalia.state.get("modelo") or {}
+        for _, f in ipairs(m.fixados or {}) do
+          for _, w in ipairs(f.windows or {}) do if w == c.a then a = f end end
+        end
+        key = a and a.key or ("app:" .. c.c)
+        break
+      end
+    end
+  end
+  local a = key and findApp(key)
+  if not a then return end
+  if string.sub(a.key, 1, 4) == "pin:" then OPS.desafixar(a) else OPS.fixar(a) end
+end
+
 -- Mesmas operações pela linha de comando (testes, atalhos):
 --   noctalia msg plugin erllan/tarefas:fonte all <fixar|desafixar|novo|fechar> <app:classe|pin:id>
+--   noctalia msg plugin erllan/tarefas:fonte all alternar-fixado      (atalho KEY_PIN)
 function onIpc(event, payload)
+  if event == "alternar-fixado" then OPS.alternar(); return end
   if not apply(event, payload or "") then
     noctalia.log("tarefas: pedido ignorado: " .. tostring(event) .. " " .. tostring(payload))
   end

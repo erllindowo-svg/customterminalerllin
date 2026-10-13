@@ -39,6 +39,7 @@ function M.widget(group, bar)
   local apps = {}
   local cycle = {}
   local hovered = nil
+  local piscando = nil   -- key realçada por ~0,7 s depois de fixar/desafixar (KEY_PIN)
 
   -- appIconPath é caro (varre temas de ícones): uma busca por app, em cache.
   local icons = {}
@@ -85,10 +86,16 @@ function M.widget(group, bar)
       table.insert(items, ui.column({
         key = key, gap = PAD, align = "center", justify = "center",
         width = ITEM, height = ITEM,
-        opacity = (#a.windows == 0) and 0.55 or 1.0,
+        -- Transparente explícito: o reconciliador mantém props ausentes de um render ao outro.
+        fill = (piscando == key) and "primary/0.35" or "#00000000",
+        opacity = (#a.windows == 0 and piscando ~= key) and 0.55 or 1.0,
         onClick = function() activate(key) end,
         onHover = function(state)
+          local antes = hovered
           if state == "true" then hovered = key elseif hovered == key then hovered = nil end
+          -- O service usa isto no atalho KEY_PIN (ícone sob o mouse). Uma chave por
+          -- widget: a saída de um e a entrada no outro não se atropelam.
+          if hovered ~= antes then noctalia.state.set("hover-" .. group, hovered or "") end
         end,
       }, {
         ui.box({ width = 1, height = MARK_H, fill = "#00000000" }),
@@ -110,6 +117,19 @@ function M.widget(group, bar)
   end
 
   noctalia.state.watch("modelo", setModel)
+
+  -- Retorno visual do KEY_PIN: o ícone que mudou de lado pisca no lugar novo.
+  local ultimoPiscar = nil
+  noctalia.state.watch("piscar", function(p)
+    if type(p) ~= "table" or p.n == ultimoPiscar then return end
+    ultimoPiscar = p.n
+    if not find(p.key) then return end
+    piscando = p.key
+    render()
+    noctalia.runAsync({ "sleep", "0.7" }, function()
+      if piscando == p.key then piscando = nil; render() end
+    end, 2000)
+  end)
   setModel(noctalia.state.get("modelo"))
 
   local self = {}
