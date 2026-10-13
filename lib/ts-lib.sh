@@ -16,7 +16,8 @@ die()  { err "$*"; exit 1; }
 
 # ------------------------------------------------------------------ configuração
 CONF_KEYS=(HIDDEN_WORKSPACE COLLAPSE_CLASSES BAR_NAME WEATHER_ADDRESS KEY_INSPECT KEY_OPS
-           KEY_ARTE FAVORITES GAME_DESKTOP)
+           KEY_ARTE FAVORITES GAME_DESKTOP
+           LIMINE_THEME LIMINE_ORIGEM LIMINE_FONTE LIMINE_RESOLUCAO LIMINE_TITULO LIMINE_TIMEOUT)
 
 # Lê VAR="valor" sem executar o arquivo (só chaves conhecidas).
 load_conf() {
@@ -46,6 +47,12 @@ validate_conf() {
     [[ ${!k} =~ ^(SUPER|SHIFT|CTRL|ALT)( \+ (SUPER|SHIFT|CTRL|ALT))*( \+ [A-Z0-9]+)$ ]] \
       || die "$k inválido: '${!k}' (ex.: \"SUPER + ALT + A\")"
   done
+  [[ $LIMINE_THEME =~ ^(fosforo|ambar|fallout)$ ]] || die "LIMINE_THEME: fosforo, ambar ou fallout"
+  [[ $LIMINE_ORIGEM =~ ^(arte|zero)$ ]] || die "LIMINE_ORIGEM: arte ou zero"
+  [[ $LIMINE_FONTE =~ ^(terminus|phxega)$ ]] || die "LIMINE_FONTE: terminus ou phxega"
+  [[ $LIMINE_RESOLUCAO =~ ^[1-9][0-9]{2,3}x[1-9][0-9]{2,3}$ ]] || die "LIMINE_RESOLUCAO: LxA, ex. 1920x1080"
+  [[ -z $(printf '%s' "$LIMINE_TITULO" | LC_ALL=C tr -d ' -~') ]] || die "LIMINE_TITULO: só ASCII (a fonte do boot é CP437)"
+  [[ $LIMINE_TIMEOUT =~ ^[0-9]{1,3}$ ]] || die "LIMINE_TIMEOUT: segundos (0-999)"
   local f
   for f in $FAVORITES; do
     [[ $f =~ ^[A-Za-z0-9._-]+:[a-z0-9._,!-]+$ ]] || die "FAVORITES: item inválido '$f' (desktop-id:classe1,classe2)"

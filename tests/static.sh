@@ -15,11 +15,26 @@ for f in install.sh lib/*.sh bin/soviet-* scripts/*.sh migrate/*.sh tests/*.sh \
   check "bash -n $f" bash -n "$f"
 done
 check "perl -c cores-tema.pl" perl -c share/terminal-soviet/arte/cores-tema.pl
+for f in scripts/*.py; do
+  check "python (sintaxe) $f" python3 -I -c "import ast, sys; ast.parse(open(sys.argv[1]).read())" "$f"
+done
 if command -v shellcheck >/dev/null; then
   check "shellcheck (erros)" shellcheck -S error install.sh lib/*.sh bin/soviet-* scripts/*.sh migrate/*.sh
 else
   skip "shellcheck" "não instalado (pacote shellcheck)"
 fi
+
+section "Tema de boot: escrita só no /boot e no backup"
+# Toda escrita privilegiada (root cp/mv/rm/tee/install/dd/sed -i) do instalador
+# do Limine tem como destino $BOOT_DIR ou $CONF (= $BOOT_DIR/limine.conf); as
+# outras escritas são do usuário (cache, estado, temporário).
+check "install-limine-theme.sh: root só escreve em \$BOOT_DIR/\$CONF" bash -c '
+  ruins=$(grep -nE "root +(cp|mv|rm|tee|install|dd|sed|ln|touch|mkdir|chmod)\b" scripts/install-limine-theme.sh \
+          | grep -vE "\"(\\\$BOOT_DIR|\\\$CONF)[^\"]*\" *$")
+  [[ -z $ruins ]] || { echo "$ruins"; exit 1; }'
+check "install-limine-theme.sh: sem sudo direto (só pela função root)" \
+  bash -c '! grep -nE "^[^#]*\bsudo\b" scripts/install-limine-theme.sh | grep -vE "SUDO|sudo:|sem sudo|TS_SUDO"'
+check "install.sh não toca em /boot nem usa sudo" bash -c '! grep -nE "/boot|\bsudo\b" install.sh lib/ts-lib.sh | grep -v "^[^:]*:[0-9]*: *#"'
 
 section "Formatos de dados"
 for f in noctalia/config/palettes/*.json omarchy/plugins/*/manifest.json noctalia/plugins/*/translations/*.json; do

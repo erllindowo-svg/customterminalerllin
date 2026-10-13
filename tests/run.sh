@@ -12,6 +12,7 @@ rc=0
 run() { echo "### $*" | tee -a "$OUT"; "$@" 2>&1 | sed 's/\x1b\[[0-9;]*m//g' | tee -a "$OUT"; (( PIPESTATUS[0] == 0 )) || rc=1; }
 run tests/static.sh
 run tests/sandbox.sh
+run tests/limine.sh
 case ${1:-} in
   --live) run tests/live.sh ;;
   --disruptive) run tests/live.sh --disruptive ;;

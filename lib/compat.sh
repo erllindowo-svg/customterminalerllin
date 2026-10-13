@@ -119,3 +119,24 @@ check_integration() {
         "noctalia --help 2>&1 | grep -q 'msg'"
   return $bad
 }
+
+# ------------------------------------------------------------ tema de boot (Limine)
+# Usado só por scripts/install-limine-theme.sh (o install.sh não toca em /boot).
+# Série aceita do Limine: o formato das chaves (term_*, wallpaper com #hash,
+# interface_help_color_bright) foi conferido no CONFIG.md da v12; fora dela, PARA.
+LIMINE_VERIFIED="12.8.0"
+LIMINE_SERIES="12."
+
+# Ativos de terceiros, por commit fixo e SHA-256 (nunca versionados; ver THIRD_PARTY.md).
+#   arte: tela CRT do fallout-grub-theme (Vault Boy/RobCo: Bethesda; o gerador remove)
+LIMINE_ARTE_URL="https://raw.githubusercontent.com/shvchk/fallout-grub-theme/b441e25a6d115614dc00ee6d11355d019a4969bf/background.png"
+LIMINE_ARTE_SHA256="224e4ff6ae09c54cda9b8519494eb5d2e87526761da6310444d5c4397ccb3906"
+#   fonte opcional (LIMINE_FONTE=phxega): licença não declarada pelo upstream
+LIMINE_PHXEGA_URL="https://raw.githubusercontent.com/Neptune3013/fallout-limine-theme/9a777b932de07dce60e58b2a1162b7d41ecfd2e9/Fallout_limine/PHXEGA8.F14"
+LIMINE_PHXEGA_SHA256="4811ac4edd9c2d5996131ec416b1c50ce8f94cbafea82b70069eedea91622537"
+#   fonte padrão: pacote do sistema (terminus-font, SIL OFL 1.1), variante IBM-437
+LIMINE_TERMINUS_PSF="/usr/share/kbd/consolefonts/ter-i14n.psf.gz"
+
+# Configurações que o Limine lê ANTES de /boot/limine.conf (omarchy-upgrade-to-quattro,
+# remove_legacy_limine_configs). Se existir alguma, o tema não teria efeito.
+LIMINE_LEGADAS=(EFI/arch-limine/limine.conf EFI/limine/limine.conf EFI/BOOT/limine.conf limine/limine.conf)

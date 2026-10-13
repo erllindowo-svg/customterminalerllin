@@ -1,13 +1,13 @@
 # Progresso — tema de boot do Limine
 
 ## Onde parei
-Plano APROVADO (respostas em "Decisões"). Implementando: passo 4 (instalador).
+Plano APROVADO (respostas em "Decisões"). Implementando: passo 5 (VM QEMU/OVMF e capturas).
 Também na branch: cherry-pick do fix da espessura da barra (`102f272` da redesenho-barra).
 
 ## Próximo passo exato
 2. (FEITO) scripts/limine-font.py: ter-i14n → CP437 0 ausentes; ter-k14n+ter-i14n → CP866 8 ausentes.
 3. (FEITO) scripts/limine-wallpaper.py: resíduo ≤ 4/255 nas caixas, 0 px alterados fora (moldura intacta).
-4. `scripts/install-limine-theme.sh` + `tests/fixtures/limine.conf` + `tests/limine.sh`.
+4. (FEITO) install-limine-theme.sh + fixture + tests/limine.sh (50/0) + static (escrita só em $BOOT_DIR). limine-update/snapper-sync só rodam se TS_BOOT_DIR == ESP_PATH do sistema.
 5. `tests/vm-limine.sh` (QEMU/OVMF/vvfat) → capturas das 3 variantes → mostrar.
 6. Docs (boot-theme.md, decisions D19, file-map, stack, THIRD_PARTY, README) e static.sh.
 
