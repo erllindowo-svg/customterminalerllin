@@ -1,13 +1,14 @@
 # Progresso — barra v2
 
 ## Onde parei
-Item 1 pesquisado (achados abaixo). Começando o item 2 (KEY_PIN).
+Item 2: KEY_PIN feito no conf/ts-lib/install.sh/hypr/testes. Falta o lado do plugin (onIpc alternar-fixado, hover publicado, piscar).
 
 ## Próximo passo exato
-Item 2: conferir se SUPER + ALT + F está livre (hyprctl binds -j, mesmo
-critério do install.sh: check_keys em install.sh/lib), adicionar KEY_PIN ao
-conf/ts-lib (CONF_KEYS, validate, render TS_KEY_PIN) e o bind em
-hypr/terminal_soviet.lua.in → `noctalia msg plugin erllan/tarefas:fonte all alternar-fixado`.
+Item 2, plugin: em noctalia/plugins/tarefas/comum.luau.in publicar
+state "hover-<grupo>" (key ou "") no onHover; em fonte.luau.in, onIpc
+"alternar-fixado": key = hover-abertos/hover-fixados ou app da janela focada
+(clients com h == 0); fixar/desafixar; state "piscar" {key, n}; widgets
+realçam o item ~0,7 s (runAsync sleep como timer).
 
 ## Estado do pedido anterior (fases 1–7, branch redesenho-barra)
 | Fase | Estado | Commit |
@@ -62,6 +63,7 @@ Instalado no sistema: tudo acima (a partir do checkout principal, branch redesen
   "pressionar + mover" na barra.
 
 ## Decisões
+- KEY_PIN = SUPER + ALT + P (SUPER + ALT + F já é "Full width" do Omarchy; P livre em hyprctl binds).
 - Base da branch: redesenho-barra (não main), porque o pedido continua aquele trabalho.
 - Google Maps: removido no arquivo pessoal ~/.config/hypr/bindings.lua (não é do projeto).
 

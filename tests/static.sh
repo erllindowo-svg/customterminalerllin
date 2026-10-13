@@ -43,6 +43,7 @@ for f in "$TMP"/out/.local/share/noctalia/plugins/*/*.luau; do
   check "luajit -bl (sintaxe Lua 5.1) ${f#"$TMP"/out/}" bash -c "sed 's/^--!nonstrict//' '$f' | luajit -bl - >/dev/null"
 done
 check "atalhos do módulo vêm da configuração" grep -q 'o.bind("SUPER + ALT + A"' "$TMP/out/.config/hypr/terminal_soviet.lua"
+check "atalho de fixar vem da configuração (KEY_PIN)" grep -q 'o.bind("SUPER + ALT + P"' "$TMP/out/.config/hypr/terminal_soviet.lua"
 
 section "Caminhos e conteúdo sensível"
 hits=$(grep -rIl --exclude-dir=.git --exclude-dir=docs --exclude-dir=tests -e "/home/$USER" -e "/home/erll" . 2>/dev/null || true)

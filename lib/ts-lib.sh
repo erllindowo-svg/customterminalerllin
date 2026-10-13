@@ -16,7 +16,7 @@ die()  { err "$*"; exit 1; }
 
 # ------------------------------------------------------------------ configuração
 CONF_KEYS=(HIDDEN_WORKSPACE COLLAPSE_CLASSES BAR_NAME WEATHER_ADDRESS KEY_INSPECT KEY_OPS
-           KEY_ARTE FAVORITES GAME_DESKTOP)
+           KEY_ARTE KEY_PIN FAVORITES GAME_DESKTOP)
 
 # Lê VAR="valor" sem executar o arquivo (só chaves conhecidas).
 load_conf() {
@@ -42,7 +42,7 @@ validate_conf() {
   [[ $WEATHER_ADDRESS != *\\* ]] || die "WEATHER_ADDRESS não pode conter \\"
   [[ $GAME_DESKTOP =~ ^[A-Za-z0-9._-]*$ ]] || die "GAME_DESKTOP inválido: $GAME_DESKTOP (desktop-id sem .desktop)"
   local k
-  for k in KEY_INSPECT KEY_OPS KEY_ARTE; do
+  for k in KEY_INSPECT KEY_OPS KEY_ARTE KEY_PIN; do
     [[ ${!k} =~ ^(SUPER|SHIFT|CTRL|ALT)( \+ (SUPER|SHIFT|CTRL|ALT))*( \+ [A-Z0-9]+)$ ]] \
       || die "$k inválido: '${!k}' (ex.: \"SUPER + ALT + A\")"
   done
@@ -133,7 +133,7 @@ render() {
     TS_HOME="$T_HOME" TS_BIN="$T_BIN" TS_BAR_NAME="$BAR_NAME" TS_BAR_END="$T_BAR_END" \
     TS_ACOES_MEMBERS="$T_ACOES_MEMBERS" TS_WEATHER_ADDRESS="$WEATHER_ADDRESS" \
     TS_GAME_DESKTOP="$GAME_DESKTOP" TS_GAME_NAME="$T_GAME_NAME" TS_GAME_ICON="$T_GAME_ICON" \
-    TS_KEY_INSPECT="$KEY_INSPECT" TS_KEY_OPS="$KEY_OPS" TS_KEY_ARTE="$KEY_ARTE" \
+    TS_KEY_INSPECT="$KEY_INSPECT" TS_KEY_OPS="$KEY_OPS" TS_KEY_ARTE="$KEY_ARTE" TS_KEY_PIN="$KEY_PIN" \
     TS_HIDDEN_WORKSPACE="$HIDDEN_WORKSPACE" TS_PINNED_LUA="$T_PINNED_LUA" \
     TS_BAR_THICKNESS="$T_BAR_THICKNESS" TS_ITEM="$T_ITEM" TS_ICON="$T_ICON" TS_GAP="$T_GAP" \
     TS_CAPSULE_THICKNESS="$T_CAPSULE_THICKNESS" TS_IDLE_CENTRAL="$T_IDLE_CENTRAL" \

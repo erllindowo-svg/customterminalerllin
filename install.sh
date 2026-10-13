@@ -160,7 +160,7 @@ check_keys() {
   live_session || { warn "sem sessão Hyprland ativa: conflito de atalhos não verificado"; return 0; }
   local binds k keys mask key m part desc bad=0
   binds=$(hyprctl binds -j)
-  for k in KEY_INSPECT KEY_OPS KEY_ARTE; do
+  for k in KEY_INSPECT KEY_OPS KEY_ARTE KEY_PIN; do
     keys=${!k} mask=0 key=""
     IFS='+' read -r -a parts <<< "${keys// /}"
     for part in "${parts[@]}"; do
@@ -174,7 +174,7 @@ check_keys() {
     fi
   done
   (( bad )) && die "conflito de atalhos: nada foi alterado"
-  ok "atalhos livres ou já do projeto: $KEY_INSPECT · $KEY_OPS · $KEY_ARTE"
+  ok "atalhos livres ou já do projeto: $KEY_INSPECT · $KEY_OPS · $KEY_ARTE · $KEY_PIN"
 }
 
 # ------------------------------------------------------------------ plano

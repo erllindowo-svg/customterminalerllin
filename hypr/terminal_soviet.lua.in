@@ -44,6 +44,10 @@ o.window("^soviet-arte$", {
 o.bind("@KEY_INSPECT@", "Soviet inspect (toggle)", soviet_bin .. "soviet-inspect")
 o.bind("@KEY_OPS@", "Soviet ops station", soviet_bin .. "soviet-ops")
 o.bind("@KEY_ARTE@", "Soviet ilustração (arttime)", soviet_bin .. "soviet-arte interativo")
+-- Fixar/desafixar na barra: o ícone sob o mouse ou, sem ele, o app da janela em
+-- foco (plugin erllan/tarefas, service fonte, onIpc).
+o.bind("@KEY_PIN@", "Soviet fixar/desafixar na barra",
+  "noctalia msg plugin erllan/tarefas:fonte all alternar-fixado")
 
 -- A barra do Omarchy é substituída pela do Noctalia (bar.id = erllan.sem-barra).
 -- Os painéis que eram ancorados nela passam a abrir as abas equivalentes do
