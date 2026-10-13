@@ -1,0 +1,177 @@
+#!/bin/bash
+# Terminal Soviético — grupos de apps instalados (painel "Grupos" da barra).
+#
+# Lê os .desktop instalados (~/.local/share/applications, /usr/share/applications,
+# exports do Flatpak; o do usuário vence), ignora os ocultos (NoDisplay, Hidden,
+# Type ≠ Application, OnlyShowIn/NotShowIn incompatível com o desktop atual) e
+# propõe um grupo por app pelos campos Categories=, com ajustes manuais (abaixo)
+# onde a categoria é ruim ou falta (webapps).
+#
+# Estado: ~/.local/state/terminal-soviet/grupos.json (esquema 1):
+#   { versao, grupos = [{ nome, apps = [id] }], apps = { id = { nome, icone, classe,
+#     exec, instalado } }, vistos = [id] }
+# A classificação automática só toca apps NUNCA vistos: grupos, nomes, ordem e
+# remoções feitas no painel nunca são desfeitas.
+#
+# Uso:
+#   soviet-grupos tabela         mostra a proposta app → grupo (não grava nada)
+#   soviet-grupos classificar    grava/mescla os apps novos em grupos.json
+#   soviet-grupos caminho        imprime o caminho do grupos.json
+set -uo pipefail
+
+STATE="${XDG_STATE_HOME:-$HOME/.local/state}/terminal-soviet/grupos.json"
+case ${1:-} in
+  tabela|classificar) ;;
+  caminho) echo "$STATE"; exit 0 ;;
+  *) echo "uso: soviet-grupos tabela|classificar|caminho" >&2; exit 2 ;;
+esac
+
+DIRS="${XDG_DATA_HOME:-$HOME/.local/share}/applications:$HOME/.local/share/flatpak/exports/share/applications"
+for d in ${XDG_DATA_DIRS:-/usr/local/share:/usr/share} /var/lib/flatpak/exports/share; do
+  DIRS+=":${d%/}/applications"
+done
+
+# O programa Perl vai num heredoc entre aspas (o bash não o interpreta; bash -n passa).
+MODO=$1 STATE=$STATE DIRS=$DIRS DESKTOP="${XDG_CURRENT_DESKTOP:-Hyprland}" exec perl -CSDA -Mutf8 - <<'PERL'
+use strict; use warnings; use JSON::PP;
+
+my @ORDEM = ('Desenvolvimento', 'Internet', 'Mídia', 'Jogos', 'Criação/Gráficos',
+             'Escritório e notas', 'Sistema', 'Utilitários');
+
+# Categories= → grupo (a primeira categoria do app que aparecer aqui decide).
+my @CAT = (
+  [ 'Jogos'              => qr/^(Game|Emulator)$/ ],
+  [ 'Desenvolvimento'    => qr/^(Development|IDE|Programming|Debugger|RevisionControl)$/ ],
+  [ 'Criação/Gráficos'   => qr/^(Graphics|2DGraphics|3DGraphics|RasterGraphics|VectorGraphics|Photography|Publishing)$/ ],
+  [ 'Mídia'              => qr/^(AudioVideo|Audio|Video|Player|Music|Recorder|TV)$/ ],
+  [ 'Internet'           => qr/^(Network|WebBrowser|Email|Chat|InstantMessaging|IRCClient|FileTransfer|P2P|VideoConference)$/ ],
+  [ 'Escritório e notas' => qr/^(Office|WordProcessor|Spreadsheet|Presentation|Calendar|ContactManagement|Dictionary|TextEditor|Viewer)$/ ],
+  [ 'Sistema'            => qr/^(System|Settings|HardwareSettings|Monitor|PackageManager|TerminalEmulator|Security|DesktopSettings)$/ ],
+  [ 'Utilitários'        => qr/^(Utility|Accessories|FileManager|FileTools|Archiving|Calculator|Clock)$/ ],
+);
+
+# Ajustes manuais, testados antes das categorias: [ grupo, campo, regex, motivo ].
+# Webapps (sem Categories) caem aqui pelo nome/URL.
+my @AJUSTE = (
+  [ 'Jogos',              'nome', qr/^(Steam|Lutris|Heroic)/i,              'loja de jogos' ],
+  [ 'Desenvolvimento',    'nome', qr/^(Neovim|Vim|Emacs)$/i,                'editor de código' ],
+  [ 'Sistema',            'nome', qr/^(Disks|Disk Usage)$/i,                'disco' ],
+  [ 'Mídia',              'nome', qr/YouTube|Spotify|Photos/i,              'mídia' ],
+  [ 'Internet',           'nome', qr/WhatsApp|Discord|Messages|Zoom|HEY|^X$|Telegram|Signal/i, 'comunicação' ],
+  [ 'Escritório e notas', 'nome', qr/Basecamp|Contacts|Calendar|Obsidian|Docs|Notion/i, 'organização' ],
+  [ 'Desenvolvimento',    'nome', qr/Claude|ChatGPT|GitHub|Docker|Cursor|Code/i, 'desenvolvimento' ],
+  [ 'Utilitários',        'nome', qr/Maps/i,                                'utilitário' ],
+  [ 'Internet',           'exec', qr/omarchy-launch-webapp|--new-window https?:|--app=https?:|firefox-webapp/, 'webapp' ],
+  [ 'Jogos',              'exec', qr/steam:\/\/|osu|lutris|heroic/i,        'jogo' ],
+);
+
+my $desk = $ENV{DESKTOP};
+my (%apps, %vistoArquivo);
+for my $dir (split /:/, $ENV{DIRS}) {
+  next unless -d $dir;
+  opendir(my $dh, $dir) or next;
+  for my $f (sort grep { /\.desktop$/ } readdir $dh) {
+    (my $id = $f) =~ s/\.desktop$//;
+    next if $vistoArquivo{$id}++;          # o primeiro diretório (usuário) vence
+    open(my $fh, '<:encoding(UTF-8)', "$dir/$f") or next;
+    my (%k, $sec);
+    while (my $l = <$fh>) {
+      chomp $l;
+      if ($l =~ /^\[(.+)\]$/) { $sec = $1; next }
+      next unless defined $sec && $sec eq 'Desktop Entry';
+      next unless $l =~ /^([A-Za-z]+)=(.*)$/;
+      $k{$1} //= $2;
+    }
+    close $fh;
+    next unless ($k{Type} // '') eq 'Application';
+    next if ($k{NoDisplay} // '') =~ /^true$/i || ($k{Hidden} // '') =~ /^true$/i;
+    if (defined $k{OnlyShowIn}) { next unless grep { $_ eq $desk } split /;/, $k{OnlyShowIn} }
+    if (defined $k{NotShowIn})  { next if grep { $_ eq $desk } split /;/, $k{NotShowIn} }
+    next unless defined $k{Name} && $k{Name} ne '';
+    my ($bin) = ($k{Exec} // '') =~ /^\s*"?([^"\s]+)/;
+    $bin = '' unless defined $bin; $bin =~ s{.*/}{};
+    $apps{$id} = { nome => $k{Name}, icone => $k{Icon} // '', classe => $k{StartupWMClass} // '',
+                   exec => $bin, cats => $k{Categories} // '', execfull => $k{Exec} // '' };
+  }
+}
+
+sub proposta {
+  my ($a) = @_;
+  for my $r (@AJUSTE) {
+    my ($g, $campo, $re, $motivo) = @$r;
+    my $v = $campo eq 'nome' ? $a->{nome} : $a->{execfull};
+    return ($g, "ajuste: $motivo") if $v =~ $re;
+  }
+  for my $c (split /;/, $a->{cats}) {
+    for my $r (@CAT) { return ($r->[0], "categoria $c") if $c =~ $r->[1] }
+  }
+  return ('', $a->{cats} eq '' ? 'sem categoria' : "categorias: $a->{cats}");
+}
+
+# Estado atual (se houver).
+my $estado;
+if (-r $ENV{STATE}) {
+  local $/; open(my $fh, '<:encoding(UTF-8)', $ENV{STATE}) or die "não li $ENV{STATE}: $!";
+  $estado = eval { JSON::PP->new->utf8(0)->decode(<$fh>) };
+  die "grupos.json inválido: $@" unless $estado;
+}
+my $primeira = !$estado;
+$estado //= { versao => 1, grupos => [], apps => {}, vistos => [] };
+my %visto = map { $_ => 1 } @{ $estado->{vistos} };
+my %grupoAtual;
+for my $g (@{ $estado->{grupos} }) { push @{ $grupoAtual{$_} }, $g->{nome} for @{ $g->{apps} } }
+
+if ($ENV{MODO} eq 'tabela') {
+  my @linhas;
+  for my $id (keys %apps) {
+    my ($g, $motivo) = proposta($apps{$id});
+    my $atual = $grupoAtual{$id} ? join(', ', @{ $grupoAtual{$id} }) : ($visto{$id} ? '(sem grupo)' : '');
+    push @linhas, [ $g eq '' ? 'Sem grupo' : $g, $apps{$id}{nome}, $id, $motivo, $atual ];
+  }
+  my %pos = map { $ORDEM[$_] => $_ } 0 .. $#ORDEM; $pos{'Sem grupo'} = 99;
+  @linhas = sort { $pos{$a->[0]} <=> $pos{$b->[0]} || lc $a->[1] cmp lc $b->[1] } @linhas;
+  printf "%-20s %-34s %-40s %-26s %s\n", 'GRUPO PROPOSTO', 'APP', 'DESKTOP-ID', 'MOTIVO', 'ATUAL';
+  for my $l (@linhas) {
+    printf "%-20s %-34s %-40s %-26s %s\n", $l->[0], substr($l->[1], 0, 34), substr($l->[2], 0, 40), substr($l->[3], 0, 26), $l->[4];
+  }
+  printf "\n%d apps visíveis. Nada foi gravado (use: soviet-grupos classificar).\n", scalar keys %apps;
+  exit 0;
+}
+
+# classificar: atualiza o registro de todos e só agrupa os nunca vistos.
+for my $id (keys %{ $estado->{apps} }) { $estado->{apps}{$id}{instalado} = JSON::PP::false }
+my %grupoPorNome = map { $_->{nome} => $_ } @{ $estado->{grupos} };
+my $novos = 0;
+for my $id (sort { lc $apps{$a}{nome} cmp lc $apps{$b}{nome} } keys %apps) {
+  my $a = $apps{$id};
+  $estado->{apps}{$id} = { nome => $a->{nome}, icone => $a->{icone}, classe => $a->{classe},
+                           exec => $a->{exec}, instalado => JSON::PP::true };
+  next if $visto{$id};
+  my ($g) = proposta($a);
+  if ($g ne '') {
+    my $grupo = $grupoPorNome{$g};
+    unless ($grupo) {
+      $grupo = { nome => $g, apps => [] };
+      push @{ $estado->{grupos} }, $grupo;
+      $grupoPorNome{$g} = $grupo;
+    }
+    push @{ $grupo->{apps} }, $id;
+  }
+  push @{ $estado->{vistos} }, $id; $visto{$id} = 1; $novos++;
+}
+# Primeira classificação: grupos na ordem sugerida. Depois disso a ordem é do
+# usuário, e grupos criados agora vão para o fim.
+if ($primeira) {
+  my %pos = map { $ORDEM[$_] => $_ } 0 .. $#ORDEM;
+  @{ $estado->{grupos} } = sort { $pos{$a->{nome}} <=> $pos{$b->{nome}} } @{ $estado->{grupos} };
+}
+$estado->{versao} = 1;
+
+(my $dir = $ENV{STATE}) =~ s{/[^/]+$}{};
+system('mkdir', '-p', $dir);
+my $tmp = "$ENV{STATE}.tmp";
+open(my $out, '>:encoding(UTF-8)', $tmp) or die "não gravei $tmp: $!";
+print $out JSON::PP->new->utf8(0)->canonical->pretty->encode($estado);
+close $out; rename $tmp, $ENV{STATE} or die "não renomeei $tmp: $!";
+printf "%d app(s) novo(s) classificado(s); %d no total. %s\n", $novos, scalar keys %apps, $ENV{STATE};
+PERL

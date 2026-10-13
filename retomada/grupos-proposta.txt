@@ -1,0 +1,69 @@
+GRUPO PROPOSTO       APP                                DESKTOP-ID                               MOTIVO                     ATUAL
+Desenvolvimento      Claude                             chrome-fmpnliohjhemenmnlpbfagaolkdacoja- ajuste: desenvolvimento    
+Desenvolvimento      Cursor                             cursor                                   ajuste: desenvolvimento    
+Desenvolvimento      Docker                             Docker                                   ajuste: desenvolvimento    
+Desenvolvimento      Neovim                             nvim                                     ajuste: editor de código   
+Desenvolvimento      Postman                            postman                                  categoria Development      
+Internet             Avahi SSH Server Browser           bssh                                     categoria Network          
+Internet             Avahi VNC Server Browser           bvnc                                     categoria Network          
+Internet             Chromium                           chromium                                 categoria Network          
+Internet             Discord                            Discord                                  ajuste: comunicação        
+Internet             Firefox                            firefox                                  categoria Network          
+Internet             Go Live                            golive                                   categoria Network          
+Internet             Google Messages                    Google Messages                          ajuste: comunicação        
+Internet             HEY                                HEY                                      ajuste: comunicação        
+Internet             WhatsApp                           WhatsApp                                 ajuste: comunicação        
+Internet             X                                  X                                        ajuste: comunicação        
+Internet             Zoom                               Zoom                                     ajuste: comunicação        
+Mídia                cliamp                             cliamp                                   categoria Audio            
+Mídia                Google Photos                      Google Photos                            ajuste: mídia              
+Mídia                Kdenlive                           org.kde.kdenlive                         categoria AudioVideo       
+Mídia                Media Player                       mpv                                      categoria AudioVideo       
+Mídia                OBS Studio                         com.obsproject.Studio                    categoria AudioVideo       
+Mídia                Omacut                             omacut                                   categoria AudioVideo       
+Mídia                Qt V4L2 test Utility               qv4l2                                    categoria AudioVideo       
+Mídia                Qt V4L2 video capture utility      qvidcap                                  categoria AudioVideo       
+Mídia                Spotify                            spotify                                  ajuste: mídia              
+Mídia                YouTube                            YouTube                                  ajuste: mídia              
+Jogos                Deadlock                           Deadlock                                 ajuste: jogo               
+Jogos                Moonlight                          com.moonlight_stream.Moonlight           categoria Game             
+Jogos                osu!lazer                          osu-lazer                                ajuste: jogo               
+Jogos                Steam                              steam                                    ajuste: loja de jogos      
+Criação/Gráficos     Image Viewer                       imv                                      categoria Graphics         
+Criação/Gráficos     Pinta                              com.github.PintaProject.Pinta            categoria Graphics         
+Escritório e notas   Basecamp                           Basecamp                                 ajuste: organização        
+Escritório e notas   Document Viewer                    org.gnome.Evince                         categoria Office           
+Escritório e notas   Google Contacts                    Google Contacts                          ajuste: organização        
+Escritório e notas   LibreOffice                        libreoffice-startcenter                  categoria Office           
+Escritório e notas   LibreOffice Base                   libreoffice-base                         categoria Office           
+Escritório e notas   LibreOffice Calc                   libreoffice-calc                         categoria Office           
+Escritório e notas   LibreOffice Draw                   libreoffice-draw                         categoria Office           
+Escritório e notas   LibreOffice Impress                libreoffice-impress                      categoria Office           
+Escritório e notas   LibreOffice Math                   libreoffice-math                         categoria Office           
+Escritório e notas   LibreOffice Writer                 libreoffice-writer                       categoria Office           
+Escritório e notas   Obsidian                           obsidian                                 ajuste: organização        
+Escritório e notas   Omawrite                           omawrite                                 categoria Office           
+Escritório e notas   Xournal++                          com.github.xournalpp.xournalpp           categoria Office           
+Sistema              Avahi Zeroconf Browser             avahi-discover                           categoria System           
+Sistema              btop++                             btop                                     categoria System           
+Sistema              Disk Usage                         Disk Usage                               ajuste: disco              
+Sistema              Disks                              org.gnome.DiskUtility                    ajuste: disco              
+Sistema              Fcitx 5 Configuration              fcitx5-configtool                        categoria Settings         
+Sistema              Foot                               foot                                     categoria System           
+Sistema              Foot Client                        footclient                               categoria System           
+Sistema              Foot Server                        foot-server                              categoria System           
+Sistema              Hardware Locality lstopo           lstopo                                   categoria System           
+Sistema              Manage Printing                    cups                                     categoria System           
+Sistema              Noctalia                           dev.noctalia.Noctalia                    categoria Settings         
+Sistema              Print Settings                     system-config-printer                    categoria System           
+Utilitários          Aether                             aether                                   categoria Utility          
+Utilitários          Bitwarden                          bitwarden                                categoria Utility          
+Utilitários          Files                              org.gnome.Nautilus                       categoria Utility          
+Utilitários          Google Maps                        Google Maps                              ajuste: utilitário         
+Utilitários          Limine-snapper-restore             limine-snapper-restore                   categoria Utility          
+Utilitários          LocalSend                          localsend                                categoria Utility          
+Utilitários          Omacalc                            omacalc                                  categoria Utility          
+Utilitários          Tensaku                            dev.tensaku.Tensaku                      categoria Utility          
+Utilitários          uuctl                              uuctl                                    categoria Utility          
+
+66 apps visíveis. Nada foi gravado (use: soviet-grupos classificar).

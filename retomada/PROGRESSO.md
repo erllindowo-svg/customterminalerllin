@@ -1,14 +1,18 @@
 # Progresso — barra v2
 
 ## Onde parei
-Item 3 implementado (service + painel editar.luau + aberturas). Docs dos itens 2–3 pendentes (faço no fim, junto com os demais).
+Item 4, parte 1: bin/soviet-grupos (tabela|classificar|caminho) pronto. Proposta salva em retomada/grupos-proposta.txt, AGUARDANDO aprovação do usuário (não rodar `classificar` antes). Parte 2: plugin erllan/grupos (painel).
 
 ## Próximo passo exato
-Item 4 (Grupos), parte 1: bin/soviet-grupos com `classificar --tabela`
-(só imprime app → grupo, sem gravar) lendo .desktop de
-~/.local/share/applications, /usr/share/applications e exports do Flatpak;
-ignora NoDisplay/Hidden/OnlyShowIn/NotShowIn incompatível com Hyprland.
-Depois MOSTRAR a tabela ao usuário e só gravar com aprovação.
+Item 4, parte 2: plugin noctalia/plugins/grupos (plugin_api 28): [[panel]] "painel"
+(grupos.luau) lê ~/.local/state/terminal-soviet/grupos.json; um bloco por grupo
+(dropZone value=nome) com ícones dragSource (payload "id|grupoOrigem");
+clique = abrir/focar (hyprctl clients|jq pela classe/StartupWMClass/exec; senão
+uwsm-app -- id.desktop); onRightClick num ui.button do app → openContextMenu
+(tirar do grupo, adicionar a…); criar/renomear/apagar grupo com ui.input;
+"Classificar novos" roda soviet-grupos classificar. Escrita atômica do JSON pelo
+próprio painel (writeFile em .tmp + renameFile). Ícone "grupos" no centro
+(custom_button panel-toggle) em 20-barra.toml.in, membro do capsule "acoes".
 
 ## Estado do pedido anterior (fases 1–7, branch redesenho-barra)
 | Fase | Estado | Commit |
@@ -68,4 +72,5 @@ Instalado no sistema: tudo acima (a partir do checkout principal, branch redesen
 - Google Maps: removido no arquivo pessoal ~/.config/hypr/bindings.lua (não é do projeto).
 
 ## Decisões em aberto (dependem do usuário)
-- (nenhuma ainda)
+- Aprovar a tabela app → grupo (retomada/grupos-proposta.txt) antes de gravar grupos.json.
+- O lançador "Google Maps" (~/.local/share/applications/Google Maps.desktop) ainda existe; só o atalho foi removido. Remover o webapp também?
