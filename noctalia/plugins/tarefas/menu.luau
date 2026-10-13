@@ -42,6 +42,12 @@ local function render()
       enabled = alvo.janelas > 0,
       onClick = function() pedir("fechar") end,
     }),
+    ui.button({
+      key = "editar",
+      text = "Editar barra…", glyph = "arrows-move",
+      variant = "ghost", contentAlign = "start", controlSize = "sm",
+      onClick = function() noctalia.togglePanel("erllan/tarefas:editar") end,
+    }),
   }))
 end
 

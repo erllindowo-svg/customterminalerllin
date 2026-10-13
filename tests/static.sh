@@ -42,6 +42,8 @@ check "luac -p tema soviet-terminal/hyprland.lua" luac -p omarchy/themes/soviet-
 for f in "$TMP"/out/.local/share/noctalia/plugins/*/*.luau; do
   check "luajit -bl (sintaxe Lua 5.1) ${f#"$TMP"/out/}" bash -c "sed 's/^--!nonstrict//' '$f' | luajit -bl - >/dev/null"
 done
+check "noctalia plugins lint (manifestos e settings dos plugins gerados)" \
+  bash -c "noctalia plugins lint '$TMP'/out/.local/share/noctalia/plugins/* | grep -q '0 errors'"
 check "atalhos do módulo vêm da configuração" grep -q 'o.bind("SUPER + ALT + A"' "$TMP/out/.config/hypr/terminal_soviet.lua"
 check "atalho de fixar vem da configuração (KEY_PIN)" grep -q 'o.bind("SUPER + ALT + P"' "$TMP/out/.config/hypr/terminal_soviet.lua"
 

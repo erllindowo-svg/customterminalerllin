@@ -11,7 +11,8 @@
 -- Clique esquerdo: em execução -> foca a janela mais recente (cliques seguidos
 -- alternam entre as janelas do app; o foco leva ao workspace dela); fechado ->
 -- abre pelo .desktop (uwsm-app).
--- Clique direito: mini-menu (painel erllan/tarefas:menu). Ícones clicáveis só
+-- Clique direito num ícone: mini-menu (painel erllan/tarefas:menu); fora de um
+-- ícone: painel "Editar barra" (erllan/tarefas:editar). Ícones clicáveis só
 -- capturam o botão esquerdo; o direito chega ao onRightClick() do widget, e o
 -- onHover de cada ícone diz qual estava sob o ponteiro.
 
@@ -145,7 +146,8 @@ function M.widget(group, bar)
   function self.menu(key)
     key = key or hovered
     local a = key and find(key)
-    if not a then return end
+    -- Clique direito fora de um ícone (espaço do widget): painel "Editar barra".
+    if not a then noctalia.togglePanel("erllan/tarefas:editar"); return end
     noctalia.state.set("menu", {
       key = a.key,
       nome = a.id,

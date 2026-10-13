@@ -28,7 +28,19 @@ entry = "fixados.luau"
 id = "menu"
 entry = "menu.luau"
 width = 220
-height = 156
+height = 190
+placement = "attached"
+position = "auto"
+open_near_click = true
+capture_keys = ["escape"]
+
+# "Editar barra": arrastar ícones entre Abertos e Fixados e reordenar (a barra em
+# si não tem arrasto no 5.0.1).
+[[panel]]
+id = "editar"
+entry = "editar.luau"
+width = 460
+height = 250
 placement = "attached"
 position = "auto"
 open_near_click = true

@@ -1,18 +1,14 @@
 # Progresso — barra v2
 
 ## Onde parei
-Item 3: service pronto (fixados.json esquema 2 com ordemAbertos; OPS.mover). Falta o painel editar.luau, o [[panel]] no plugin.toml e a abertura (clique direito fora de ícone + item no mini-menu).
+Item 3 implementado (service + painel editar.luau + aberturas). Docs dos itens 2–3 pendentes (faço no fim, junto com os demais).
 
 ## Próximo passo exato
-Item 3: painel "Editar barra" no plugin tarefas (novo [[panel]] "editar",
-editar.luau): duas listas (Abertos, Fixados) com ui.dragSource por ícone e
-ui.dropZone de inserção entre ícones (expandOnDrag/hitSlop); onDrop(payload=key,
-value="fixados|<pos>" ou "abertos|<pos>") → state "pedido" {op="mover", key, arg}.
-Service: OPS.mover (reordenar fixados; abertos→fixados = fixar na posição;
-fixados→abertos = desafixar; ordem dos abertos persistida em ordemAbertos).
-fixados.json passa a {versao=2, fixados=[...], ordemAbertos=[...]} (ler o v1 = array).
-Abrir: clique direito fora de ícone (widget onRightClick sem hover) + item
-"Editar barra…" no mini-menu.
+Item 4 (Grupos), parte 1: bin/soviet-grupos com `classificar --tabela`
+(só imprime app → grupo, sem gravar) lendo .desktop de
+~/.local/share/applications, /usr/share/applications e exports do Flatpak;
+ignora NoDisplay/Hidden/OnlyShowIn/NotShowIn incompatível com Hyprland.
+Depois MOSTRAR a tabela ao usuário e só gravar com aprovação.
 
 ## Estado do pedido anterior (fases 1–7, branch redesenho-barra)
 | Fase | Estado | Commit |
@@ -31,7 +27,7 @@ Instalado no sistema: tudo acima (a partir do checkout principal, branch redesen
 - [x] 0 worktree + retomada/
 - [x] 1 limites da API (achados abaixo; falta registrar em docs/decisions.md junto dos itens)
 - [x] 2 KEY_PIN = SUPER+ALT+P + onIpc alternar-fixado + hover + piscar (doc pendente)
-- [ ] 3 painel "Editar barra" (abertos/fixados, ordenar, mover) + ordem persistida
+- [x] 3 painel "Editar barra" (abertos/fixados, ordenar, mover) + ordem persistida (não testado ao vivo: exige install)
 - [ ] 4 Grupos: classificador + tabela p/ aprovação + painel + edição + grupos.json
 - [ ] 5 atalhos no hover (hyprctl binds → apps; nativos por marcadores)
 - [ ] 6 arrasto da barra → orientação (verificar; alça ⠿)
