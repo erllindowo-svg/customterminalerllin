@@ -2,9 +2,11 @@
 #
 # MODELO: install.sh gera ~/.config/noctalia/20-barra.toml trocando os marcadores BIN,
 # BAR_NAME, BAR_END, ACOES_MEMBERS e GAME_* (jogo instalado) conforme config/terminal-soviet.conf,
-# e os da grade (BAR_THICKNESS, GAP, CAPSULE_THICKNESS), fixos em lib/ts-lib.sh.
+# e os da grade (BAR_THICKNESS, GAP, CAPSULE_THICKNESS), de lib/ts-lib.sh.
 #
-# Grade única (px lógicos): barra 26 · item 22 · ícone 16 · espaço 6. Os plugins
+# Grade única (px lógicos): barra 26 · item 22 · ícone 16 · espaço 6. Com escala
+# fracionária, a barra cresce até virar px físicos inteiros (27 em 4/3; ver
+# bar_thickness em lib/ts-lib.sh), senão a borda com a janela pisca. Os plugins
 # (tarefas, spotify-media) usam os mesmos marcadores; glifos nativos já são 16.
 #
 # Uma única barra ("estacao"), no topo por padrão (borda escolhida pelo clique direito

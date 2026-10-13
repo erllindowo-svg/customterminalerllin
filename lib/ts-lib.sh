@@ -59,12 +59,13 @@ compute_tokens() {
   T_BIN="$HOME/.local/bin"
 
   # Grade da barra: uma só régua para widgets nativos e plugins (px lógicos).
-  #   BAR_THICKNESS  espessura da barra (borda de 1 px incluída: sobra 24 por dentro)
+  #   BAR_THICKNESS  espessura da barra (borda de 1 px incluída): 26, ou a menor
+  #                  acima que dê px físicos inteiros na escala do monitor (bar_thickness)
   #   ITEM           altura de todo item: botões, capa, coluna ícone+traço, cápsulas
   #   ICON           ícones de app e glifos (= Style::baseGlyphSize dos nativos)
   #   GAP            espaço entre widgets e entre itens dentro de um plugin
   # Não são preferências: mudar um valor exige conferir a barra com capturas.
-  T_BAR_THICKNESS=26 T_ITEM=22 T_ICON=16 T_GAP=6
+  T_BAR_THICKNESS=$(bar_thickness 26) T_ITEM=22 T_ICON=16 T_GAP=6
   T_CAPSULE_THICKNESS=$(awk -v i="$T_ITEM" -v b="$T_BAR_THICKNESS" 'BEGIN { printf "%.3f", i / b }')
 
   # Tempo até a central substituir a tela de descanso: o mesmo do Omarchy
@@ -96,6 +97,25 @@ compute_tokens() {
     pins+="  { id = \"$id\", classes = { ${list%, } } },"$'\n'
   done
   T_PINNED_LUA=${pins%$'\n'}
+}
+
+# bar_thickness <base>: a menor espessura (px lógicos) a partir de <base> que vira
+# um número inteiro de px físicos em TODAS as escalas dos monitores ativos.
+# Com escala fracionária, uma barra de 26 em 4/3 mede 34,67 px físicos: a janela
+# encostada nela começa no meio de um pixel, e essa fileira, recomposta a cada
+# quadro da janela, pisca (visível com o Firefox maximizado). 27 × 4/3 = 36.
+# Sem sessão Hyprland (sandbox, check remoto): <base>. Mudou a escala? ./install.sh.
+bar_thickness() {
+  local base=$1 scales t
+  scales=$(hyprctl -j monitors 2>/dev/null | jq -r '.[].scale' 2>/dev/null) || scales=""
+  [[ -n $scales ]] || { echo "$base"; return 0; }
+  for (( t = base; t <= base + 6; t++ )); do
+    if awk -v t="$t" 'BEGIN { ok = 1 } { p = t * $1; if (p - int(p + 0.5) > 0.01 || int(p + 0.5) - p > 0.01) ok = 0 }
+                      END { exit !ok }' <<< "$scales"; then
+      echo "$t"; return 0
+    fi
+  done
+  echo "$base"   # nenhuma serve para todas as escalas: fica a base
 }
 
 # Caminho do <id>.desktop nos diretórios XDG de aplicativos (usuário primeiro), ou nada.
