@@ -5,7 +5,8 @@
 # exports do Flatpak; o do usuário vence), ignora os ocultos (NoDisplay, Hidden,
 # Type ≠ Application, OnlyShowIn/NotShowIn incompatível com o desktop atual) e
 # propõe um grupo por app pelos campos Categories=, com ajustes manuais (abaixo)
-# onde a categoria é ruim ou falta (webapps).
+# onde a categoria é ruim ou falta. Webapps (sites em janela própria) ficam de
+# fora: só entram programas instalados.
 #
 # Estado: ~/.local/state/terminal-soviet/grupos.json (esquema 1):
 #   { versao, grupos = [{ nome, apps = [id] }], apps = { id = { nome, icone, classe,
@@ -51,7 +52,6 @@ my @CAT = (
 );
 
 # Ajustes manuais, testados antes das categorias: [ grupo, campo, regex, motivo ].
-# Webapps (sem Categories) caem aqui pelo nome/URL.
 my @AJUSTE = (
   [ 'Jogos',              'nome', qr/^(Steam|Lutris|Heroic)/i,              'loja de jogos' ],
   [ 'Desenvolvimento',    'nome', qr/^(Neovim|Vim|Emacs)$/i,                'editor de código' ],
@@ -61,9 +61,11 @@ my @AJUSTE = (
   [ 'Escritório e notas', 'nome', qr/Basecamp|Contacts|Calendar|Obsidian|Docs|Notion/i, 'organização' ],
   [ 'Desenvolvimento',    'nome', qr/Claude|ChatGPT|GitHub|Docker|Cursor|Code/i, 'desenvolvimento' ],
   [ 'Utilitários',        'nome', qr/Maps/i,                                'utilitário' ],
-  [ 'Internet',           'exec', qr/omarchy-launch-webapp|--new-window https?:|--app=https?:|firefox-webapp/, 'webapp' ],
   [ 'Jogos',              'exec', qr/steam:\/\/|osu|lutris|heroic/i,        'jogo' ],
 );
+
+# Webapp = atalho que abre um site (navegador em janela própria ou lançador de webapp).
+my $WEBAPP = qr/omarchy-launch-webapp|--new-window https?:|--app=https?:|firefox-webapp/;
 
 my $desk = $ENV{DESKTOP};
 my (%apps, %vistoArquivo);
@@ -88,6 +90,7 @@ for my $dir (split /:/, $ENV{DIRS}) {
     if (defined $k{OnlyShowIn}) { next unless grep { $_ eq $desk } split /;/, $k{OnlyShowIn} }
     if (defined $k{NotShowIn})  { next if grep { $_ eq $desk } split /;/, $k{NotShowIn} }
     next unless defined $k{Name} && $k{Name} ne '';
+    next if ($k{Exec} // '') =~ $WEBAPP;   # sites não entram nos grupos
     my ($bin) = ($k{Exec} // '') =~ /^\s*"?([^"\s]+)/;
     $bin = '' unless defined $bin; $bin =~ s{.*/}{};
     $apps{$id} = { nome => $k{Name}, icone => $k{Icon} // '', classe => $k{StartupWMClass} // '',

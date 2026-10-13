@@ -83,6 +83,7 @@ Instalado no sistema: tudo acima (a partir do checkout principal, branch redesen
   "pressionar + mover" na barra.
 
 ## Decisões
+- Grupos: webapps (Exec com omarchy-launch-webapp / firefox --new-window http / firefox-webapp) são ignorados pelo soviet-grupos; tabela caiu de 66 para 54 apps. Pendente: aprovação da tabela.
 - Atalhos: `hyprctl binds -j` não traz o comando (dispatcher "__lua"); a config é avaliada num Lua isolado (hl falso só registra bind/unbind; os.execute/io.popen inertes) e cruzada com o hyprctl (só binds ativos).
 - KEY_PIN = SUPER + ALT + P (SUPER + ALT + F já é "Full width" do Omarchy; P livre em hyprctl binds).
 - Base da branch: redesenho-barra (não main), porque o pedido continua aquele trabalho.
@@ -90,4 +91,5 @@ Instalado no sistema: tudo acima (a partir do checkout principal, branch redesen
 
 ## Decisões em aberto (dependem do usuário)
 - Aprovar a tabela app → grupo (retomada/grupos-proposta.txt) antes de gravar grupos.json.
-- O lançador "Google Maps" (~/.local/share/applications/Google Maps.desktop) ainda existe; só o atalho foi removido. Remover o webapp também?
+- (RESOLVIDO: Google Maps fica como está, só sem o atalho; webapps/sites não entram nos Grupos.)
+- [obsoleto] O lançador "Google Maps" (~/.local/share/applications/Google Maps.desktop) ainda existe; só o atalho foi removido. Remover o webapp também?
