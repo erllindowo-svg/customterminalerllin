@@ -41,9 +41,9 @@ o.window("^soviet-arte$", {
 })
 
 -- ---------------------------------------------------------------- atalhos
-o.bind("@KEY_INSPECT@", "Soviet inspect (toggle)", soviet_bin .. "soviet-inspect")
-o.bind("@KEY_OPS@", "Soviet ops station", soviet_bin .. "soviet-ops")
-o.bind("@KEY_ARTE@", "Soviet ilustração (arttime)", soviet_bin .. "soviet-arte interativo")
+o.bind("@KEY_INSPECT@", "Erllinsapin: inspeção (alternar)", soviet_bin .. "soviet-inspect")
+o.bind("@KEY_OPS@", "Erllinsapin: central de operações", soviet_bin .. "soviet-ops")
+o.bind("@KEY_ARTE@", "Erllinsapin: ilustração (arttime)", soviet_bin .. "soviet-arte interativo")
 
 -- A barra do Omarchy é substituída pela do Noctalia (bar.id = erllan.sem-barra).
 -- Os painéis que eram ancorados nela passam a abrir as abas equivalentes do

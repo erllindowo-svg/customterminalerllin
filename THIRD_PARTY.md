@@ -13,7 +13,7 @@ repositório e é obtido na instalação.
 
 Todo o restante (scripts `soviet-*`, `install.sh`, `lib/`, plugins
 `erllan/tarefas`, `erllan/audio` e `erllan.sem-barra`, paleta, tema
-`soviet-terminal` sem as fotos, configurações) foi escrito para este projeto.
+`erllinsapin` sem as fotos, configurações) foi escrito para este projeto.
 
 ## Obtidos na instalação (não versionados)
 
@@ -21,11 +21,11 @@ Todo o restante (scripts `soviet-*`, `install.sh`, `lib/`, plugins
 |---|---|---|---|
 | **arttime** 2.5.0 (código + coleção de 516 artes e frases) | `scripts/install-arttime.sh`: clone de [poetaman/arttime](https://github.com/poetaman/arttime) @ `38c2955`, instalado pelo `install.sh --local` do próprio arttime | Código: GPL-3.0 + addendum **CFLA v1.0**. Arte: propriedade dos artistas, "uso pessoal não comercial" (`LICENSE_ART`); a curadoria também está sob CFLA. | A coleção não é nossa e o uso é só pessoal. O projeto **não copia nenhuma arte nem frase**: tudo é lido da instalação do arttime e desenhado pelo `artprint`. O `soviet-arte` copia `arttime.zsh` para uma árvore temporária em `$XDG_RUNTIME_DIR` (tmpfs) ao abrir o modo interativo; essa cópia não é distribuída. |
 | **omarchy-overview** (`moorgrove.overview`) | `install.sh`: clone de [itsmoorgrove/omarchy-overview](https://github.com/itsmoorgrove/omarchy-overview) @ `1ed4938` | MIT | Plugin de terceiros instalável por si só; basta fixar o commit. |
-| **Fotos do tema** `soviet-terminal` (5 imagens, 39 MB) + `preview.png` | `scripts/fetch-backgrounds.sh`: Wikimedia Commons com conferência de SHA-1 | CC BY-SA 3.0, CC BY-SA 3.0 DE, CC BY 2.0, CC BY-SA 4.0, CC0 (créditos em `omarchy/themes/soviet-terminal/SOURCES.md`) | Há dúvida concreta sobre direitos: as **esculturas** retratadas podem ter direitos próprios (a Rússia não tem liberdade de panorama ampla), e CC BY-SA exige atribuição e mesma licença em derivados (o `preview.png` é um deles). Por precaução, nada disso é versionado. |
+| **Fotos do tema** `erllinsapin` (5 imagens, 39 MB) + `preview.png` | `scripts/fetch-backgrounds.sh`: Wikimedia Commons com conferência de SHA-1 | CC BY-SA 3.0, CC BY-SA 3.0 DE, CC BY 2.0, CC BY-SA 4.0, CC0 (créditos em `omarchy/themes/erllinsapin/SOURCES.md`) | Há dúvida concreta sobre direitos: as **esculturas** retratadas podem ter direitos próprios (a Rússia não tem liberdade de panorama ampla), e CC BY-SA exige atribuição e mesma licença em derivados (o `preview.png` é um deles). Por precaução, nada disso é versionado. |
 | Noctalia, Omarchy, Hyprland, foot, btop, fastfetch, zsh… | pacotes do Arch/Omarchy | várias | Dependências do sistema (`docs/stack.md`). |
 
 ## Referências sem cópia
 
-* `omarchy/themes/soviet-terminal/icons.theme` só **nomeia** o tema de ícones
+* `omarchy/themes/erllinsapin/icons.theme` só **nomeia** o tema de ícones
   `Yaru-olive-dark`; `neovim.lua` só **nomeia** o plugin `everforest-nvim`.
 * A fonte `JetBrainsMono Nerd Font` vem do Omarchy.

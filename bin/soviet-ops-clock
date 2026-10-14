@@ -17,7 +17,7 @@ TS_CONF="${TS_CONF:-${XDG_CONFIG_HOME:-$HOME/.config}/terminal-soviet/terminal-s
 WEATHER="${XDG_CACHE_HOME:-$HOME/.cache}/noctalia/weather.json"
 LOCATION="${XDG_CACHE_HOME:-$HOME/.cache}/noctalia/location.json"
 
-# Cores (paleta soviet-terminal, truecolor).
+# Cores (paleta erllinsapin, truecolor).
 G=$'\e[38;2;184;213;138m'   # fósforo  #B8D58A
 O=$'\e[38;2;113;141;88m'    # oliva    #718D58
 D=$'\e[38;2;68;75;66m'      # divisor  #444B42

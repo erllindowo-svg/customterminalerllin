@@ -37,7 +37,7 @@ section "Modelos renderizados (configuração versionada)"
 check "noctalia config validate (configuração gerada)" noctalia config validate "$TMP/out/.config/noctalia"
 check "luac -p terminal_soviet.lua (sintaxe Lua)" luac -p "$TMP/out/.config/hypr/terminal_soviet.lua"
 check "luac -p workspace layout" luac -p "$TMP/out/.local/state/omarchy/workspace-layouts/1.lua"
-check "luac -p tema soviet-terminal/hyprland.lua" luac -p omarchy/themes/soviet-terminal/hyprland.lua
+check "luac -p tema erllinsapin/hyprland.lua" luac -p omarchy/themes/erllinsapin/hyprland.lua
 # O Luau aceita a sintaxe do Lua 5.1 + anotações; os plugins não usam anotações.
 for f in "$TMP"/out/.local/share/noctalia/plugins/*/*.luau; do
   check "luajit -bl (sintaxe Lua 5.1) ${f#"$TMP"/out/}" bash -c "sed 's/^--!nonstrict//' '$f' | luajit -bl - >/dev/null"
@@ -53,7 +53,7 @@ hits=$(grep -rIlE --exclude-dir=.git -e '(api[_-]?key|secret|token|passw(or)?d)[
 big=$(find . -path ./.git -prune -o -type f -size +500k -print)
 [[ -z $big ]] && pass "nenhum arquivo > 500 KB (mídia de terceiros fica fora)" || fail "arquivos grandes" "$big"
 [[ -z $(find . -path ./.git -prune -o -type l -print) ]] && pass "nenhum link simbólico versionado" || fail "links simbólicos no repositório"
-[[ ! -e omarchy/themes/soviet-terminal/backgrounds && ! -e omarchy/themes/soviet-terminal/preview.png ]] \
+[[ ! -e omarchy/themes/erllinsapin/backgrounds && ! -e omarchy/themes/erllinsapin/preview.png ]] \
   && pass "papéis de parede/preview fora do repositório" || fail "papéis de parede presentes no repositório"
 
 summary

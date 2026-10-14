@@ -34,7 +34,7 @@ customterminalerllin/
 │   │   ├── 20-barra.toml.in               barra e widgets (lançadores e GPU conforme a máquina)
 │   │   ├── 30-monitoramento-clima.toml.in limiares do sysmon, endereço do clima
 │   │   ├── 40-integracao-hyprland.toml.in hook started → soviet-bar-sync --apply; idle → central
-│   │   ├── palettes/SovietTerminal.json   paleta
+│   │   ├── palettes/Erllinsapin.json      paleta
 │   │   └── README.md
 │   └── plugins/                    → ~/.local/share/noctalia/plugins
 │       ├── tarefas/                abertos (esq.) + fixados (dir.): service fonte.luau.in (socat,
@@ -46,7 +46,7 @@ customterminalerllin/
 │                                   tocar.sh (abre oculto + toca), LICENSE, upstream/, README.soviet.md
 ├── omarchy/
 │   ├── plugins/erllan.sem-barra/   → ~/.config/omarchy/plugins (barra nula: Bar.qml, manifest.json)
-│   ├── themes/soviet-terminal/     → ~/.config/omarchy/themes (colors.toml, btop.theme, hyprland.lua,
+│   ├── themes/erllinsapin/         → ~/.config/omarchy/themes (colors.toml, btop.theme, hyprland.lua,
 │   │                                  icons.theme, neovim.lua, SOURCES.md; SEM backgrounds/preview)
 │   └── workspace-layouts/central.lua.in → ~/.local/state/omarchy/workspace-layouts/<N>.lua
 ├── systemd/                        → ~/.config/systemd/user (noctalia.service, soviet-bar-sync.service)
@@ -83,7 +83,7 @@ customterminalerllin/
 | `~/.local/share/noctalia/plugins/{tarefas,audio,spotify-media,barra}/` | `noctalia/plugins/` | R/G | `tarefas/{fonte,comum}.luau` e `spotify-media/bar.luau` são gerados |
 | `~/.config/omarchy/plugins/erllan.sem-barra/` | `omarchy/plugins/` | R | |
 | `~/.config/omarchy/shell.json` | — | chaves | `bar.id`, `bar.position` via `omarchy bar` |
-| `~/.config/omarchy/themes/soviet-terminal/` | `omarchy/themes/` | R | `backgrounds/`, `preview.png`: **D** (`fetch-backgrounds.sh`) |
+| `~/.config/omarchy/themes/erllinsapin/` | `omarchy/themes/` | R | `backgrounds/`, `preview.png`: **D** (`fetch-backgrounds.sh`) |
 | `~/.local/state/omarchy/workspace-layouts/1.lua` | `omarchy/workspace-layouts/central.lua.in` | G | formato do toggle de layout do Omarchy |
 | `~/.config/systemd/user/{noctalia,soviet-bar-sync}.service` | `systemd/` | R | |
 | `~/.config/systemd/user/graphical-session.target.wants/*.service` | — | link | habilitação |

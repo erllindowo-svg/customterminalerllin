@@ -1,7 +1,7 @@
 # Terminal Soviético — identidade visual do Noctalia
 #
-# Paleta: palettes/SovietTerminal.json (valores do tema Omarchy soviet-terminal,
-# ~/.config/omarchy/themes/soviet-terminal/colors.toml e btop.theme).
+# Paleta: palettes/Erllinsapin.json (valores do tema Omarchy erllinsapin,
+# ~/.config/omarchy/themes/erllinsapin/colors.toml e btop.theme).
 #   primary   #B8D58A  fósforo — números, item ativo, informação prioritária
 #   secondary #718D58  oliva   — rótulos, ícones, itens ocupados
 #   tertiary  #C9B26B  âmbar   — avisos
@@ -13,7 +13,7 @@
 
 [theme]
 source = "custom"
-custom_palette = "SovietTerminal"
+custom_palette = "Erllinsapin"
 mode = "dark"
 shell_mode = "follow"
 

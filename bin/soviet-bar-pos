@@ -34,7 +34,7 @@ gui_conflict() {
 }
 
 notify() {
-  command -v notify-send >/dev/null && notify-send -a "Terminal Soviético" "Barra" "$1"
+  command -v notify-send >/dev/null && notify-send -a "Erllinsapin" "Barra" "$1"
   printf '%s\n' "$1" >&2
 }
 

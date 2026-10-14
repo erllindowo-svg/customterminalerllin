@@ -2,7 +2,7 @@
 # Único mecanismo de inicialização do Noctalia (não há entrada em autostart.lua).
 # Documentação: README.md e docs/architecture.md no repositório do projeto.
 [Unit]
-Description=Noctalia shell (barra do Terminal Soviético)
+Description=Noctalia shell (barra do Erllinsapin)
 Documentation=https://docs.noctalia.dev/noctalia/
 After=graphical-session.target
 PartOf=graphical-session.target
