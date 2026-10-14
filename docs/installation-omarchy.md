@@ -135,7 +135,7 @@ Tema e papéis de parede (as fotos não ficam no repositório):
 
 ```bash
 scripts/fetch-backgrounds.sh      # Wikimedia Commons, confere SHA-1, gera preview.png
-omarchy theme set soviet-terminal
+omarchy theme set erllinsapin
 ```
 
 ## 9. Reiniciar só o necessário

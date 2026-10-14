@@ -25,7 +25,7 @@ cd ~/www/customterminalerllin
 ./install.sh check        # compatibilidade, dependências, atalhos e plano — não altera nada
 ./install.sh --dry-run    # plano de instalação
 ./install.sh              # instala (idempotente), baixa arttime/omarchy-overview fixados e ativa
-scripts/fetch-backgrounds.sh && omarchy theme set soviet-terminal
+scripts/fetch-backgrounds.sh && omarchy theme set erllinsapin
 ```
 
 Passo a passo, pré-requisitos e migração desta máquina:
@@ -73,7 +73,7 @@ hypr/                      módulo Hyprland (modelo) → ~/.config/hypr/terminal
 noctalia/config/           configuração do Noctalia (modelos .in) → ~/.config/noctalia
 noctalia/plugins/          plugins Luau (tarefas, audio, spotify-media, barra, grupos) → ~/.local/share/noctalia/plugins
 omarchy/plugins/           barra nula erllan.sem-barra → ~/.config/omarchy/plugins
-omarchy/themes/            tema soviet-terminal (sem as fotos) → ~/.config/omarchy/themes
+omarchy/themes/            tema erllinsapin (sem as fotos) → ~/.config/omarchy/themes
 omarchy/workspace-layouts/ layout dwindle da central → ~/.local/state/omarchy/workspace-layouts
 systemd/                   noctalia.service, soviet-bar-sync.service → ~/.config/systemd/user
 btop/, fastfetch/          configurações dos painéis

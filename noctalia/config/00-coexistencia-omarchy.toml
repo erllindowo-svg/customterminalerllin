@@ -22,7 +22,7 @@ enable_daemon = false          # org.freedesktop.Notifications = shell Omarchy
 enabled = false                # OSD de volume/brilho = shell Omarchy (omarchy.osd)
 
 [wallpaper]
-enabled = false                # papel de parede = tema Omarchy (soviet-terminal/backgrounds)
+enabled = false                # papel de parede = tema Omarchy (erllinsapin/backgrounds)
 
 [lockscreen]
 enabled = false                # bloqueio = omarchy.lock (SUPER+CTRL+L, idle, suspend)
@@ -36,7 +36,7 @@ enabled = false                # luz noturna = hyprsunset (SUPER+CTRL+N)
 
 [theme.templates]
 # NUNCA deixar o Noctalia reescrever temas de foot/btop/gtk/etc.: o tema
-# soviet-terminal do Omarchy é a fonte da verdade para os aplicativos.
+# erllinsapin do Omarchy é a fonte da verdade para os aplicativos.
 enable_builtin_templates = false
 enable_community_templates = false
 

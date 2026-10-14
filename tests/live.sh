@@ -28,7 +28,7 @@ section "Hyprland"
 for k in KEY_INSPECT KEY_OPS KEY_ARTE KEY_PIN; do
   d=$(hyprctl binds -j | jq -r --argjson m "$(mask_of "${!k}")" --arg key "$(key_of "${!k}")" \
       '[.[] | select(.modmask == $m and .key == $key)] | map(.description) | join("|")')
-  [[ $d == Soviet* && $d != *"|"* ]] && pass "$k (${!k}) ligado uma vez: $d" || fail "$k (${!k})" "binds: '$d'"
+  [[ $d == Erllinsapin:* && $d != *"|"* ]] && pass "$k (${!k}) ligado uma vez: $d" || fail "$k (${!k})" "binds: '$d'"
 done
 
 section "Processos permanentes (sem duplicatas)"

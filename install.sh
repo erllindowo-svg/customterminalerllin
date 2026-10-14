@@ -169,7 +169,8 @@ check_keys() {
     done
     desc=$(jq -r --argjson m "$mask" --arg k "$key" \
       '[.[] | select(.modmask == $m and (.key | ascii_upcase) == $k)][0].description // empty' <<< "$binds")
-    if [[ -n $desc && $desc != Soviet* ]]; then
+    # "Soviet*": descrição dos atalhos instalados antes da troca para Erllinsapin.
+    if [[ -n $desc && $desc != Erllinsapin:* && $desc != Soviet* ]]; then
       err "$k ($keys) já está em uso: \"$desc\". Troque em config/terminal-soviet.conf"; bad=1
     fi
   done
@@ -406,6 +407,30 @@ apply_screensaver() {
   ok "tela de descanso do Omarchy desligada: ocioso leva à central de operações"
 }
 
+# Tema renomeado (soviet-terminal → erllinsapin): o instalador remove os arquivos
+# versionados do diretório antigo; as fotos baixadas (fora do repositório) e o
+# preview vão para o novo, e o tema ativo é trocado se ainda for o antigo.
+TEMA_ANTIGO="$HOME/.config/omarchy/themes/soviet-terminal"
+TEMA_NOVO="$HOME/.config/omarchy/themes/erllinsapin"
+TEMA_ATIVO="$HOME/.local/state/omarchy/current/theme.name"
+plan_theme_rename() {
+  [[ -d $TEMA_ANTIGO ]] && info "  MIGRAR    tema      soviet-terminal → erllinsapin  (fotos e preview; tema ativo)"
+  return 0
+}
+apply_theme_rename() {
+  local f
+  [[ -d $TEMA_ANTIGO ]] || return 0
+  mkdir -p "$TEMA_NOVO"
+  for f in backgrounds preview.png; do
+    [[ -e $TEMA_ANTIGO/$f && ! -e $TEMA_NOVO/$f ]] && mv "$TEMA_ANTIGO/$f" "$TEMA_NOVO/$f"
+  done
+  rmdir "$TEMA_ANTIGO" 2>/dev/null || warn "~/${TEMA_ANTIGO#"$HOME"/} não ficou vazio: mantido"
+  if [[ $(cat "$TEMA_ATIVO" 2>/dev/null) == soviet-terminal ]] && live_session && command -v omarchy >/dev/null; then
+    omarchy theme set erllinsapin >/dev/null 2>&1 || warn "omarchy theme set erllinsapin falhou: rode à mão"
+  fi
+  ok "tema migrado para erllinsapin"
+}
+
 cmd_install() {
   preflight
   read_manifest
@@ -413,6 +438,7 @@ cmd_install() {
   plan_files; plan_links; plan_block; plan_shelljson; plan_externals
   print_plan
   plan_screensaver
+  plan_theme_rename
   if (( CONFLICTS && ! FORCE )); then
     err "$CONFLICTS conflito(s): arquivo existente diferente e não instalado por este projeto (ou editado depois)."
     info "  Compare com 'diff ~/<arquivo> <repo>/...'; para sobrescrever COM backup: --force"
@@ -423,6 +449,7 @@ cmd_install() {
   apply_plan
   write_manifest
   apply_screensaver
+  apply_theme_rename
   [[ -d $BACKUP_DIR ]] && ok "originais guardados em $BACKUP_DIR"
   install_externals
   activate
