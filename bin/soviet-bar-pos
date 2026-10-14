@@ -59,11 +59,16 @@ if [[ $pos == top ]]; then
 else
   {
     printf '# GERADO por soviet-bar-pos (estado local, fora do manifesto do install.sh).\n[bar.%s]\nposition = "%s"\n' "$BAR" "$pos"
-    # Vertical (810 px lógicos de altura aqui): sem centro, o Noctalia dá a seção
-    # `end` (player, fixados, utilidades) por inteiro e corta só o fim da `start`.
-    # As ações vão para o fim da `start`. Mantenha em sincronia com 20-barra.toml.in.
+    # Vertical (810 px lógicos de altura aqui): ações (com o símbolo de música) no
+    # centro exato. Com centro, cada ponta tem ~315 px; para a de baixo caber, ela
+    # fica sem clima (está no control center) e o espaço entre widgets cai para 4.
+    # Só na vertical entram os ícones de apps (abertos em cima, fixados embaixo).
+    # Mantenha em sincronia com 20-barra.toml.in e T_BAR_END (lib/ts-lib.sh).
     if [[ $pos == left || $pos == right ]]; then
-      printf 'start = ["alca", "menu", "workspaces", "overview", "abertos", "group:acoes"]\ncenter = []\n'
+      printf 'widget_spacing = 4\n'
+      printf 'start = ["alca", "menu", "workspaces", "overview", "abertos"]\n'
+      printf 'center = ["group:acoes"]\n'
+      printf 'end = ["fixados", "tray", "notificacoes", "audio", "clock", "control-center"]\n'
     fi
   } > "$OUT"
 fi

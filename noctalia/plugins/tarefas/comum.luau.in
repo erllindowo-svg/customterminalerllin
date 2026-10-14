@@ -17,8 +17,9 @@
 -- onHover de cada ícone diz qual estava sob o ponteiro.
 
 local ITEM, ICON = @ITEM@, @ICON@
--- Coluna de altura ITEM com o ícone no centro: o traço (2 px + 1 de folga) embaixo
--- é compensado por um vão igual em cima, para o ícone ficar na linha dos glifos.
+-- Caixa ITEM×ITEM com o ícone no centro: o traço (2 px + 1 de folga) embaixo é
+-- compensado por um vão igual em cima, para o ícone ficar na linha dos glifos. Na
+-- vertical, o traço fica em pé, do lado da borda da tela (vão igual do outro lado).
 local MARK_H = 2
 local PAD = math.floor((ITEM - ICON) / 2) - MARK_H
 
@@ -90,6 +91,8 @@ function M.widget(group, bar)
 
   local function render()
     local items = {}
+    local vertical = barraVertical(bar)
+    local naEsquerda = noctalia.getSetting("bar.@BAR_NAME@.position") == "left"
     for _, a in ipairs(apps) do
       local key = a.key
       local path = iconFor(a)
@@ -97,7 +100,14 @@ function M.widget(group, bar)
         or ui.glyph({ name = "app-window", size = ICON, color = "on_surface" })
       local mark = "#00000000"
       if a.focused then mark = "primary" elseif #a.windows > 0 then mark = "secondary" end
-      table.insert(items, ui.column({
+      local tam = (#a.windows > 1) and 12 or 8
+      local traco = vertical and ui.box({ width = MARK_H, height = tam, fill = mark })
+        or ui.box({ width = tam, height = MARK_H, fill = mark })
+      local vao = vertical and ui.box({ width = MARK_H, height = 1, fill = "#00000000" })
+        or ui.box({ width = 1, height = MARK_H, fill = "#00000000" })
+      local filhos = { vao, node, traco }
+      if vertical and naEsquerda then filhos = { traco, node, vao } end
+      table.insert(items, (vertical and ui.row or ui.column)({
         key = key, gap = PAD, align = "center", justify = "center",
         width = ITEM, height = ITEM,
         -- Transparente explícito: o reconciliador mantém props ausentes de um render ao outro.
@@ -114,13 +124,9 @@ function M.widget(group, bar)
             tooltip(hovered and find(hovered))
           end
         end,
-      }, {
-        ui.box({ width = 1, height = MARK_H, fill = "#00000000" }),
-        node,
-        ui.box({ width = (#a.windows > 1) and 12 or 8, height = MARK_H, fill = mark }),
-      }))
+      }, filhos))
     end
-    local container = barraVertical(bar) and ui.column or ui.row
+    local container = vertical and ui.column or ui.row
     -- Sem gap: cada item tem ITEM de largura, então os ícones já ficam ITEM - ICON (= GAP) apartados.
     bar.render(container({ gap = 0, align = "center" }, items))
   end

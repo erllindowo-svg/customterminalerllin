@@ -1,29 +1,24 @@
 -- Terminal Soviético — fork local de azokyen/spotify-media 0.1.1 (MIT), community-plugins
 -- rev. em upstream/REVISION; original intocado em upstream/bar.luau. MODELO: install.sh
--- gera bar.luau (marcadores ITEM e ICON da grade da barra, lib/ts-lib.sh, e BAR_NAME).
+-- gera bar.luau (marcadores ITEM e ICON da grade da barra, lib/ts-lib.sh).
 --
--- A barra É o player: nada de ícone do Spotify.
---   * Mostra sempre a última música tocada (capa, artista – título), mesmo com o
---     Spotify fechado logo após ligar o PC: título, artista, capa e mpris:trackid
---     ficam em pluginDataDir()/ultima.json a cada troca de faixa.
+-- Na barra, só um botão com o símbolo de música (na cápsula das ações); o clique
+-- abre o painel do player. O widget continua sendo o serviço da música:
+--   * Guarda a última música tocada, mesmo com o Spotify fechado logo após ligar
+--     o PC: título, artista, capa e mpris:trackid ficam em
+--     pluginDataDir()/ultima.json a cada troca de faixa (o painel mostra).
 --   * Play com o Spotify fechado: tocar.sh abre o Spotify sem mostrar a janela
 --     (workspace especial "musica", regra em terminal_soviet.lua) e retoma a
 --     última faixa (playerctl open spotify:track:…).
---   * Clique na capa/título: painel erllan/spotify-media:player (capa grande,
+--   * Clique no símbolo: painel erllan/spotify-media:player (capa grande,
 --     controles, progresso, busca).
 --   * Metadados por evento: um `playerctl --follow metadata` (runStream) no lugar
---     do `playerctl metadata` a cada 1 s do upstream. O tick de 250 ms só existe
---     enquanto o texto rola.
--- Outras diferenças do upstream: capa com cantos retos numa caixa fixa ITEM×ITEM;
--- texto rolante de 11 caracteres / 92 px (upstream 16/136); sem a prop `align` nos
--- ui.button (a API 5.0.1 não a tem). O marquee (utf8Chars, charWidth,
--- scrollingText) e stripNewline são do upstream sem mudança.
--- O estado vai para o painel por noctalia.state "musica".
+--     do `playerctl metadata` a cada 1 s do upstream.
+-- stripNewline é do upstream sem mudança. O estado vai para o painel por
+-- noctalia.state "musica".
 
 local ITEM, ICON = @ITEM@, @ICON@   -- grade da barra (lib/ts-lib.sh)
-local SCROLL_WIDTH = 11
-local SCROLL_TICK_MS = 500          -- upstream: 2 ticks de 250 ms
-local IDLE_TICK_MS = 60000
+local IDLE_TICK_MS = 60000          -- só para religar o stream do playerctl
 
 local title = ""
 local artist = ""
@@ -34,94 +29,12 @@ local artPath = nil
 local playerAvailable = false
 
 local coverRevision = 0
-local scrollOffset = 1
-local lastDisplayText = ""
 
 local dataDir = noctalia.pluginDataDir()
 local LAST_FILE = dataDir and (dataDir .. "/ultima.json") or nil
 local TOCAR = (noctalia.pluginDir() or ".") .. "/tocar.sh"
 
 local SEP = string.char(31)
-
--- Barra vertical? barWidget.isVertical() do 5.0.1 compara altura × largura do
--- CONTEÚDO do widget (um item de 22 px numa barra de 26 conta como horizontal, e
--- uma linha larga se perpetua). A posição efetiva da barra (inclui o
--- 90-posicao-barra.toml do soviet-bar-pos) é a fonte confiável.
-local function barraVertical()
-  local pos = noctalia.getSetting("bar.@BAR_NAME@.position")
-  if pos == "left" or pos == "right" then return true end
-  if pos == "top" or pos == "bottom" then return false end
-  return barWidget and barWidget.isVertical() or false
-end
-
-
-local function utf8Chars(value)
-  local chars = {}
-
-  for _, codepoint in utf8.codes(value) do
-    table.insert(chars, utf8.char(codepoint))
-  end
-
-  return chars
-end
-
-local function charWidth(char)
-  local cp = utf8.codepoint(char)
-
-  if cp == nil then
-    return 1
-  end
-
-  -- Common CJK / Japanese / Korean ranges.
-  if
-    (cp >= 0x1100 and cp <= 0x11FF) or
-    (cp >= 0x2E80 and cp <= 0xA4CF) or
-    (cp >= 0xAC00 and cp <= 0xD7A3) or
-    (cp >= 0xF900 and cp <= 0xFAFF) or
-    (cp >= 0xFE10 and cp <= 0xFE6F) or
-    (cp >= 0xFF00 and cp <= 0xFFEF)
-  then
-    return 2
-  end
-
-  return 1
-end
-
-local function scrollingText(value)
-  local chars = utf8Chars(value)
-  local length = #chars
-
-  -- Ensure short titles still have enough empty space
-  -- before wrapping back around.
-
-  local extraSpaces = math.max(3, SCROLL_WIDTH - length + 3)
-  local padded = value .. string.rep(" ", extraSpaces)
-
-  local sequence = utf8Chars(padded)
-  local sequenceLength = #sequence
-
-  local output = {}
-
-  local usedWidth = 0
-  local i = 0
-
-  while usedWidth < SCROLL_WIDTH do
-    local index = ((scrollOffset + i - 1) % sequenceLength) + 1
-    local char = sequence[index]
-    local width = charWidth(char)
-
-    if usedWidth + width > SCROLL_WIDTH then
-      break
-    end
-
-    table.insert(output, char)
-    usedWidth = usedWidth + width
-    i = i + 1
-  end
-
-  return table.concat(output)
-end
-
 
 local function stripNewline(value)
   if value == nil then
@@ -172,16 +85,6 @@ local function loadLast()
 end
 
 
-function previousTrack()
-  noctalia.runAsync({ "playerctl", "--player=spotify", "previous" })
-end
-
-
-function nextTrack()
-  noctalia.runAsync({ "playerctl", "--player=spotify", "next" })
-end
-
-
 -- Com o Spotify aberto: play-pause. Fechado: abre oculto e retoma a última faixa.
 function togglePlayback()
   if playerAvailable then
@@ -200,66 +103,22 @@ function openPlayer()
 end
 
 
--- Clique no widget fora dos botões (a capa): o mesmo que clicar no título.
+-- Clique no símbolo: abre o player.
 function onClick()
   openPlayer()
 end
 
 
+-- Glifo na cor de ícone da barra (secondary); o clique chega ao onClick() do
+-- widget. Tooltip só por widget na API 5.0.1 (barWidget.setTooltip).
 local function render()
-  local playing = status == "Playing"
-  local vertical = barraVertical()
-  local container = vertical and ui.column or ui.row
   local text = displayText()
-
-  -- Caixa fixa ITEM×ITEM (width/height viram min=max no Flex): a capa nunca encolhe.
-  -- Sem onClick aqui (o clique chega ao onClick() do widget); sem capa, glifo de música.
-  local cover = ui.row({
-    key = "cover-box", width = ITEM, height = ITEM, align = "center", justify = "center",
+  barWidget.setTooltip(text ~= "" and ("Música: " .. text) or "Música")
+  barWidget.render(ui.row({
+    key = "musica", width = ITEM, height = ITEM, align = "center", justify = "center",
   }, {
-    (artPath and artPath ~= "")
-      and ui.image({ key = "cover", path = artPath, width = ITEM, height = ITEM, radius = 0, fit = "cover" })
-      or ui.glyph({ key = "cover-glyph", name = "music", size = ICON, color = "primary" }),
-  })
-
-  local playButton = ui.button({
-    key = "playpause",
-    glyph = playing and "player-pause-filled" or "player-play-filled",
-    glyphSize = ICON, variant = "ghost", width = ITEM, height = ITEM,
-    tooltip = playing and "Pausar" or "Tocar",
-    onClick = "togglePlayback",
-  })
-
-  -- Barra vertical: capa + play empilhados; o texto vira tooltip do play.
-  if vertical then
-    barWidget.render(container({ gap = 0, align = "center" }, { cover, playButton }))
-    return
-  end
-
-  local children = { cover }
-  if text ~= "" then
-    table.insert(children, ui.button({
-      key = "track", text = scrollingText(text), variant = "ghost", contentAlign = "start",
-      height = ITEM, width = 92, tooltip = text, onClick = "openPlayer",
-    }))
-  end
-  table.insert(children, ui.button({
-    key = "previous", glyph = "caret-left-filled", glyphSize = ICON, variant = "ghost",
-    width = ITEM, height = ITEM, tooltip = "Anterior", onClick = "previousTrack",
+    ui.glyph({ name = "music", size = ICON, color = "secondary" }),
   }))
-  table.insert(children, playButton)
-  table.insert(children, ui.button({
-    key = "next", glyph = "caret-right-filled", glyphSize = ICON, variant = "ghost",
-    width = ITEM, height = ITEM, tooltip = "Próxima", onClick = "nextTrack",
-  }))
-  barWidget.render(container({ gap = 0, align = "center" }, children))
-end
-
-
--- Só rola (e só re-renderiza a cada tick) quando o texto não cabe.
-local function scheduleTicks()
-  local long = utf8.len(displayText()) or 0
-  noctalia.setUpdateInterval((long > SCROLL_WIDTH and not barraVertical()) and SCROLL_TICK_MS or IDLE_TICK_MS)
 end
 
 
@@ -304,7 +163,7 @@ local function onMetadata(line)
   if newStatus == nil then
     playerAvailable = false
     status = "Stopped"
-    publish(); render(); scheduleTicks()
+    publish(); render()
     return
   end
 
@@ -317,7 +176,7 @@ local function onMetadata(line)
     trackid = newTrackid or ""
   end
   if changed then saveLast() end
-  publish(); render(); scheduleTicks()
+  publish(); render()
   updateArtwork(newArtUrl or "")
 end
 
@@ -347,15 +206,7 @@ end)
 
 
 function update()
-  local text = displayText()
-  if text ~= lastDisplayText then
-    lastDisplayText = text
-    scrollOffset = 1
-  elseif (utf8.len(text) or 0) > SCROLL_WIDTH then
-    scrollOffset = scrollOffset + 1
-  end
   render()
-  scheduleTicks()
   startStream()
 end
 
@@ -363,5 +214,5 @@ end
 loadLast()
 publish()
 render()
-scheduleTicks()
+noctalia.setUpdateInterval(IDLE_TICK_MS)
 startStream()

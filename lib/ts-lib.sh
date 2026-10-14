@@ -73,10 +73,12 @@ compute_tokens() {
   T_IDLE_CENTRAL=$(jq -r '.idle.screensaver // 150 | numbers' "$HOME/.config/omarchy/shell.json" 2>/dev/null || true)
   [[ $T_IDLE_CENTRAL =~ ^[0-9]+$ && $T_IDLE_CENTRAL -gt 0 ]] || T_IDLE_CENTRAL=150
 
-  # Seção da direita: player, fixados (erllan/tarefas:fixados) e utilidades.
-  T_BAR_END='["spotify", "fixados", "tray", "notificacoes", "audio", "weather", "clock", "control-center"]'
+  # Seção da direita: utilidades (sem ícones de apps na horizontal; na vertical,
+  # bin/soviet-bar-pos refaz as seções e põe abertos/fixados).
+  T_BAR_END='["tray", "notificacoes", "audio", "weather", "clock", "control-center"]'
 
   # Centro: ações (grupo "acoes"); o botão do jogo só entra se o .desktop existir.
+  # O símbolo de música (erllan/spotify-media:bar, abre o player) fecha o grupo.
   T_ACOES_MEMBERS='["inspecao", "grupos", "captura", "luz_noturna", "cafeina", "energia"'
   T_GAME_NAME="" T_GAME_ICON=""
   local desk
@@ -86,7 +88,7 @@ compute_tokens() {
     T_GAME_ICON=$(icon_path "$(sed -n 's/^Icon=//p' "$desk" | head -1)")
     T_ACOES_MEMBERS+=', "jogo"'
   fi
-  T_ACOES_MEMBERS+="]"
+  T_ACOES_MEMBERS+=', "spotify"]'
   T_GAME_NAME=${T_GAME_NAME:-$GAME_DESKTOP} T_GAME_NAME=${T_GAME_NAME//\"/}
 
   local pins="" f id classes c list l
