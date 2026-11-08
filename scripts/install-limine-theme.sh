@@ -150,7 +150,7 @@ gerar_ativos() {
 
 # ------------------------------------------------------------------ bloco do tema
 # Cores por variante. robco: o verde do texto da arte do fallout-grub-theme
-# (69D87A). fosforo/ambar: omarchy/themes/soviet-terminal/colors.toml.
+# (69D87A). fosforo/ambar: omarchy/themes/erllinsapin/colors.toml.
 # fallout: Fallout_limine/Limine.txt do Neptune3013 (@9a777b9), sem interface_*.
 cores() {
   case $LIMINE_THEME in

@@ -1,6 +1,6 @@
 # Componentes de terceiros e licenças
 
-O repositório é **privado e de uso pessoal**. Isso não dispensa as condições
+O repositório é **público, de uso pessoal**. Isso não dispensa as condições
 das licenças de terceiros: o que não pode ser copiado livremente fica fora do
 repositório e é obtido na instalação.
 

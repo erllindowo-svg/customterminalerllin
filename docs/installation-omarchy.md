@@ -32,9 +32,10 @@ omarchy pkg add noctalia zsh socat jq fastfetch playerctl fzf git
 # opcional, AUR: omarchy pkg aur add osu-lazer-bin
 ```
 
-## 2. Acesso ao repositório privado
+## 2. Acesso ao repositório
 
-Use **um** dos métodos. Nenhum deles grava token no projeto.
+O repositório é público: clonar não exige login. Para enviar alterações, use
+**um** dos métodos. Nenhum deles grava token no projeto.
 
 ```bash
 # A) GitHub CLI (HTTPS, login pelo navegador)

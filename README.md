@@ -14,13 +14,13 @@ Configuração pessoal de desktop para o **Omarchy 4** (Hyprland em Lua):
 * a **ilustração** do arttime (arte + frase original, sem relógio), com menu,
   arttime interativo e dois modos de cor (`SUPER+ALT+A`).
 
-Repositório privado, de uso pessoal, para levar essa configuração a novos
+Repositório público, de uso pessoal, para levar essa configuração a novos
 computadores. Não é uma distribuição genérica: só o Omarchy 4 é suportado.
 
 ## Instalação rápida
 
 ```bash
-git clone <remoto-privado> ~/www/customterminalerllin   # qualquer diretório serve
+git clone https://github.com/erllindowo-svg/customterminalerllin.git ~/www/customterminalerllin   # qualquer diretório serve
 cd ~/www/customterminalerllin
 ./install.sh check        # compatibilidade, dependências, atalhos e plano — não altera nada
 ./install.sh --dry-run    # plano de instalação
