@@ -73,7 +73,13 @@ faltam com o comando `omarchy pkg add …`.
 | `playerctl` | playerctl 2.4.1-5 | extra | não | widget do Spotify | `playerctl -l` |
 | `fzf` | fzf 0.74.3-1 | extra | não | tecla `x` do arttime | — |
 | `luac`, `luajit`, `python3`, `wtype`, `grim` | lua, luajit, python, wtype, grim | extra | só testes | sintaxe, pty, teclas, capturas | — |
-| `shellcheck` | shellcheck | extra | só testes (opcional) | análise dos scripts; **não instalado** hoje | — |
+| `shellcheck` | shellcheck | extra | só testes (opcional) | análise dos scripts | — |
+| `limine` | limine **12.8.0** | extra | só o tema de boot | `scripts/install-limine-theme.sh` recusa fora da série 12.x | `limine --version` |
+| `b2sum` | coreutils | core | só o tema de boot | hash de fonte e papel de parede no `limine.conf` | — |
+| `python-pillow`, `python-numpy` | 12.3.0, 2.5.3 | extra | só o tema de boot | `scripts/limine-wallpaper.py` (gerar o papel de parede) | — |
+| `terminus-font` | terminus-font | extra | só o tema de boot | fonte padrão do menu (`ter-i14n`, IBM-437, OFL) | — |
+| `curl` | curl | core | só o tema de boot | baixar a arte e a fonte opcional (SHA-256 conferido) | — |
+| `qemu-system-x86_64`, `edk2-ovmf` | qemu-base 11.1.1, edk2-ovmf 202608 | extra | só testes | `tests/vm-limine.sh` (VM UEFI com o Limine do sistema) | — |
 
 Fonte: `JetBrainsMono Nerd Font` (vem com o Omarchy). Ícones: `btop.svg` e
 `foot.svg` em `/usr/share/icons/hicolor/scalable/apps` (dos pacotes btop e
@@ -88,6 +94,14 @@ foot). Os links `soviet-*.svg` só são criados se eles existirem.
 
 Atualizar uma delas = trocar o commit em `install.sh` (`ARTTIME_COMMIT`,
 `OVERVIEW_COMMIT`) depois de revisar o diff do upstream e rodar os testes.
+
+Ativos do tema de boot (só `scripts/install-limine-theme.sh`; pins em `lib/compat.sh`,
+cache em `~/.cache/terminal-soviet/limine/upstream/`):
+
+| Ativo | Commit | SHA-256 |
+|---|---|---|
+| [shvchk/fallout-grub-theme](https://github.com/shvchk/fallout-grub-theme) `background.png` (1920×1080) | `b441e25a6d115614dc00ee6d11355d019a4969bf` | `224e4ff6…7ccb3906` |
+| [Neptune3013/fallout-limine-theme](https://github.com/Neptune3013/fallout-limine-theme) `Fallout_limine/PHXEGA8.F14` (opcional) | `9a777b932de07dce60e58b2a1162b7d41ecfd2e9` | `4811ac4e…91622537` |
 
 ### Como o projeto encontra a coleção do arttime
 
