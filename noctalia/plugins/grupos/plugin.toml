@@ -1,0 +1,22 @@
+# Terminal Soviético — painel "Grupos": apps instalados agrupados por propósito
+# (Desenvolvimento, Internet, Mídia, Jogos…). Aberto pelo ícone do centro da barra.
+# Estado: ~/.local/state/terminal-soviet/grupos.json (bin/soviet-grupos classifica).
+id = "erllan/grupos"
+name = "Grupos"
+version = "1.0.0"
+plugin_api = 28   # panel.openContextMenu (menu do clique direito num app)
+author = "erllan"
+license = "MIT"
+dependencies = ["hyprctl", "jq", "uwsm-app"]
+icon = "category"
+description = "Apps instalados em grupos editáveis (arrastar entre grupos, criar, renomear)."
+
+[[panel]]
+id = "painel"
+entry = "grupos.luau"
+width = 520
+height = 560
+placement = "attached"
+position = "auto"
+open_near_click = true
+capture_keys = ["escape"]

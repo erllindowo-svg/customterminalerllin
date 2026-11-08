@@ -1,31 +1,10 @@
-# Terminal Soviético — monitoramento e clima
+# Terminal Soviético — monitoramento (desligado) e clima
 
-# Coleta nativa do Noctalia. CPU: hwmon k10temp (Tctl). GPU: NVML (driver NVIDIA
-# proprietário, GTX 1660 SUPER). Nada é estimado: fonte ausente aparece como
-# indisponível, não como zero.
+# Sysmon do Noctalia desligado: a barra não tem mais sensores (o btop da inspeção,
+# SUPER+M, mostra CPU/RAM/GPU/rede). Efeito colateral: a aba "System" do control
+# center some. Para religar, enabled = true (com os limiares de cpu_usage_* etc.).
 [system.monitor]
-enabled = true
-cpu_poll_seconds = 2.0
-memory_poll_seconds = 2.0
-gpu_poll_seconds = 5.0
-network_poll_seconds = 3.0
-# Limiares: atividade = começa a tingir; crítico = vermelho pleno.
-cpu_usage_activity_threshold = 70.0
-cpu_usage_critical_threshold = 95.0
-cpu_temp_activity_threshold = 70.0
-cpu_temp_critical_threshold = 88.0
-ram_pct_activity_threshold = 75.0
-ram_pct_critical_threshold = 92.0
-gpu_usage_activity_threshold = 70.0
-gpu_usage_critical_threshold = 97.0
-gpu_temp_activity_threshold = 70.0
-gpu_temp_critical_threshold = 85.0
-gpu_vram_activity_threshold = 75.0
-gpu_vram_critical_threshold = 92.0
-net_rx_activity_threshold = 5.0
-net_rx_critical_threshold = 80.0
-net_tx_activity_threshold = 5.0
-net_tx_critical_threshold = 80.0
+enabled = false
 
 # Localização fixa — sem geolocalização por IP.
 [location]

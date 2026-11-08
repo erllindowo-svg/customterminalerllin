@@ -1,0 +1,22 @@
+# Terminal Soviético — posição da barra: painel com uma mini-tela onde se arrasta a
+# barra até uma das 4 bordas (ou se usam os botões). Aplica por soviet-bar-pos.
+# Aberto pelo clique direito na zona vazia da barra (20-barra.toml).
+id = "erllan/barra"
+name = "Posição da barra"
+version = "1.0.0"
+plugin_api = 24
+author = "erllan"
+license = "MIT"
+dependencies = []
+icon = "layout-navbar"
+description = "Escolhe a borda da tela da barra arrastando-a numa mini-tela."
+
+[[panel]]
+id = "posicao"
+entry = "posicao.luau"
+width = 300
+height = 250
+placement = "attached"
+position = "auto"
+open_near_click = true
+capture_keys = ["escape"]

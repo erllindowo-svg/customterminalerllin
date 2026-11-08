@@ -1,0 +1,218 @@
+-- Terminal Soviético — fork local de azokyen/spotify-media 0.1.1 (MIT), community-plugins
+-- rev. em upstream/REVISION; original intocado em upstream/bar.luau. MODELO: install.sh
+-- gera bar.luau (marcadores ITEM e ICON da grade da barra, lib/ts-lib.sh).
+--
+-- Na barra, só um botão com o símbolo de música (na cápsula das ações); o clique
+-- abre o painel do player. O widget continua sendo o serviço da música:
+--   * Guarda a última música tocada, mesmo com o Spotify fechado logo após ligar
+--     o PC: título, artista, capa e mpris:trackid ficam em
+--     pluginDataDir()/ultima.json a cada troca de faixa (o painel mostra).
+--   * Play com o Spotify fechado: tocar.sh abre o Spotify sem mostrar a janela
+--     (workspace especial "musica", regra em terminal_soviet.lua) e retoma a
+--     última faixa (playerctl open spotify:track:…).
+--   * Clique no símbolo: painel erllan/spotify-media:player (capa grande,
+--     controles, progresso, busca).
+--   * Metadados por evento: um `playerctl --follow metadata` (runStream) no lugar
+--     do `playerctl metadata` a cada 1 s do upstream.
+-- stripNewline é do upstream sem mudança. O estado vai para o painel por
+-- noctalia.state "musica".
+
+local ITEM, ICON = @ITEM@, @ICON@   -- grade da barra (lib/ts-lib.sh)
+local IDLE_TICK_MS = 60000          -- só para religar o stream do playerctl
+
+local title = ""
+local artist = ""
+local status = "Stopped"
+local trackid = ""
+local artUrl = ""
+local artPath = nil
+local playerAvailable = false
+
+local coverRevision = 0
+
+local dataDir = noctalia.pluginDataDir()
+local LAST_FILE = dataDir and (dataDir .. "/ultima.json") or nil
+local TOCAR = (noctalia.pluginDir() or ".") .. "/tocar.sh"
+
+local SEP = string.char(31)
+
+local function stripNewline(value)
+  if value == nil then
+    return ""
+  end
+
+  return value:gsub("[\r\n]+", " ")
+end
+
+
+-- spotify:track:ID a partir do mpris:trackid ("/com/spotify/track/ID" ou já um URI).
+local function trackUri(id)
+  if id == nil or id == "" then return nil end
+  if string.sub(id, 1, 8) == "spotify:" then return id end
+  local tid = string.match(id, "/track/([%w]+)$")
+  return tid and ("spotify:track:" .. tid) or nil
+end
+
+local function displayText()
+  if title == "" then return "" end
+  if artist ~= "" then return artist .. " - " .. title end
+  return title
+end
+
+local function publish()
+  noctalia.state.set("musica", {
+    title = title, artist = artist, status = status, trackid = trackid,
+    artPath = artPath or "", disponivel = playerAvailable,
+  })
+end
+
+local function saveLast()
+  if not LAST_FILE or title == "" then return end
+  noctalia.writeFile(LAST_FILE, noctalia.json.encode({
+    title = title, artist = artist, trackid = trackid, artUrl = artUrl, artPath = artPath or "",
+  }))
+end
+
+local function loadLast()
+  local raw = LAST_FILE and noctalia.fileExists(LAST_FILE) and noctalia.readFile(LAST_FILE) or nil
+  local last = raw and noctalia.json.decode(raw) or nil
+  if type(last) ~= "table" then return end
+  title = last.title or ""
+  artist = last.artist or ""
+  trackid = last.trackid or ""
+  artUrl = last.artUrl or ""
+  if last.artPath and last.artPath ~= "" and noctalia.fileExists(last.artPath) then artPath = last.artPath end
+end
+
+
+-- Com o Spotify aberto: play-pause. Fechado: abre oculto e retoma a última faixa.
+function togglePlayback()
+  if playerAvailable then
+    noctalia.runAsync({ "playerctl", "--player=spotify", "play-pause" })
+  else
+    local args = { "bash", TOCAR }
+    local uri = trackUri(trackid)
+    if uri then table.insert(args, uri) end
+    noctalia.runAsync(args, nil, 45000)
+  end
+end
+
+
+function openPlayer()
+  noctalia.togglePanel("erllan/spotify-media:player")
+end
+
+
+-- Clique no símbolo: abre o player.
+function onClick()
+  openPlayer()
+end
+
+
+-- Glifo na cor de ícone da barra (secondary); o clique chega ao onClick() do
+-- widget. Tooltip só por widget na API 5.0.1 (barWidget.setTooltip).
+local function render()
+  local text = displayText()
+  barWidget.setTooltip(text ~= "" and ("Música: " .. text) or "Música")
+  barWidget.render(ui.row({
+    key = "musica", width = ITEM, height = ITEM, align = "center", justify = "center",
+  }, {
+    ui.glyph({ name = "music", size = ICON, color = "secondary" }),
+  }))
+end
+
+
+local function updateArtwork(newUrl)
+  if newUrl == nil or newUrl == "" or newUrl == artUrl then
+    return
+  end
+
+  artUrl = newUrl
+
+  if string.sub(newUrl, 1, 7) == "file://" then
+    artPath = noctalia.string.urlDecode(string.sub(newUrl, 8))
+    saveLast(); publish(); render()
+    return
+  end
+
+  if not string.match(newUrl, "^https?://") or dataDir == nil then
+    return
+  end
+
+  coverRevision = coverRevision + 1
+  local revision = coverRevision
+  local destination = dataDir .. "/capa-" .. tostring(revision % 2) .. ".jpg"
+
+  noctalia.download(newUrl, destination, function(ok)
+    if not ok or revision ~= coverRevision then
+      return
+    end
+    artPath = destination
+    saveLast(); publish(); render()
+  end)
+end
+
+
+-- Uma linha por mudança (playerctl --follow). Linha vazia = o Spotify fechou: a
+-- barra continua mostrando a última faixa, só o estado vira "parado".
+local function onMetadata(line)
+  local output = stripNewline(line or "")
+  local newStatus, newTitle, newArtist, newTrackid, newArtUrl =
+    string.match(output, "^(.-)" .. SEP .. "(.-)" .. SEP .. "(.-)" .. SEP .. "(.-)" .. SEP .. "(.*)$")
+
+  if newStatus == nil then
+    playerAvailable = false
+    status = "Stopped"
+    publish(); render()
+    return
+  end
+
+  playerAvailable = true
+  status = newStatus
+  local changed = newTitle ~= "" and (newTitle ~= title or newArtist ~= artist or newTrackid ~= trackid)
+  if newTitle ~= "" then
+    title = newTitle
+    artist = newArtist or ""
+    trackid = newTrackid or ""
+  end
+  if changed then saveLast() end
+  publish(); render()
+  updateArtwork(newArtUrl or "")
+end
+
+
+local streaming = false
+local function startStream()
+  if streaming or not noctalia.commandExists("playerctl") then return end
+  streaming = true
+  local format = "{{status}}" .. SEP .. "{{title}}" .. SEP .. "{{artist}}" .. SEP
+    .. "{{mpris:trackid}}" .. SEP .. "{{mpris:artUrl}}"
+  -- runStream recebe uma linha de shell; o formato não tem aspas simples.
+  noctalia.runStream("exec playerctl --player=spotify --follow metadata --format '" .. format .. "'", onMetadata)
+end
+
+
+-- Pedidos do painel (state "musica-pedido" = { op, uri, n }).
+local lastPedido = nil
+noctalia.state.watch("musica-pedido", function(p)
+  if type(p) ~= "table" or p.n == lastPedido then return end
+  lastPedido = p.n
+  if p.op == "tocar" then
+    togglePlayback()
+  elseif p.op == "abrir" and p.uri then
+    noctalia.runAsync({ "bash", TOCAR, p.uri }, nil, 45000)
+  end
+end)
+
+
+function update()
+  render()
+  startStream()
+end
+
+
+loadLast()
+publish()
+render()
+noctalia.setUpdateInterval(IDLE_TICK_MS)
+startStream()

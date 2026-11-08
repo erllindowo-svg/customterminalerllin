@@ -1,0 +1,24 @@
+# Terminal Soviético — integração com o Hyprland e o Omarchy
+# MODELO: install.sh gera 40-integracao-hyprland.toml (marcadores BIN e IDLE_CENTRAL).
+#
+# Ao (re)iniciar, o Noctalia sobe com a barra visível; este hook reaplica o
+# estado correto para o workspace ativo (oculta no 1, visível nos demais).
+# A troca de workspace em si é tratada por soviet-bar-sync.service.
+[hooks]
+started = "@BIN@/soviet-bar-sync --apply"
+
+# No lugar da tela de descanso do Omarchy: ocioso -> central de operações.
+# O install.sh desliga a tela de descanso pelo flag do próprio Omarchy
+# (~/.local/state/omarchy/toggles/screensaver-off, o mesmo do
+# omarchy-toggle-screensaver). No mesmo tempo dela (idle.screensaver do
+# ~/.config/omarchy/shell.json, lido na instalação), o soviet-ops vai ao workspace
+# da central e reabre só os painéis que faltarem. O bloqueio continua com o
+# Omarchy (idle.lock). Respeita inibidores de idle (cafeína, vídeo em tela cheia).
+[idle]
+pre_action_fade_seconds = 0     # sem escurecer antes: a central já é a "tela de descanso"
+
+[idle.behavior.central]
+timeout = @IDLE_CENTRAL@
+action = "command"
+command = "@BIN@/soviet-ops"
+enabled = true

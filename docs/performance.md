@@ -52,7 +52,7 @@ Leitura:
 
 | Permanente | Custo medido |
 |---|---|
-| noctalia (barra, sysmon a cada 2–5 s, clima a cada 30 min) | ~2 % CPU, 210 MB |
+| noctalia (barra, sysmon a cada 2–5 s, clima a cada 30 min) | ~2 % CPU, 210 MB (medido com o sysmon ligado; desde 2026-10-13 ele está desligado, sem nova medição) |
 | btop da central (`update_ms = 1000`) | ~3,6 % CPU, 33 MB — **maior consumidor do projeto** |
 | soviet-ops-clock (laço de 1 s) | 0,17 % CPU, mas **cria processos a cada segundo** |
 | soviet-ops-fetch (fastfetch a cada 30 min; arte só em SIGWINCH/SIGUSR1) | ~0 |

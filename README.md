@@ -5,24 +5,27 @@ Configuração pessoal de desktop para o **Omarchy 4** (Hyprland em Lua):
 * uma **central de operações** no workspace 1: btop, fastfetch com uma ilustração
   do arttime, relógio e clima do Rio, e um shell, em verde fósforo sobre grafite;
 * uma **barra única** (Noctalia) que some na central e aparece nos demais
-  workspaces, com os favoritos e os apps abertos (ícones reais), sensores,
-  clima e relógio;
+  workspaces, com os apps abertos à esquerda e os fixados à direita (estilo
+  Windows, ícones reais; fixar/desafixar pelo clique direito), ações rápidas
+  (btop, captura, luz noturna, cafeína, perfil de energia, jogo), clima e relógio;
+* a **central no lugar da tela de descanso**: ocioso pelo tempo da tela de
+  descanso do Omarchy, você volta para o workspace 1 (o bloqueio continua com o Omarchy);
 * um **btop flutuante sob demanda** (`SUPER+M`);
 * a **ilustração** do arttime (arte + frase original, sem relógio), com menu,
   arttime interativo e dois modos de cor (`SUPER+ALT+A`).
 
-Repositório privado, de uso pessoal, para levar essa configuração a novos
+Repositório público, de uso pessoal, para levar essa configuração a novos
 computadores. Não é uma distribuição genérica: só o Omarchy 4 é suportado.
 
 ## Instalação rápida
 
 ```bash
-git clone <remoto-privado> ~/www/customterminalerllin   # qualquer diretório serve
+git clone https://github.com/erllindowo-svg/customterminalerllin.git ~/www/customterminalerllin   # qualquer diretório serve
 cd ~/www/customterminalerllin
 ./install.sh check        # compatibilidade, dependências, atalhos e plano — não altera nada
 ./install.sh --dry-run    # plano de instalação
 ./install.sh              # instala (idempotente), baixa arttime/omarchy-overview fixados e ativa
-scripts/fetch-backgrounds.sh && omarchy theme set soviet-terminal
+scripts/fetch-backgrounds.sh && omarchy theme set erllinsapin
 ```
 
 Passo a passo, pré-requisitos e migração desta máquina:
@@ -36,9 +39,13 @@ Passo a passo, pré-requisitos e migração desta máquina:
 | `SUPER+ALT+A` | ilustração: Cores da ilustração, sortear, arttime interativo |
 | `SUPER+CTRL+M` | recompor a central do workspace 1 |
 | `SUPER+SHIFT+SPACE` | mostrar/ocultar a barra manualmente |
+| `SUPER+ALT+P` | fixar/desafixar na barra o app sob o mouse (ou o da janela em foco) |
+| alça no início da barra, ou clique direito na zona vazia | escolher a borda da barra (arrastar numa mini-tela) |
+| clique direito fora de um ícone de app | Editar barra: arrastar entre abertos e fixados, reordenar |
+| ícone de grupos no centro da barra | Grupos: apps instalados por propósito |
 
-Preferências (atalhos, clima, workspace da central, favoritos, lançadores,
-sensores de GPU) ficam em [`config/terminal-soviet.conf`](config/terminal-soviet.conf).
+Preferências (atalhos, clima, workspace da central, semente dos fixados,
+jogo da barra) ficam em [`config/terminal-soviet.conf`](config/terminal-soviet.conf).
 Depois de editar, rode `./install.sh`. Tudo sobre os controles:
 [`docs/controls.md`](docs/controls.md).
 
@@ -54,6 +61,19 @@ tests/run.sh [--live|--disruptive]                   # testes
 
 Recuperação e backups das fases anteriores: [`docs/backup-restore.md`](docs/backup-restore.md).
 
+### Tema do menu de boot (opcional)
+
+O menu do Limine com cara de tela CRT nas cores do tema. Fica fora do
+`./install.sh` porque mexe em `/boot` e pede sudo:
+
+```bash
+scripts/install-limine-theme.sh            # plano: mostra o diff, não escreve
+scripts/install-limine-theme.sh --install  # aplica (backup datado, confere, limine-update)
+scripts/install-limine-theme.sh --status   # confere; --remove desfaz
+```
+
+Variantes, riscos e recuperação: [`docs/boot-theme.md`](docs/boot-theme.md).
+
 ## Estrutura
 
 ```
@@ -64,9 +84,9 @@ bin/                       scripts → ~/.local/bin (soviet-ops, soviet-arte, so
 share/terminal-soviet/arte filtro de cores e shim do artprint → ~/.local/share/terminal-soviet/arte
 hypr/                      módulo Hyprland (modelo) → ~/.config/hypr/terminal_soviet.lua
 noctalia/config/           configuração do Noctalia (modelos .in) → ~/.config/noctalia
-noctalia/plugins/          plugins Luau (tarefas, volume-slider, spotify-media) → ~/.local/share/noctalia/plugins
+noctalia/plugins/          plugins Luau (tarefas, audio, spotify-media, barra, grupos) → ~/.local/share/noctalia/plugins
 omarchy/plugins/           barra nula erllan.sem-barra → ~/.config/omarchy/plugins
-omarchy/themes/            tema soviet-terminal (sem as fotos) → ~/.config/omarchy/themes
+omarchy/themes/            tema erllinsapin (sem as fotos) → ~/.config/omarchy/themes
 omarchy/workspace-layouts/ layout dwindle da central → ~/.local/state/omarchy/workspace-layouts
 systemd/                   noctalia.service, soviet-bar-sync.service → ~/.config/systemd/user
 btop/, fastfetch/          configurações dos painéis
@@ -88,6 +108,7 @@ docs/                      documentação (abaixo)
 | [`docs/backup-restore.md`](docs/backup-restore.md) | manifesto, desinstalação, backups das fases |
 | [`docs/installation-omarchy.md`](docs/installation-omarchy.md) | instalação nova e migração desta máquina |
 | [`docs/decisions.md`](docs/decisions.md) | decisões, alternativas e limites |
+| [`docs/boot-theme.md`](docs/boot-theme.md) | tema do menu de boot (Limine): instalar, remover, riscos, recuperação |
 | [`THIRD_PARTY.md`](THIRD_PARTY.md) | licenças, o que fica fora do repositório e por quê |
 
 ## Licenças

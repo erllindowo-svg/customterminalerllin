@@ -31,3 +31,6 @@ id_ed25519*
 
 # Dependências externas obtidas localmente (arttime, omarchy-overview)
 vendor/
+
+# Credenciais da Web API do Spotify (ficam em ~/.config/terminal-soviet/, nunca aqui)
+spotify.env

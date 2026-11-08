@@ -82,7 +82,7 @@ live_session() { (( ! NO_ACTIVATE )) && [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]
 
 # ------------------------------------------------------------------ manifesto
 # kind \t destino(relativo a $HOME) \t sha256 \t backup(relativo a $STATE ou -)
-declare -A M_SHA M_BAK M_KIND
+declare -A M_SHA=() M_BAK=() M_KIND=()   # =(): sob set -u, vazio ≠ não definido
 read_manifest() {
   [[ -r $MANIFEST ]] || return 0
   local kind rel s b
@@ -148,6 +148,11 @@ check_legacy() {
     die "nada foi alterado"
   fi
   ok "nenhuma configuração do projeto fora do módulo gerenciado"
+  # Posição da barra fixada pela GUI do Noctalia (vence soviet-bar-pos).
+  local conflito
+  conflito=$(BAR_NAME=$BAR_NAME "$ROOT/bin/soviet-bar-pos" --status 2>/dev/null | sed -n 's/^CONFLITO: //p')
+  [[ -n $conflito ]] && warn "posição da barra: $conflito — o painel de posição não terá efeito até remover essa linha"
+  return 0
 }
 
 # Atalhos novos não podem tomar teclas de outros recursos.
@@ -155,7 +160,7 @@ check_keys() {
   live_session || { warn "sem sessão Hyprland ativa: conflito de atalhos não verificado"; return 0; }
   local binds k keys mask key m part desc bad=0
   binds=$(hyprctl binds -j)
-  for k in KEY_INSPECT KEY_OPS KEY_ARTE; do
+  for k in KEY_INSPECT KEY_OPS KEY_ARTE KEY_PIN; do
     keys=${!k} mask=0 key=""
     IFS='+' read -r -a parts <<< "${keys// /}"
     for part in "${parts[@]}"; do
@@ -164,12 +169,13 @@ check_keys() {
     done
     desc=$(jq -r --argjson m "$mask" --arg k "$key" \
       '[.[] | select(.modmask == $m and (.key | ascii_upcase) == $k)][0].description // empty' <<< "$binds")
-    if [[ -n $desc && $desc != Soviet* ]]; then
+    # "Soviet*": descrição dos atalhos instalados antes da troca para Erllinsapin.
+    if [[ -n $desc && $desc != Erllinsapin:* && $desc != Soviet* ]]; then
       err "$k ($keys) já está em uso: \"$desc\". Troque em config/terminal-soviet.conf"; bad=1
     fi
   done
   (( bad )) && die "conflito de atalhos: nada foi alterado"
-  ok "atalhos livres ou já do projeto: $KEY_INSPECT · $KEY_OPS · $KEY_ARTE"
+  ok "atalhos livres ou já do projeto: $KEY_INSPECT · $KEY_OPS · $KEY_ARTE · $KEY_PIN"
 }
 
 # ------------------------------------------------------------------ plano
@@ -367,12 +373,16 @@ activate() {
   fi
   systemctl --user daemon-reload
   systemctl --user start noctalia.service soviet-bar-sync.service
-  local line act kind rel extra restart_sync=0
+  local line act kind rel extra restart_sync=0 restart_noctalia=0
   for line in "${PLAN[@]}"; do
     IFS=$'\t' read -r act kind rel extra <<< "$line"
     [[ $act != OK && $rel == .local/bin/soviet-bar-sync ]] && restart_sync=1
+    # Plugin novo, removido ou com entradas mudadas: a recarga a quente do Noctalia
+    # pode ler a barra antes do plugin.toml novo ("unrecognized widget type").
+    [[ $act != OK && $rel == .local/share/noctalia/plugins/*/plugin.toml ]] && restart_noctalia=1
   done
   (( restart_sync )) && systemctl --user restart soviet-bar-sync.service
+  (( restart_noctalia )) && systemctl --user restart noctalia.service
   hyprctl reload >/dev/null
   local errs; errs=$(hyprctl configerrors 2>&1 | sed '/^$/d')
   if [[ -n $errs ]]; then
@@ -383,12 +393,52 @@ activate() {
   info "  Painéis já abertos da central usam a versão anterior até serem reabertos ($KEY_OPS)."
 }
 
+# Tela de descanso do Omarchy: desligada pelo flag do próprio Omarchy (o mesmo do
+# omarchy-toggle-screensaver); o idle do Noctalia leva à central no lugar dela
+# (40-integracao-hyprland.toml). Só desfazemos no uninstall se fomos nós que ligamos.
+SCREENSAVER_FLAG="$HOME/.local/state/omarchy/toggles/screensaver-off"
+SCREENSAVER_OURS="$STATE/screensaver-off.nosso"
+plan_screensaver() {
+  [[ -f $SCREENSAVER_FLAG ]] || info "  DESLIGAR  toggle    tela de descanso do Omarchy  (~/${SCREENSAVER_FLAG#"$HOME"/})"
+}
+apply_screensaver() {
+  [[ -f $SCREENSAVER_FLAG ]] && return 0
+  mkdir -p "${SCREENSAVER_FLAG%/*}" "$STATE" && touch "$SCREENSAVER_FLAG" "$SCREENSAVER_OURS"
+  ok "tela de descanso do Omarchy desligada: ocioso leva à central de operações"
+}
+
+# Tema renomeado (soviet-terminal → erllinsapin): o instalador remove os arquivos
+# versionados do diretório antigo; as fotos baixadas (fora do repositório) e o
+# preview vão para o novo, e o tema ativo é trocado se ainda for o antigo.
+TEMA_ANTIGO="$HOME/.config/omarchy/themes/soviet-terminal"
+TEMA_NOVO="$HOME/.config/omarchy/themes/erllinsapin"
+TEMA_ATIVO="$HOME/.local/state/omarchy/current/theme.name"
+plan_theme_rename() {
+  [[ -d $TEMA_ANTIGO ]] && info "  MIGRAR    tema      soviet-terminal → erllinsapin  (fotos e preview; tema ativo)"
+  return 0
+}
+apply_theme_rename() {
+  local f
+  [[ -d $TEMA_ANTIGO ]] || return 0
+  mkdir -p "$TEMA_NOVO"
+  for f in backgrounds preview.png; do
+    [[ -e $TEMA_ANTIGO/$f && ! -e $TEMA_NOVO/$f ]] && mv "$TEMA_ANTIGO/$f" "$TEMA_NOVO/$f"
+  done
+  rmdir "$TEMA_ANTIGO" 2>/dev/null || warn "~/${TEMA_ANTIGO#"$HOME"/} não ficou vazio: mantido"
+  if [[ $(cat "$TEMA_ATIVO" 2>/dev/null) == soviet-terminal ]] && live_session && command -v omarchy >/dev/null; then
+    omarchy theme set erllinsapin >/dev/null 2>&1 || warn "omarchy theme set erllinsapin falhou: rode à mão"
+  fi
+  ok "tema migrado para erllinsapin"
+}
+
 cmd_install() {
   preflight
   read_manifest
   info "== Plano"
   plan_files; plan_links; plan_block; plan_shelljson; plan_externals
   print_plan
+  plan_screensaver
+  plan_theme_rename
   if (( CONFLICTS && ! FORCE )); then
     err "$CONFLICTS conflito(s): arquivo existente diferente e não instalado por este projeto (ou editado depois)."
     info "  Compare com 'diff ~/<arquivo> <repo>/...'; para sobrescrever COM backup: --force"
@@ -398,6 +448,8 @@ cmd_install() {
   info "== Aplicando"
   apply_plan
   write_manifest
+  apply_screensaver
+  apply_theme_rename
   [[ -d $BACKUP_DIR ]] && ok "originais guardados em $BACKUP_DIR"
   install_externals
   activate
@@ -496,10 +548,14 @@ cmd_uninstall() {
       *:REMOVER) rm -f "$HOME/$r" ;;
     esac
   done
+  # Tela de descanso do Omarchy: religada só se fomos nós que a desligamos.
+  if [[ -f $SCREENSAVER_OURS ]]; then rm -f "$SCREENSAVER_FLAG" "$SCREENSAVER_OURS"; fi
+  # Estado gerado em tempo de execução por soviet-bar-pos (fora do manifesto).
+  rm -f "$HOME/.config/noctalia/90-posicao-barra.toml"
   # Diretórios do projeto que ficaram vazios.
   local d
   for d in .local/share/terminal-soviet/arte .local/share/terminal-soviet .config/terminal-soviet \
-           .local/share/noctalia/plugins/tarefas .local/share/noctalia/plugins/volume-slider/ \
+           .local/share/noctalia/plugins/tarefas .local/share/noctalia/plugins/audio .local/share/noctalia/plugins/barra .local/share/noctalia/plugins/grupos \
            .local/share/noctalia/plugins/spotify-media .config/omarchy/plugins/erllan.sem-barra \
            .config/noctalia/palettes .config/noctalia; do
     [[ -d $HOME/$d ]] && find "$HOME/$d" -depth -type d -empty -delete 2>/dev/null || true

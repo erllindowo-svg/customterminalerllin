@@ -16,7 +16,8 @@ die()  { err "$*"; exit 1; }
 
 # ------------------------------------------------------------------ configuração
 CONF_KEYS=(HIDDEN_WORKSPACE COLLAPSE_CLASSES BAR_NAME WEATHER_ADDRESS KEY_INSPECT KEY_OPS
-           KEY_ARTE FAVORITES BAR_LAUNCHERS GPU_SENSORS)
+           KEY_ARTE KEY_PIN FAVORITES GAME_DESKTOP
+           LIMINE_THEME LIMINE_ORIGEM LIMINE_FONTE LIMINE_RESOLUCAO LIMINE_TITULO LIMINE_TIMEOUT)
 
 # Lê VAR="valor" sem executar o arquivo (só chaves conhecidas).
 load_conf() {
@@ -40,45 +41,66 @@ validate_conf() {
   [[ $HIDDEN_WORKSPACE =~ ^[1-9][0-9]?$ ]] || die "HIDDEN_WORKSPACE deve ser um número (1-99)"
   [[ $BAR_NAME =~ ^[a-z][a-z0-9_-]*$ ]] || die "BAR_NAME inválido: $BAR_NAME"
   [[ $WEATHER_ADDRESS != *\\* ]] || die "WEATHER_ADDRESS não pode conter \\"
-  [[ $GPU_SENSORS =~ ^(auto|yes|no)$ ]] || die "GPU_SENSORS deve ser auto, yes ou no"
+  [[ $GAME_DESKTOP =~ ^[A-Za-z0-9._-]*$ ]] || die "GAME_DESKTOP inválido: $GAME_DESKTOP (desktop-id sem .desktop)"
   local k
-  for k in KEY_INSPECT KEY_OPS KEY_ARTE; do
+  for k in KEY_INSPECT KEY_OPS KEY_ARTE KEY_PIN; do
     [[ ${!k} =~ ^(SUPER|SHIFT|CTRL|ALT)( \+ (SUPER|SHIFT|CTRL|ALT))*( \+ [A-Z0-9]+)$ ]] \
       || die "$k inválido: '${!k}' (ex.: \"SUPER + ALT + A\")"
   done
+  [[ $LIMINE_THEME =~ ^(robco|fosforo|ambar|fallout)$ ]] || die "LIMINE_THEME: robco, fosforo, ambar ou fallout"
+  [[ $LIMINE_ORIGEM =~ ^(arte|zero)$ ]] || die "LIMINE_ORIGEM: arte ou zero"
+  [[ $LIMINE_FONTE =~ ^(terminus|phxega)$ ]] || die "LIMINE_FONTE: terminus ou phxega"
+  [[ $LIMINE_RESOLUCAO =~ ^[1-9][0-9]{2,3}x[1-9][0-9]{2,3}$ ]] || die "LIMINE_RESOLUCAO: LxA, ex. 1920x1080"
+  { printf '%s' "$LIMINE_TITULO" | iconv -f UTF-8 -t CP437 >/dev/null 2>&1 \
+    || printf '%s' "$LIMINE_TITULO" | iconv -f UTF-8 -t CP866 >/dev/null 2>&1; } \
+    || die "LIMINE_TITULO: só caracteres do CP437 (latim com acentos, sem ã/õ) ou do CP866 (cirílico)"
+  [[ $LIMINE_TIMEOUT =~ ^[0-9]{1,3}$ ]] || die "LIMINE_TIMEOUT: segundos (0-999)"
   local f
   for f in $FAVORITES; do
-    [[ $f =~ ^[A-Za-z0-9._-]+:[a-z0-9._,-]+$ ]] || die "FAVORITES: item inválido '$f' (desktop-id:classe1,classe2)"
+    [[ $f =~ ^[A-Za-z0-9._-]+:[a-z0-9._,!-]+$ ]] || die "FAVORITES: item inválido '$f' (desktop-id:classe1,classe2)"
   done
 }
 
 # ------------------------------------------------------------------ marcadores
-# Valores derivados que dependem da máquina (lançadores instalados, GPU).
+# Valores derivados que dependem da máquina (jogo instalado) e a grade da barra.
 compute_tokens() {
   T_HOME=$HOME
   T_BIN="$HOME/.local/bin"
 
-  local launchers=() l
-  for l in $BAR_LAUNCHERS; do
-    case $l in
-      firefox) command -v firefox >/dev/null && launchers+=('"firefox"') ;;
-      osu)     command -v osu-lazer >/dev/null && launchers+=('"osu"') ;;
-      *) die "BAR_LAUNCHERS: lançador desconhecido '$l' (firefox, osu)" ;;
-    esac
-  done
-  local end='["spotify", "sep", '
-  (( ${#launchers[@]} )) && end+="$(IFS=,; echo "${launchers[*]}" | sed 's/,/, /g'), \"sep\", "
-  T_BAR_END="$end\"tray\", \"notificacoes\", \"volume\", \"weather\", \"clock\", \"control-center\"]"
+  # Grade da barra: uma só régua para widgets nativos e plugins (px lógicos).
+  #   BAR_THICKNESS  espessura da barra (borda de 1 px incluída): 26, ou a menor
+  #                  acima que dê px físicos inteiros na escala do monitor (bar_thickness)
+  #   ITEM           altura de todo item: botões, capa, coluna ícone+traço, cápsulas
+  #   ICON           ícones de app e glifos (= Style::baseGlyphSize dos nativos)
+  #   GAP            espaço entre widgets e entre itens dentro de um plugin
+  # Não são preferências: mudar um valor exige conferir a barra com capturas.
+  T_BAR_THICKNESS=$(bar_thickness 26) T_ITEM=22 T_ICON=16 T_GAP=6
+  T_CAPSULE_THICKNESS=$(awk -v i="$T_ITEM" -v b="$T_BAR_THICKNESS" 'BEGIN { printf "%.3f", i / b }')
 
-  local gpu=0
-  case $GPU_SENSORS in yes) gpu=1 ;; auto) command -v nvidia-smi >/dev/null && gpu=1 ;; esac
-  if (( gpu )); then
-    T_SENSOR_MEMBERS='["l_cpu", "cpu", "cpu_temp", "l_ram", "ram", "l_gpu", "gpu", "gpu_temp", "vram", "l_net", "net_down", "net_up"]'
-  else
-    T_SENSOR_MEMBERS='["l_cpu", "cpu", "cpu_temp", "l_ram", "ram", "l_net", "net_down", "net_up"]'
+  # Tempo até a central substituir a tela de descanso: o mesmo do Omarchy
+  # (idle.screensaver em ~/.config/omarchy/shell.json; padrão do shell: 150 s).
+  T_IDLE_CENTRAL=$(jq -r '.idle.screensaver // 150 | numbers' "$HOME/.config/omarchy/shell.json" 2>/dev/null || true)
+  [[ $T_IDLE_CENTRAL =~ ^[0-9]+$ && $T_IDLE_CENTRAL -gt 0 ]] || T_IDLE_CENTRAL=150
+
+  # Seção da direita: utilidades (sem ícones de apps na horizontal; na vertical,
+  # bin/soviet-bar-pos refaz as seções e põe abertos/fixados).
+  T_BAR_END='["tray", "notificacoes", "audio", "weather", "clock", "control-center"]'
+
+  # Centro: ações (grupo "acoes"); o botão do jogo só entra se o .desktop existir.
+  # O símbolo de música (erllan/spotify-media:bar, abre o player) fecha o grupo.
+  T_ACOES_MEMBERS='["inspecao", "grupos", "captura", "luz_noturna", "cafeina", "energia"'
+  T_GAME_NAME="" T_GAME_ICON=""
+  local desk
+  desk=$(desktop_file "$GAME_DESKTOP")
+  if [[ -n $desk ]]; then
+    T_GAME_NAME=$(sed -n 's/^Name=//p' "$desk" | head -1)
+    T_GAME_ICON=$(icon_path "$(sed -n 's/^Icon=//p' "$desk" | head -1)")
+    T_ACOES_MEMBERS+=', "jogo"'
   fi
+  T_ACOES_MEMBERS+=', "spotify"]'
+  T_GAME_NAME=${T_GAME_NAME:-$GAME_DESKTOP} T_GAME_NAME=${T_GAME_NAME//\"/}
 
-  local pins="" f id classes c list
+  local pins="" f id classes c list l
   for f in $FAVORITES; do
     id=${f%%:*} classes=${f#*:} list=""
     IFS=, read -r -a c <<< "$classes"
@@ -86,6 +108,76 @@ compute_tokens() {
     pins+="  { id = \"$id\", classes = { ${list%, } } },"$'\n'
   done
   T_PINNED_LUA=${pins%$'\n'}
+
+  # Atalhos nos tooltips dos widgets nativos ("Luz noturna — SUPER + CTRL + N"),
+  # lidos dos binds ativos por bin/soviet-atalhos. Ficam fixos no TOML: mudar um
+  # atalho só aparece aqui depois de rodar ./install.sh de novo (os ícones de apps
+  # do plugin de tarefas, ao contrário, releem a cada `configreloaded`).
+  local at
+  at=$("${ROOT:-.}/bin/soviet-atalhos" 2>/dev/null) || at=""
+  T_AT_MENU=$(atalho_de "$at" "omarchy-menu toggle")
+  T_AT_CAPTURA=$(atalho_de "$at" "omarchy-capture-screenshot")
+  T_AT_GRAVAR=$(atalho_de "$at" "omarchy-capture-screenrecording")
+  T_AT_NOTURNA=$(atalho_de "$at" "omarchy-toggle-nightlight")
+  T_AT_CAFEINA=$(atalho_de "$at" "omarchy-toggle-idle")
+  T_AT_NOTIF=$(atalho_de "$at" "omarchy-shell notifications showHistory")
+  T_AT_SILENCIO=$(atalho_de "$at" "omarchy-toggle-notification-silencing")
+}
+
+# atalho_de <json do soviet-atalhos> <comando>: " — TECLAS" do primeiro atalho do
+# comando exato (linhas) ou, sem ele, do executável (cmds); vazio se não houver.
+atalho_de() {
+  local k
+  k=$(jq -r --arg c "$2" '(.linhas[$c] // .cmds[$c | split(" ")[0]] // "") | split(" · ")[0]' \
+        <<< "${1:-{\}}" 2>/dev/null) || k=""
+  [[ -n $k ]] && printf ' — %s' "$k"
+  return 0
+}
+
+# bar_thickness <base>: a menor espessura (px lógicos) a partir de <base> que vira
+# um número inteiro de px físicos em TODAS as escalas dos monitores ativos.
+# Com escala fracionária, uma barra de 26 em 4/3 mede 34,67 px físicos: a janela
+# encostada nela começa no meio de um pixel, e essa fileira, recomposta a cada
+# quadro da janela, pisca (visível com o Firefox maximizado). 27 × 4/3 = 36.
+# Sem sessão Hyprland (sandbox, check remoto): <base>. Mudou a escala? ./install.sh.
+bar_thickness() {
+  local base=$1 scales t
+  scales=$(hyprctl -j monitors 2>/dev/null | jq -r '.[].scale' 2>/dev/null) || scales=""
+  [[ -n $scales ]] || { echo "$base"; return 0; }
+  for (( t = base; t <= base + 6; t++ )); do
+    if awk -v t="$t" 'BEGIN { ok = 1 } { p = t * $1; if (p - int(p + 0.5) > 0.01 || int(p + 0.5) - p > 0.01) ok = 0 }
+                      END { exit !ok }' <<< "$scales"; then
+      echo "$t"; return 0
+    fi
+  done
+  echo "$base"   # nenhuma serve para todas as escalas: fica a base
+}
+
+# Caminho do <id>.desktop nos diretórios XDG de aplicativos (usuário primeiro), ou nada.
+desktop_file() {
+  [[ -n $1 ]] || return 0
+  local d
+  for d in "${XDG_DATA_HOME:-$HOME/.local/share}" ${XDG_DATA_DIRS//:/ } /usr/local/share /usr/share; do
+    [[ -f $d/applications/$1.desktop ]] && { echo "$d/applications/$1.desktop"; return 0; }
+  done
+  return 0   # nada achado não é erro (o instalador roda com set -e)
+}
+
+# Arquivo de ícone para um Icon= de .desktop (caminho absoluto ou nome no tema
+# hicolor/pixmaps); vazio se não achar (a barra usa o glifo).
+icon_path() {
+  local icon=$1 base s f
+  [[ -z $icon ]] && return 0
+  [[ $icon == /* ]] && { [[ -f $icon ]] && echo "$icon"; return 0; }
+  for base in "${XDG_DATA_HOME:-$HOME/.local/share}/icons/hicolor" /usr/share/icons/hicolor; do
+    for s in scalable 48x48 64x64 32x32 128x128 256x256; do
+      for f in "$base/$s/apps/$icon.svg" "$base/$s/apps/$icon.png"; do
+        [[ -f $f ]] && { echo "$f"; return 0; }
+      done
+    done
+  done
+  for f in /usr/share/pixmaps/"$icon".{svg,png}; do [[ -f $f ]] && { echo "$f"; return 0; }; done
+  return 0
 }
 
 # render <origem> <destino>: *.in -> troca @TOKEN@; outros -> cópia exata.
@@ -94,9 +186,15 @@ render() {
   mkdir -p "$(dirname "$dst")"
   if [[ $src == *.in ]]; then
     TS_HOME="$T_HOME" TS_BIN="$T_BIN" TS_BAR_NAME="$BAR_NAME" TS_BAR_END="$T_BAR_END" \
-    TS_SENSOR_MEMBERS="$T_SENSOR_MEMBERS" TS_WEATHER_ADDRESS="$WEATHER_ADDRESS" \
-    TS_KEY_INSPECT="$KEY_INSPECT" TS_KEY_OPS="$KEY_OPS" TS_KEY_ARTE="$KEY_ARTE" \
+    TS_ACOES_MEMBERS="$T_ACOES_MEMBERS" TS_WEATHER_ADDRESS="$WEATHER_ADDRESS" \
+    TS_GAME_DESKTOP="$GAME_DESKTOP" TS_GAME_NAME="$T_GAME_NAME" TS_GAME_ICON="$T_GAME_ICON" \
+    TS_KEY_INSPECT="$KEY_INSPECT" TS_KEY_OPS="$KEY_OPS" TS_KEY_ARTE="$KEY_ARTE" TS_KEY_PIN="$KEY_PIN" \
     TS_HIDDEN_WORKSPACE="$HIDDEN_WORKSPACE" TS_PINNED_LUA="$T_PINNED_LUA" \
+    TS_BAR_THICKNESS="$T_BAR_THICKNESS" TS_ITEM="$T_ITEM" TS_ICON="$T_ICON" TS_GAP="$T_GAP" \
+    TS_CAPSULE_THICKNESS="$T_CAPSULE_THICKNESS" TS_IDLE_CENTRAL="$T_IDLE_CENTRAL" \
+    TS_AT_MENU="$T_AT_MENU" TS_AT_CAPTURA="$T_AT_CAPTURA" TS_AT_GRAVAR="$T_AT_GRAVAR" \
+    TS_AT_NOTURNA="$T_AT_NOTURNA" TS_AT_CAFEINA="$T_AT_CAFEINA" TS_AT_NOTIF="$T_AT_NOTIF" \
+    TS_AT_SILENCIO="$T_AT_SILENCIO" \
     perl -pe 's/@([A-Z_]+)@/exists $ENV{"TS_$1"} ? $ENV{"TS_$1"} : "\@$1\@"/ge' "$src" > "$dst"
     if grep -qE '@[A-Z][A-Z_]+@' "$dst"; then
       die "marcador sem valor em $src: $(grep -oE '@[A-Z][A-Z_]+@' "$dst" | sort -u | tr '\n' ' ')"

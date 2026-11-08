@@ -1,0 +1,186 @@
+--!nonstrict
+-- Terminal Soviético — tarefas: render comum aos widgets `abertos` e `fixados`.
+-- MODELO: install.sh gera comum.luau (marcadores ITEM e ICON da grade da barra,
+-- definidos em lib/ts-lib.sh, e BAR_NAME). Carregado com require("./comum.luau").
+--
+-- Um bloco por aplicativo, com o ícone real (appIconPath pelo desktop id ou pela
+-- classe):
+--   traço fósforo (primary)   = aplicativo da janela focada
+--   traço oliva (secondary)   = aplicativo em execução (traço largo: 2+ janelas)
+--   sem traço, ícone atenuado = fixado e fechado
+-- Clique esquerdo: em execução -> foca a janela mais recente (cliques seguidos
+-- alternam entre as janelas do app; o foco leva ao workspace dela); fechado ->
+-- abre pelo .desktop (uwsm-app).
+-- Clique direito num ícone: mini-menu (painel erllan/tarefas:menu); fora de um
+-- ícone: painel "Editar barra" (erllan/tarefas:editar). Ícones clicáveis só
+-- capturam o botão esquerdo; o direito chega ao onRightClick() do widget, e o
+-- onHover de cada ícone diz qual estava sob o ponteiro.
+
+local ITEM, ICON = @ITEM@, @ICON@
+-- Caixa ITEM×ITEM com o ícone no centro: o traço (2 px + 1 de folga) embaixo é
+-- compensado por um vão igual em cima, para o ícone ficar na linha dos glifos. Na
+-- vertical, o traço fica em pé, do lado da borda da tela (vão igual do outro lado).
+local MARK_H = 2
+local PAD = math.floor((ITEM - ICON) / 2) - MARK_H
+
+local M = {}
+
+-- Barra vertical? barWidget.isVertical() do 5.0.1 compara altura × largura do
+-- CONTEÚDO do widget (um item de 22 px numa barra de 26 conta como horizontal, e
+-- uma linha larga se perpetua). A posição efetiva da barra (inclui o
+-- 90-posicao-barra.toml do soviet-bar-pos) é a fonte confiável.
+local function barraVertical(bar)
+  local pos = noctalia.getSetting("bar.@BAR_NAME@.position")
+  if pos == "left" or pos == "right" then return true end
+  if pos == "top" or pos == "bottom" then return false end
+  return bar.isVertical()
+end
+
+-- group: "abertos" | "fixados" (chave em state "modelo"); bar: o barWidget da entrada.
+function M.widget(group, bar)
+  local apps = {}
+  local cycle = {}
+  local hovered = nil
+  local piscando = nil   -- key realçada por ~0,7 s depois de fixar/desafixar (KEY_PIN)
+
+  -- appIconPath é caro (varre temas de ícones): uma busca por app, em cache.
+  local icons = {}
+  local function iconFor(a)
+    local v = icons[a.key]
+    if v == nil then
+      v = noctalia.appIconPath(a.id, ICON)
+      if not v and a.class and a.class ~= a.id then v = noctalia.appIconPath(string.lower(a.class), ICON) end
+      icons[a.key] = v or false
+    end
+    return v or nil
+  end
+
+  -- Tooltip do widget = o do ícone sob o mouse: "Firefox — SUPER + SHIFT + B".
+  -- A API 5.0.1 só tem tooltip por WIDGET (barWidget.setTooltip; por nó é API 32),
+  -- então o texto acompanha o ícone, mas o balão fica ancorado ao widget.
+  local function tooltip(a)
+    if not a then bar.clearTooltip(); return end
+    local at = noctalia.state.get("atalhos") or {}
+    local nomes, apps = at.nomes or {}, at.apps or {}
+    local id, cl = string.lower(a.id or ""), string.lower(a.class or "")
+    local nome = nomes[id] or nomes[cl] or a.id
+    local teclas = apps[id] or apps[cl]
+    bar.setTooltip(teclas and (nome .. " — " .. teclas) or nome)
+  end
+
+  local function find(key)
+    for _, a in ipairs(apps) do
+      if a.key == key then return a end
+    end
+    return nil
+  end
+
+  local function activate(key)
+    local a = find(key)
+    if not a then return end
+    if #a.windows == 0 then
+      noctalia.runAsync({ "uwsm-app", "--", a.id .. ".desktop" })
+      return
+    end
+    local i = 1
+    if a.focused and #a.windows > 1 then i = ((cycle[key] or 1) % #a.windows) + 1 end
+    cycle[key] = i
+    noctalia.runAsync({ "hyprctl", "dispatch",
+      'hl.dsp.focus({ window = "address:' .. a.windows[i] .. '" })' })
+  end
+
+  local function render()
+    local items = {}
+    local vertical = barraVertical(bar)
+    local naEsquerda = noctalia.getSetting("bar.@BAR_NAME@.position") == "left"
+    for _, a in ipairs(apps) do
+      local key = a.key
+      local path = iconFor(a)
+      local node = path and ui.image({ path = path, width = ICON, height = ICON, fit = "contain" })
+        or ui.glyph({ name = "app-window", size = ICON, color = "on_surface" })
+      local mark = "#00000000"
+      if a.focused then mark = "primary" elseif #a.windows > 0 then mark = "secondary" end
+      local tam = (#a.windows > 1) and 12 or 8
+      local traco = vertical and ui.box({ width = MARK_H, height = tam, fill = mark })
+        or ui.box({ width = tam, height = MARK_H, fill = mark })
+      local vao = vertical and ui.box({ width = MARK_H, height = 1, fill = "#00000000" })
+        or ui.box({ width = 1, height = MARK_H, fill = "#00000000" })
+      local filhos = { vao, node, traco }
+      if vertical and naEsquerda then filhos = { traco, node, vao } end
+      table.insert(items, (vertical and ui.row or ui.column)({
+        key = key, gap = PAD, align = "center", justify = "center",
+        width = ITEM, height = ITEM,
+        -- Transparente explícito: o reconciliador mantém props ausentes de um render ao outro.
+        fill = (piscando == key) and "primary/0.35" or "#00000000",
+        opacity = (#a.windows == 0 and piscando ~= key) and 0.55 or 1.0,
+        onClick = function() activate(key) end,
+        onHover = function(state)
+          local antes = hovered
+          if state == "true" then hovered = key elseif hovered == key then hovered = nil end
+          -- O service usa isto no atalho KEY_PIN (ícone sob o mouse). Uma chave por
+          -- widget: a saída de um e a entrada no outro não se atropelam.
+          if hovered ~= antes then
+            noctalia.state.set("hover-" .. group, hovered or "")
+            tooltip(hovered and find(hovered))
+          end
+        end,
+      }, filhos))
+    end
+    local container = vertical and ui.column or ui.row
+    -- Sem gap: cada item tem ITEM de largura, então os ícones já ficam ITEM - ICON (= GAP) apartados.
+    bar.render(container({ gap = 0, align = "center" }, items))
+  end
+
+  local function setModel(m)
+    apps = (type(m) == "table" and m[group]) or {}
+    local alive = {}
+    for _, a in ipairs(apps) do alive[a.key] = true end
+    for k in pairs(cycle) do if not alive[k] then cycle[k] = nil end end
+    render()
+  end
+
+  noctalia.state.watch("modelo", setModel)
+
+  -- Retorno visual do KEY_PIN: o ícone que mudou de lado pisca no lugar novo.
+  local ultimoPiscar = nil
+  noctalia.state.watch("piscar", function(p)
+    if type(p) ~= "table" or p.n == ultimoPiscar then return end
+    ultimoPiscar = p.n
+    if not find(p.key) then return end
+    piscando = p.key
+    render()
+    noctalia.runAsync({ "sleep", "0.7" }, function()
+      if piscando == p.key then piscando = nil; render() end
+    end, 2000)
+  end)
+  setModel(noctalia.state.get("modelo"))
+
+  local self = {}
+
+  -- Rede de segurança: re-render periódico (ex.: posição da barra mudou).
+  function self.update()
+    noctalia.setUpdateInterval(60000)
+    render()
+  end
+
+  -- Clique direito: abre o mini-menu para o ícone sob o ponteiro (ou para `key`,
+  -- vindo do IPC: noctalia msg plugin erllan/tarefas:<widget> focused menu <key>).
+  function self.menu(key)
+    key = key or hovered
+    local a = key and find(key)
+    -- Clique direito fora de um ícone (espaço do widget): painel "Editar barra".
+    if not a then noctalia.togglePanel("erllan/tarefas:editar"); return end
+    noctalia.state.set("menu", {
+      key = a.key,
+      nome = a.id,
+      fixado = string.sub(a.key, 1, 4) == "pin:",
+      janelas = #a.windows,
+      n = noctalia.nowMs(),
+    })
+    noctalia.togglePanel("erllan/tarefas:menu")
+  end
+
+  return self
+end
+
+return M

@@ -350,7 +350,7 @@ menu_draw() {
 
 menu_cores() {
   printf '\e[H\e[2J\n %s%sCores da ilustração%s\n\n' "$G" "$B" "$N"
-  printf '   %s[1]%s Tema do terminal  %spaleta fósforo do Terminal Soviético%s %s\n' "$G" "$N" "$D" "$N" "$([[ $CORES == tema ]] && echo "${G}● atual${N}")"
+  printf '   %s[1]%s Tema do terminal  %spaleta fósforo do Erllinsapin%s %s\n' "$G" "$N" "$D" "$N" "$([[ $CORES == tema ]] && echo "${G}● atual${N}")"
   printf '   %s[2]%s Cores originais   %sANSI/truecolor nativos da arte%s %s\n' "$G" "$N" "$D" "$N" "$([[ $CORES == originais ]] && echo "${G}● atual${N}")"
   printf '\n   %s[Esc]%s voltar\n' "$G" "$N"
   local k; read -rsn1 k

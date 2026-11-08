@@ -16,7 +16,7 @@
 # Cores 0-15 usam a paleta REAL do terminal (foot.ini do tema ativo), então a
 # cor 2 (verde do tema), que o arttime usa para frases, vira o próprio acento.
 # "Cor padrão" (SGR 0 e 39) passa a ser o acento, para a arte monocromática
-# também ficar fósforo. Lê o tema ativo do Omarchy; sem ele, usa o soviet-terminal.
+# também ficar fósforo. Lê o tema ativo do Omarchy; sem ele, usa o erllinsapin.
 use strict; use warnings;
 
 my $theme = "$ENV{HOME}/.local/state/omarchy/current/theme";

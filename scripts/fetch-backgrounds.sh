@@ -1,16 +1,16 @@
 #!/bin/bash
-# Terminal Soviético — baixa os papéis de parede do tema soviet-terminal.
+# Terminal Soviético — baixa os papéis de parede do tema erllinsapin.
 #
 # As fotos NÃO são versionadas (CC BY / CC BY-SA com atribuição; esculturas
 # podem ter direitos próprios no país de origem — ver omarchy/themes/
-# soviet-terminal/SOURCES.md e THIRD_PARTY.md). Este script as baixa do
+# erllinsapin/SOURCES.md e THIRD_PARTY.md). Este script as baixa do
 # Wikimedia Commons, confere o SHA-1 publicado e gera o preview.png do seletor
 # de temas (requer ImageMagick para o preview; sem ele, o preview é omitido).
 #
 # Uso: scripts/fetch-backgrounds.sh [diretório do tema]
-#      (padrão: ~/.config/omarchy/themes/soviet-terminal)
+#      (padrão: ~/.config/omarchy/themes/erllinsapin)
 set -euo pipefail
-THEME=${1:-$HOME/.config/omarchy/themes/soviet-terminal}
+THEME=${1:-$HOME/.config/omarchy/themes/erllinsapin}
 DIR="$THEME/backgrounds"
 mkdir -p "$DIR"
 # arquivo-local|nome no Commons|sha1
