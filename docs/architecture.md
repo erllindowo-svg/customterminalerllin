@@ -36,7 +36,7 @@ shell do Omarchy: usa só os pontos de extensão do usuário (`~/.config`,
 | `soviet-bar-sync` | serviço do usuário (bash + socat) | permanente | oculta a barra no workspace da central (e onde houver janela de `COLLAPSE_CLASSES`), mostra nos demais. Orientado a eventos do socket2; só envia `bar-hide`/`bar-show` quando o estado desejado muda; nunca alterna às cegas |
 | `erllan/tarefas` | plugin Luau do Noctalia | permanente (dentro do noctalia) | apps abertos (esq.) e fixados (dir.) fora do WS da central, com o ícone real; fixar/desafixar pelo clique direito. Um service com um `socat` no socket2 lê `hyprctl clients` só em eventos de janela/foco/workspace (1 leitura de segurança a cada 30 s) e alimenta os dois widgets |
 | `erllan.sem-barra` | plugin QML do shell Omarchy | permanente (dentro do quickshell) | "barra nula" selecionada por `bar.id`: tira a barra do Omarchy e mantém o resto do shell |
-| central (`soviet-ops`) | 4 janelas foot no WS 1 | da sessão | `btop` (soviet-ops-btop), `fastfetch` + **ilustração** (soviet-ops-fetch), relógio/clima (soviet-ops-clock), shell (soviet-ops-shell) |
+| central (`soviet-ops`) | 4 janelas foot no WS 1 | da sessão | `btop` (soviet-ops-btop), **ilustração** (soviet-ops-fetch), relógio/clima (soviet-ops-clock), shell (soviet-ops-shell) |
 | `soviet-inspect` | janela foot flutuante | sob demanda | btop detalhado (`SUPER+M`); abre no workspace atual, fecha com a mesma tecla |
 | `soviet-arte` | CLI + janela foot flutuante | sob demanda | ilustração: seleção por sessão, desenho, modos de cores, menu e arttime interativo (`SUPER+ALT+A`) |
 
@@ -59,7 +59,7 @@ shell do Omarchy: usa só os pontos de extensão do usuário (`~/.config`,
    Uma trava (`flock`) impede composições simultâneas, e só os painéis que
    faltam são abertos.
 5. O painel `soviet-ops-fetch` grava seu PID e a área disponível em
-   `$XDG_RUNTIME_DIR/terminal-soviet/`, roda o fastfetch e pede ao
+   `$XDG_RUNTIME_DIR/terminal-soviet/` e pede ao
    `soviet-arte render` a ilustração da sessão. A arte é sorteada nesse momento
    (1ª vez na sessão), entre as que cabem na área, e fica estável até o fim da
    sessão.
@@ -85,8 +85,12 @@ shell do Omarchy: usa só os pontos de extensão do usuário (`~/.config`,
   516 artes trazem só o texto-modelo `"Custom message for art goes here"`, e
   essas são exibidas **sem frase**. Nada é inventado.
 * **Sem polling**: o painel só redesenha em SIGWINCH (tamanho) e SIGUSR1
-  (conjunto ou cores mudaram). O fastfetch é relido a cada 30 min, e a arte
-  em cache só é reimpressa.
+  (conjunto ou cores mudaram).
+* **Título do btop**: o btop não tem plugins. A versão do Omarchy e os monitores
+  ficam no campo nativo `clock_format`. A cada execução, `soviet-ops` gera uma cópia
+  da config em `$XDG_RUNTIME_DIR/terminal-soviet/`, usada só pelo btop da central, e o
+  SIGUSR2 faz o btop relê-la sem reiniciar. O arquivo instalado não muda, então ajustes
+  feitos no menu do btop da central valem só até o fim da sessão.
 * **Cores**: `Tema do terminal` passa a saída do `artprint` por
   `cores-tema.pl`, que reescreve só os parâmetros de cor SGR para a rampa
   fósforo do tema ativo, pela luminância. `Cores originais` é a saída do

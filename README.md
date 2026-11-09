@@ -2,7 +2,7 @@
 
 Configuração pessoal de desktop para o **Omarchy 4** (Hyprland em Lua):
 
-* uma **central de operações** no workspace 1: btop, fastfetch com uma ilustração
+* uma **central de operações** no workspace 1: btop, uma ilustração
   do arttime, relógio e clima do Rio, e um shell, em verde fósforo sobre grafite;
 * uma **barra única** (Noctalia) que some na central e aparece nos demais
   workspaces, com os apps abertos à esquerda e os fixados à direita (estilo
@@ -115,7 +115,7 @@ omarchy/plugins/           barra nula erllan.sem-barra → ~/.config/omarchy/plu
 omarchy/themes/            tema erllinsapin (sem as fotos) → ~/.config/omarchy/themes
 omarchy/workspace-layouts/ layout dwindle da central → ~/.local/state/omarchy/workspace-layouts
 systemd/                   noctalia.service, soviet-bar-sync.service → ~/.config/systemd/user
-btop/, fastfetch/          configurações dos painéis
+btop/                      configurações dos painéis
 migrate/                   migração da instalação manual da Fase 1
 scripts/                   arttime fixado, papéis de parede, medição de desempenho
 tests/                     estáticos, HOME isolado, ao vivo

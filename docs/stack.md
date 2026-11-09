@@ -62,7 +62,6 @@ faltam com o comando `omarchy pkg add …`.
 | `quickshell` | quickshell 0.3.1-1 | extra | sim (do Omarchy) | notificações, lock, OSD, menus | `pacman -Q quickshell` |
 | `foot` | foot 1.28.0-1 | extra | sim | terminal dos painéis | `foot --version` |
 | `btop` | btop 1.4.7-1 | extra | sim | monitoramento | `btop --version` |
-| `fastfetch` | fastfetch 2.68.1-1 | extra | sim | painel de sistema | `fastfetch --version` |
 | `jq` | jq 1.8.2-1 | extra | sim | JSON do `hyprctl` | `jq --version` |
 | `socat` | socat 1.8.1.3-1 | extra | sim | eventos do socket2 | `socat -V` |
 | `uwsm-app` | uwsm 0.26.7-1 | extra | sim | lançar apps na sessão | `uwsm --version` |

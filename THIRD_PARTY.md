@@ -26,7 +26,7 @@ Todo o restante (scripts `soviet-*`, `install.sh`, `lib/`, plugins
 | **Fonte PHXEGA8.F14** (opcional, `LIMINE_FONTE=phxega`) | download do [Neptune3013/fallout-limine-theme](https://github.com/Neptune3013/fallout-limine-theme) @ `9a777b9` com SHA-256 conferido | Não declarada (parece um dump da ROM EGA da Phoenix; nenhum dos repositórios diz a origem) | Licença incerta: nunca versionada, nunca padrão. |
 | **Terminus** (fonte padrão do menu de boot) | pacote `terminus-font` (`ter-i14n.psf.gz`, IBM-437), convertida na instalação por `scripts/limine-font.py` | SIL OFL 1.1 | Pacote do sistema; a fonte convertida só existe na ESP. |
 | Ideias e valores do tema de boot | [Neptune3013/fallout-limine-theme](https://github.com/Neptune3013/fallout-limine-theme) @ `9a777b9` (chaves e cores do `Limine.txt`, usadas na variante `fallout`; lógica do instalador CachyOS) e [magicdude4eva/fallout-limine-theme](https://github.com/magicdude4eva/fallout-limine-theme) @ `693365d` (lógica do `setup.sh`) | MIT | Lidos, não copiados; o instalador foi escrito para este projeto. Valores de cor da variante `fallout` = os do upstream, para comparação. |
-| Noctalia, Omarchy, Hyprland, foot, btop, fastfetch, zsh… | pacotes do Arch/Omarchy | várias | Dependências do sistema (`docs/stack.md`). |
+| Noctalia, Omarchy, Hyprland, foot, btop, zsh… | pacotes do Arch/Omarchy | várias | Dependências do sistema (`docs/stack.md`). |
 
 ## Referências sem cópia
 

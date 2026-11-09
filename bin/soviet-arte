@@ -128,14 +128,24 @@ write_sel() {  # write_sel <nome>
 }
 
 # Sorteia entre as artes que cabem na área (mesmo acervo do sorteio do arttime:
-# tudo menos tarot-*, e menos a página de ajuda). Sem área conhecida: qualquer uma.
+# tudo menos tarot-*, e menos a página de ajuda). Prefere as que preenchem ao menos
+# 70 % da largura e da altura; sem nenhuma, vale qualquer uma que caiba. Sem área
+# conhecida: qualquer uma.
 pick_random() {  # pick_random [cols rows] [excluir]
   ensure_index
   local cols=${1:-0} rows=${2:-0} skip=${3:-}
   awk -F'\t' -v c="$cols" -v r="$rows" -v skip="$skip" '
     $1 ~ /^tarot-/ || $1 == "help" || $1 == skip { next }
     { need = ($4 == "original") ? $3 + 3 : $3 + 1 }
-    c == 0 || ($2 <= c - 2 && $5 <= c - 2 && need + 2 <= r) { print $1 }' "$INDEX" | shuf -n1
+    c == 0 { print $1; next }
+    $2 <= c - 2 && $5 <= c - 2 && need + 2 <= r {
+      cabe[++n] = $1
+      if ($2 >= 0.7 * c && need + 2 >= 0.7 * r) grande[++g] = $1
+    }
+    END {
+      if (g) for (i = 1; i <= g; i++) print grande[i]
+      else for (i = 1; i <= n; i++) print cabe[i]
+    }' "$INDEX" | shuf -n1
 }
 
 # Conjunto da sessão. Estável durante a sessão; política "diaria" reaproveita o do dia.

@@ -22,7 +22,7 @@ customterminalerllin/
 │   └── compat.sh                   matriz de versões, dependências, pontos de integração
 ├── bin/                            → ~/.local/bin
 │   ├── soviet-ops                  compõe/restaura a central (grade dwindle, 4 painéis foot)
-│   ├── soviet-ops-fetch            painel: fastfetch + área de ilustração
+│   ├── soviet-ops-fetch            painel: ilustração em toda a área
 │   ├── soviet-ops-clock            painel: relógio grande, data, clima (cache do Noctalia)
 │   ├── soviet-inspect              btop flutuante sob demanda (abre/fecha/traz)
 │   ├── soviet-arte                 ilustração: seleção, desenho, cores, menu, arttime interativo
@@ -67,7 +67,6 @@ customterminalerllin/
 │   └── workspace-layouts/central.lua.in → ~/.local/state/omarchy/workspace-layouts/<N>.lua
 ├── systemd/                        → ~/.config/systemd/user (noctalia.service, soviet-bar-sync.service)
 ├── btop/                           → ~/.config/btop (soviet-ops.conf, soviet-inspect.conf)
-├── fastfetch/soviet-ops.jsonc      → ~/.config/fastfetch
 ├── migrate/phase1-inline.sh        remove os trechos manuais da Fase 1 (conferência por SHA-256)
 ├── scripts/
 │   ├── install-arttime.sh          arttime no commit fixado (instalador oficial --local)
@@ -110,7 +109,6 @@ customterminalerllin/
 | `~/.config/systemd/user/{noctalia,soviet-bar-sync}.service` | `systemd/` | R | |
 | `~/.config/systemd/user/graphical-session.target.wants/*.service` | — | link | habilitação |
 | `~/.config/btop/soviet-{ops,inspect}.conf` | `btop/` | R | `btop.conf` do usuário não é tocado |
-| `~/.config/fastfetch/soviet-ops.jsonc` | `fastfetch/` | R | `/etc/fastfetch` não é tocado |
 | `~/.config/terminal-soviet/terminal-soviet.conf` | `config/terminal-soviet.conf` | R | lido pelos scripts em tempo de execução |
 | `~/.local/share/icons/hicolor/scalable/apps/soviet-*.svg` | — | link | → ícones do btop/foot do sistema (só se existirem) |
 | `~/.local/src/arttime`, `~/.local/bin/{arttime,artprint}`, `~/.local/share/arttime/` | git fixado | D | `scripts/install-arttime.sh` |

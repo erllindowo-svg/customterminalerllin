@@ -226,7 +226,6 @@ payload_map() {
   emit omarchy/workspace-layouts/central.lua.in ".local/state/omarchy/workspace-layouts/$HIDDEN_WORKSPACE.lua"
   for f in "$r"/systemd/*.service; do emit "systemd/${f##*/}" ".config/systemd/user/${f##*/}"; done
   for f in "$r"/btop/*.conf; do emit "btop/${f##*/}" ".config/btop/${f##*/}"; done
-  for f in "$r"/fastfetch/*; do emit "fastfetch/${f##*/}" ".config/fastfetch/${f##*/}"; done
   emit config/terminal-soviet.conf .config/terminal-soviet/terminal-soviet.conf
 }
 
