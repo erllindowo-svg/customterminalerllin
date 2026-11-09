@@ -76,6 +76,8 @@ mkdir -p "$TMP/bin"
 for c in pacman yay mise; do
   cat > "$TMP/bin/$c" <<STUB
 #!/bin/bash
+# Consultas vão ao comando real; só as instalações são simuladas.
+[[ \$1 == -Q* || \$1 == -Si* ]] && exec /usr/bin/$c "\$@"
 echo "$c \$*" >> "\$LOG"
 [[ -n \${FALHAR:-} && "\$*" == *"\$FALHAR"* ]] && exit 1
 exit 0
@@ -114,6 +116,25 @@ out=$(./bootstrap.sh --dry-run 2>&1); rc=$?
 [[ $rc == 0 ]] && pass "bootstrap --dry-run termina com sucesso" || fail "bootstrap" "rc=$rc: $(tail -3 <<< "$out")"
 ordem=$(grep -oE '^######## [1-4]/4' <<< "$out" | tr '\n' ' ')
 [[ $ordem == '######## 1/4 ######## 2/4 ######## 3/4 ######## 4/4 ' ]] && pass "ordem: P0, projeto, tema, resto" || fail "ordem do bootstrap" "$ordem"
+
+# O caminho completo de um PC novo: HOME de Omarchy limpo, instalador real, apps simulados.
+N="$TMP/novo"; OM=${OMARCHY_PATH:-/usr/share/omarchy}
+mkdir -p "$N/.config/hypr" "$N/.config/omarchy" "$N/.local/state/omarchy/workspace-layouts"
+cp "$OM"/config/hypr/* "$N/.config/hypr/"; cp "$OM/config/omarchy/shell.json" "$N/.config/omarchy/shell.json"
+rm -f "$TMP/log"
+env -u XDG_CONFIG_HOME -u XDG_STATE_HOME -u XDG_CACHE_HOME -u XDG_DATA_HOME -u HYPRLAND_INSTANCE_SIGNATURE \
+    HOME="$N" LOG="$TMP/log" PATH="$TMP/bin:$PATH" ./bootstrap.sh --sem-tema --no-activate --no-externals > "$TMP/novo.out" 2>&1; rc=$?
+[[ $rc == 0 ]] && pass "bootstrap completo num HOME de Omarchy limpo" || fail "bootstrap limpo" "rc=$rc: $(tail -4 "$TMP/novo.out")"
+primeiro=$(grep -n -m1 stably-orca-bin "$TMP/log" | cut -d: -f1); ultimo_p0=$(grep -n -m1 ' spotify' "$TMP/log" | cut -d: -f1)
+(( ultimo_p0 < primeiro )) && pass "P0 antes dos apps de trabalho" || fail "ordem P0/P1"
+grep -q kdenlive "$TMP/log" && pass "chega até os subutilizados" || fail "não chegou à P3"
+[[ $(grep -c -- '-Syu' "$TMP/log") == 1 ]] && pass "atualiza o sistema uma única vez" || fail "atualizações" "$(grep -c -- '-Syu' "$TMP/log")"
+check "projeto instalado no HOME novo" test -f "$N/.config/hypr/terminal_soviet.lua"
+check "barra e bloqueio no shell.json novo" jq -e '.bar.id == "erllan.sem-barra" and (.plugins | any(.[]; .id == "erllan.soviet-lock"))' "$N/.config/omarchy/shell.json"
+check "clone do bloqueio gerado do Omarchy local" test -f "$N/.config/omarchy/plugins/erllan.soviet-lock/Service.qml"
+check "webapps no HOME novo" test -f "$N/.local/share/applications/WhatsApp.desktop"
+env -u XDG_CONFIG_HOME -u XDG_STATE_HOME -u XDG_CACHE_HOME -u XDG_DATA_HOME -u HYPRLAND_INSTANCE_SIGNATURE HOME="$N" ./install.sh status --no-activate >/dev/null 2>&1; rc=$?
+[[ $rc == 0 ]] && pass "install.sh status: nada divergente" || fail "status no HOME novo" "rc=$rc"
 
 if [[ ${TS_APPS_INVENTARIO:-} == 1 ]]; then
   section "Inventário desta máquina"

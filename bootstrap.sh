@@ -2,17 +2,18 @@
 # Terminal Soviético — de um Omarchy recém-instalado até o ambiente completo.
 #
 #   git clone https://github.com/erllindowo-svg/customterminalerllin ~/www/customterminalerllin
-#   ~/www/customterminalerllin/bootstrap.sh            [--dry-run] [--accept-untested]
+#   ~/www/customterminalerllin/bootstrap.sh            [--dry-run] [--sem-tema] [--accept-untested]
 #
 # Ordem: 1) P0 de apps/lista.sh, sem o qual o instalador recusa;  2) ./install.sh;
 # 3) papéis de parede e tema;  4) o restante dos apps, por prioridade.
 set -uo pipefail
 cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
-DRY=0 INST=()
+DRY=0 TEMA=1 INST=()
 for a in "$@"; do
   case $a in
     --dry-run) DRY=1; INST+=(--dry-run) ;;
+    --sem-tema) TEMA=0 ;;
     *) INST+=("$a") ;;
   esac
 done
@@ -28,7 +29,9 @@ etapa "2/4 Terminal Soviético"
 ./install.sh "${INST[@]}" || { echo "install.sh falhou: veja docs/installation-omarchy.md" >&2; exit 1; }
 
 etapa "3/4 Papéis de parede e tema"
-if (( DRY )); then
+if (( ! TEMA )); then
+  echo "  (pulado: --sem-tema)"
+elif (( DRY )); then
   echo "  scripts/fetch-backgrounds.sh && omarchy theme set erllinsapin"
 else
   { scripts/fetch-backgrounds.sh && omarchy theme set erllinsapin; } || { echo "tema não aplicado (não impede o resto)" >&2; falhou=1; }
