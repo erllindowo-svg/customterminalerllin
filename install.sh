@@ -168,7 +168,8 @@ check_keys() {
       (( mask |= m ))
     done
     desc=$(jq -r --argjson m "$mask" --arg k "$key" \
-      '[.[] | select(.modmask == $m and (.key | ascii_upcase) == $k)][0].description // empty' <<< "$binds")
+      '[.[] | select(.modmask == $m and (.key | ascii_upcase) == $k) | .description] as $d
+       | (($d | map(select(startswith("Erllinsapin:") or startswith("Soviet")))[0]) // $d[0]) // empty' <<< "$binds")
     # "Soviet*": descrição dos atalhos instalados antes da troca para Erllinsapin.
     if [[ -n $desc && $desc != Erllinsapin:* && $desc != Soviet* ]]; then
       err "$k ($keys) já está em uso: \"$desc\". Troque em config/terminal-soviet.conf"; bad=1
