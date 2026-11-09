@@ -52,7 +52,7 @@ customterminalerllin/
 │   │   └── README.md
 │   └── plugins/                    → ~/.local/share/noctalia/plugins
 │       ├── tarefas/                abertos (esq.) + fixados (dir.): service fonte.luau.in (socat,
-│       │                           fixados.json v2), widgets abertos/fixados.luau, comum.luau.in,
+│       │                           fixados.json v2), widgets abertos/fixados/trabalho.luau, comum.luau.in,
 │       │                           painel "Editar barra" editar.luau,
 │       │                           mini-menu menu.luau, desktop-id.sh
 │       ├── barra/                  painel "posição da barra" (mini-tela com arrasto)

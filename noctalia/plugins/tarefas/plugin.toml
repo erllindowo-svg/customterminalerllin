@@ -24,6 +24,11 @@ entry = "abertos.luau"
 id = "fixados"
 entry = "fixados.luau"
 
+# Só as ferramentas de trabalho (WORK_APPS), na barra horizontal.
+[[widget]]
+id = "trabalho"
+entry = "trabalho.luau"
+
 [[panel]]
 id = "menu"
 entry = "menu.luau"

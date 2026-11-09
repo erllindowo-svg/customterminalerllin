@@ -17,6 +17,7 @@
 -- Na primeira execução, sem arquivo, a semente é FAVORITES de terminal-soviet.conf.
 
 local HIDDEN_WS = @HIDDEN_WORKSPACE@
+local WORK_APPS = { @WORK_LUA@ }
 local SEED = {
 @PINNED_LUA@
 }
@@ -112,7 +113,12 @@ local function publish()
     if rank[x.key] ~= rank[y.key] then return rank[x.key] < rank[y.key] end
     return x.key < y.key
   end)
-  noctalia.state.set("modelo", { fixados = fixados, abertos = abertos })
+  local trabalho = {}
+  for _, id in ipairs(WORK_APPS) do
+    local a = byKey["pin:" .. id]
+    if a then table.insert(trabalho, a) end
+  end
+  noctalia.state.set("modelo", { fixados = fixados, abertos = abertos, trabalho = trabalho })
 end
 
 -- Campos mínimos: endereço, classe (original e minúscula), workspace, ordem de foco.
