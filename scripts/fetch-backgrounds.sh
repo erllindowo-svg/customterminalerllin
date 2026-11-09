@@ -20,13 +20,20 @@ FILES=(
   "3-worker-and-kolkhoz-woman.jpg|Moscow,_Worker_and_Kolkhoz_Woman_from_the_Main_Gate_(10656844163).jpg|a9caf76b4900868e40ceaa30555597cea10c223a"
   "4-conquerors-of-space.jpg|Monument_to_the_Conquerors_of_Space_20241022_104412_MP.jpg|ab8204e7fa4f1b44846582890a320ddbef6d1092"
   "5-treptower-park-memorial.jpg|Treptower_Park_Soviet_War_Memorial.jpg|65dbac6ef27fa8bb4b92c3be819cfe326ff059d3"
+  "6-salaspils-memorial.jpg|Salaspils_memorial,_September_2018_-_04.jpg|58b289f19f3fc91ef2374be7567d6485d5551761"
+  "7-ostankino-tower.jpg|Ostankino_Tower_IMG_4387_(37200622762).jpg|5977c943874867fa7099b4b806b1fede5adb7946"
+  "8-buzludzha-auditorium.jpg|Buzludzha_Monument_Auditorium.jpg|f4757d57ef39f1e197711217ddcf3b2cd14f1d38"
+  "9-sardarapat-memorial.jpg|Sardarapat_monument_with_special_illumination_on_independence_day,_May_28_2020_wideshot.jpg|c7617c6d0d925fbed6285b495766c5d0d337378d"
+  "10-mother-armenia.jpg|Yerevan,_Mother_Armenia_Monument,_Armenia.jpg|4e237cbb5f3433b56e7631311fe27a1ed16c175a"
+  "11-mayakovskaya-metro.jpg|Mayakovskaya,_Moscow_Metro,_2024.jpg|260dc1da802bc40b52704b76feb1dca2c07f7e1d"
+  "12-soyuz-baikonur.jpg|Soyuz_MS-26_at_Baikonur.jpg|d094f493ab5c834b2ad6837306dac1e58dca23ee"
 )
 for e in "${FILES[@]}"; do
   IFS='|' read -r local name sum <<< "$e"
   if [[ -f $DIR/$local && $(sha1sum "$DIR/$local" | cut -d' ' -f1) == "$sum" ]]; then
     echo "✓ $local (já presente)"; continue
   fi
-  curl -fsSL -A "terminal-soviet-fetch/1.0 (uso pessoal)" -o "$DIR/$local.part" \
+  curl -fsSL --retry 4 -A "terminal-soviet-fetch/1.0 (uso pessoal)" -o "$DIR/$local.part" \
     "https://commons.wikimedia.org/wiki/Special:FilePath/$(printf '%s' "$name" | sed 's/(/%28/g; s/)/%29/g; s/,/%2C/g')"
   got=$(sha1sum "$DIR/$local.part" | cut -d' ' -f1)
   [[ $got == "$sum" ]] || { rm -f "$DIR/$local.part"; echo "✗ $local: SHA-1 $got ≠ $sum" >&2; exit 1; }
