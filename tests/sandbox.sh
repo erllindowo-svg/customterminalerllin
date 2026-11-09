@@ -65,6 +65,10 @@ check "módulo Hyprland gerado" test -f "$A/.config/hypr/terminal_soviet.lua"
 [[ $(grep -c 'require("hypr.terminal_soviet")' "$A/.config/hypr/hyprland.lua") == 1 ]] \
   && pass "hyprland.lua com exatamente 1 bloco do projeto" || fail "bloco do hyprland.lua"
 check "shell.json: bar.id = erllan.sem-barra" test "$(jq -r .bar.id "$A/.config/omarchy/shell.json")" = erllan.sem-barra
+check "bloqueio da central: clone gerado na instalação" test -f "$A/.config/omarchy/plugins/erllan.soviet-lock/SovietScreen.qml"
+check "bloqueio da central: clone ligado e nativo desligado" jq -e '(.plugins | any(.[]; .id == "erllan.soviet-lock")) and (.disabledPlugins | index("omarchy.lock") != null)' "$A/.config/omarchy/shell.json"
+check "hook pós-atualização instalado" test -f "$A/.config/omarchy/hooks/post-update.d/terminal-soviet-lock"
+check "gerador instalado" test -x "$A/.local/bin/soviet-lock-clone"
 check "serviços habilitados (links em graphical-session.target.wants)" \
   test -L "$A/.config/systemd/user/graphical-session.target.wants/soviet-bar-sync.service"
 check "noctalia config validate (instalado)" noctalia config validate "$A/.config/noctalia"

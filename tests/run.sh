@@ -15,6 +15,7 @@ run tests/static.sh
 run tests/sandbox.sh
 run tests/limine.sh
 run tests/lock.sh
+run tests/apps.sh
 case ${1:-} in
   --live) run tests/live.sh ;;
   --disruptive) run tests/live.sh --disruptive

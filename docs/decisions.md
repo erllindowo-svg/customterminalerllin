@@ -364,3 +364,19 @@ Ver `THIRD_PARTY.md`.
   btop, por exemplo). O toast pode aparecer por até 150 ms antes de a cobertura entrar.
 * **Testes**: `tests/lock.sh` (gerador, em HOME isolado) e `tests/lock-live.sh` (bloqueios
   reais; senha por `SOVIET_TEST_PASSWORD`, com queda do shell em `SOVIET_TEST_CRASH=1`).
+
+## D21. Transposição: apps como comandos e bootstrap
+
+* **Contexto**: as integrações se apoiam em apps (Spotify na barra, Steam no botão de jogo,
+  fixados), mas o instalador só verificava dependências. Num PC novo sobravam horas de
+  "o que eu tinha instalado mesmo?".
+* **Escolha**: `apps/lista.sh` é a fonte: uma linha por app, que é o próprio comando de
+  instalação, com o motivo da prioridade. `bootstrap.sh` faz P0 → `install.sh` → tema → resto.
+* **Prioridade por evidência**: `pacman -Qqe`, janelas abertas, fixados na barra e a última
+  modificação da pasta de dados de cada app. O atime dos binários não serve (a atualização
+  do sistema zera). As dependências vêm sozinhas, por isso só os pacotes explícitos entram.
+* **Fora da lista de propósito**: drivers e kernel (o instalador do Omarchy escolhe pelo
+  hardware), configurações pessoais e o que exige login.
+* **Testes**: `tests/apps.sh` resolve todos os pacotes contra um banco vazio do pacman (como
+  num sistema novo), confere o AUR e roda a instalação com comandos simulados.
+  `TS_APPS_INVENTARIO=1` compara com o `pacman -Qqe` da máquina.

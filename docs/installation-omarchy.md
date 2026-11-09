@@ -293,3 +293,13 @@ migrate/phase1-inline.sh             # remove só esses trechos (com backup)
 ./install.sh --dry-run               # o restante aparece como ATUALIZAR/CONFLITO/ADOTAR
 ./install.sh --force                 # substitui pelas versões do repositório (com backup)
 ```
+
+## Bloqueio com a central ao fundo (verificação ao vivo)
+
+Depois de instalar (D20):
+
+1. `omarchy plugin list` mostra `erllan.soviet-lock` habilitado e `omarchy.lock` desativado.
+2. `SOVIET_TEST_PASSWORD='...' tests/lock-live.sh` bloqueia e desbloqueia a sessão de verdade.
+   Ele digita no teclado virtual: rode numa sessão que possa ficar bloqueada por um minuto.
+   `SOVIET_TEST_CRASH=1` inclui derrubar o shell com a sessão travada.
+3. Para voltar ao bloqueio original: `~/.local/bin/soviet-lock-clone remove`.

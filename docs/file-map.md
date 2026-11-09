@@ -10,7 +10,12 @@ como dependência (pacote ou git fixado), nunca versionado.
 ```
 customterminalerllin/
 ├── README.md  THIRD_PARTY.md  .gitignore
+├── bootstrap.sh                    Omarchy recém-instalado → ambiente completo, em um comando
 ├── install.sh                      instalador (check | install | status | uninstall)
+├── apps/                           os apps desta máquina, como comandos de instalação
+│   ├── lista.sh                    uma linha por app, de P0 (quebra tudo) a P4 (já vem no Omarchy)
+│   ├── instalar-apps.sh            executa a lista por prioridade (--ate, --so, --dry-run...)
+│   ├── webapps.sh, webapps/        webapps que abrem no Firefox
 ├── config/terminal-soviet.conf     preferências pessoais
 ├── lib/
 │   ├── ts-lib.sh                   configuração, marcadores, renderização, tabela de destinos

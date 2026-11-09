@@ -11,7 +11,8 @@ TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
 
 section "Sintaxe dos scripts"
 for f in install.sh lib/*.sh bin/soviet-* scripts/*.sh migrate/*.sh tests/*.sh \
-         noctalia/plugins/*/*.sh share/terminal-soviet/arte/artprint-shim omarchy/hooks/post-update.d/*; do
+         noctalia/plugins/*/*.sh share/terminal-soviet/arte/artprint-shim omarchy/hooks/post-update.d/* \
+         apps/*.sh apps/webapps/firefox-webapp-* bootstrap.sh; do
   check "bash -n $f" bash -n "$f"
 done
 check "perl -c cores-tema.pl" perl -c share/terminal-soviet/arte/cores-tema.pl

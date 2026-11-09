@@ -1,0 +1,7 @@
+[Desktop Entry]
+Version=1.0
+Terminal=false
+Type=Application
+Name=Claude
+Exec=firefox --new-window https://claude.ai/
+Icon=chrome-fmpnliohjhemenmnlpbfagaolkdacoja-Default
