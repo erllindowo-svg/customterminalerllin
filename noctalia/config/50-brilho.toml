@@ -1,0 +1,7 @@
+# Terminal Soviético — brilho de monitores externos
+#
+# Sem isto o Noctalia só controla o painel do notebook (sysfs). Com DDC/CI, os
+# monitores externos também aparecem na aba Monitor do control center.
+# Requer o pacote ddcutil, que já vem no Omarchy.
+[brightness]
+enable_ddcutil = true

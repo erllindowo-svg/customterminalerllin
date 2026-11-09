@@ -47,6 +47,7 @@ customterminalerllin/
 │   │   ├── 20-barra.toml.in               barra e widgets (lançadores e GPU conforme a máquina)
 │   │   ├── 30-monitoramento-clima.toml.in limiares do sysmon, endereço do clima
 │   │   ├── 40-integracao-hyprland.toml.in hook started → soviet-bar-sync --apply; idle → central
+│   │   ├── 50-brilho.toml                 DDC/CI: brilho de monitores externos
 │   │   ├── palettes/Erllinsapin.json      paleta
 │   │   └── README.md
 │   └── plugins/                    → ~/.local/share/noctalia/plugins

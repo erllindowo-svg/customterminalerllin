@@ -1,6 +1,9 @@
 #!/bin/bash
 # Terminal Soviético — visibilidade da barra do Noctalia conforme o workspace.
 #
+# Cada monitor decide pelo próprio workspace ativo, sem depender de qual tem o foco
+# (com follow_mouse, o foco muda sempre que o mouse cruza de um monitor para outro):
+#
 #   workspace 1 ativo                         -> bar-hide   (central de operações)
 #   workspace com janela de COLLAPSE_CLASSES  -> bar-hide   (opcional; padrão: nenhuma)
 #   qualquer outro caso                       -> bar-show
@@ -35,6 +38,11 @@ active_workspace() {
   hyprctl -j monitors 2>/dev/null | jq -r '[.[] | select(.focused)][0].activeWorkspace.id // empty'
 }
 
+# "<monitor>\t<workspace ativo>", uma linha por monitor.
+monitor_workspaces() {
+  hyprctl -j monitors 2>/dev/null | jq -r '.[] | select(.activeWorkspace.id != null) | [.name, .activeWorkspace.id] | @tsv'
+}
+
 # Quantas janelas de COLLAPSE_CLASSES estão no workspace $1.
 collapse_windows_on() {
   hyprctl -j clients 2>/dev/null | jq --argjson ws "$1" --arg re "$COLLAPSE_CLASSES" \
@@ -49,22 +57,26 @@ desired_for() {
   fi
 }
 
-current=""   # último estado aplicado com sucesso: hide | show | "" (desconhecido)
+declare -A current=()   # por monitor, último estado aplicado com sucesso: hide | show
 
 apply() {
-  local force=${1:-} ws want why
-  ws=$(active_workspace)
-  [[ -z $ws ]] && { log "workspace ativo indisponível; nada a fazer"; return 1; }
-  read -r want why < <(desired_for "$ws")
-  [[ -z $force && $want == "$current" ]] && return 0
-  if noctalia msg "bar-$want" "$BAR" >/dev/null 2>&1; then
-    [[ $want != "$current" || -n $force ]] && log "workspace $ws -> barra $want${why:+ ($why)}"
-    current=$want
-    return 0
-  fi
-  current=""   # Noctalia fora do ar; o hook `started` reaplica quando voltar
-  log "noctalia indisponível (bar-$want); aguardando próximo evento ou hook started"
-  return 1
+  local force=${1:-} line mon ws want why rc=0 linhas=()
+  mapfile -t linhas < <(monitor_workspaces)
+  (( ${#linhas[@]} )) || { log "monitores indisponíveis; nada a fazer"; return 1; }
+  for line in "${linhas[@]}"; do
+    mon=${line%%$'\t'*} ws=${line##*$'\t'}
+    read -r want why < <(desired_for "$ws")
+    [[ -z $force && $want == "${current[$mon]:-}" ]] && continue
+    if noctalia msg "bar-$want" "$BAR" "$mon" >/dev/null 2>&1; then
+      log "$mon: workspace $ws -> barra $want${why:+ ($why)}"
+      current[$mon]=$want
+    else
+      unset "current[$mon]"   # Noctalia fora do ar; o hook `started` reaplica quando voltar
+      log "noctalia indisponível (bar-$want $mon); aguardando próximo evento ou hook started"
+      rc=1
+    fi
+  done
+  return "$rc"
 }
 
 case ${1:-} in
@@ -75,7 +87,8 @@ case ${1:-} in
     ;;
   --status)
     ws=$(active_workspace)
-    echo "workspace=$ws desejado=$(desired_for "$ws") noctalia=$(noctalia msg status 2>/dev/null | jq -c . || echo indisponível)"
+    monitores=$(monitor_workspaces | while IFS=$'\t' read -r m w; do printf '%s:%s:%s ' "$m" "$w" "$(desired_for "$w" | cut -d' ' -f1)"; done)
+    echo "workspace=$ws desejado=$(desired_for "$ws") monitores=[${monitores% }] noctalia=$(noctalia msg status 2>/dev/null | jq -c . || echo indisponível)"
     exit 0
     ;;
   "") ;;
@@ -99,7 +112,11 @@ apply force || true
 # socat termina se o Hyprland fechar o socket; o systemd reinicia o serviço.
 while IFS= read -r line; do
   case ${line%%>>*} in
-    workspacev2|focusedmonv2|moveworkspacev2|monitoraddedv2|monitorremovedv2|configreloaded|openwindow|closewindow|movewindowv2)
+    monitoraddedv2|monitorremovedv2)
+      current=()   # monitor reconectado nasce com a barra visível: reaplica em todos
+      apply
+      ;;
+    workspacev2|focusedmonv2|moveworkspacev2|configreloaded|openwindow|closewindow|movewindowv2)
       apply
       ;;
   esac

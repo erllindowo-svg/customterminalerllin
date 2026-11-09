@@ -9,6 +9,7 @@ Configuração em arquivos, mesclados em ordem alfabética:
 | `20-barra.toml` (modelo `.in`) | barra `estacao` (topo, 26 px) e widgets; grade única: item 22 · ícone 16 · espaço 6 (`lib/ts-lib.sh`); tooltips com os atalhos ativos (`@AT_*@`, na instalação) |
 | `30-monitoramento-clima.toml` (modelo `.in`) | sysmon desligado (sem sensores na barra); endereço do clima de `WEATHER_ADDRESS`, métrico |
 | `40-integracao-hyprland.toml` (modelo `.in`) | hook `started` → `soviet-bar-sync --apply`; idle → `soviet-ops` (central no lugar da tela de descanso do Omarchy) |
+| `50-brilho.toml` | liga o DDC/CI: monitores externos na aba Monitor do control center |
 | `90-posicao-barra.toml` | **não versionado**: borda da barra escolhida no painel de posição (gerado por `soviet-bar-pos`) |
 
 Ajustes feitos pela GUI vão para `~/.local/state/noctalia/settings.toml` e
