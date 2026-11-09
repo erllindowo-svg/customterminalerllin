@@ -12,7 +12,7 @@ Configuração pessoal de desktop para o **Omarchy 4** (Hyprland em Lua):
   descanso do Omarchy, você volta para o workspace 1;
 * o **bloqueio do Omarchy com a central ao fundo**: mesmo bloqueio nativo
   (`ext-session-lock`, PAM), sem a imagem borrada: a central segue viva atrás e a senha
-  é pedida no painel de terminal, em russo. Limites em
+  é pedida no painel de terminal; os outros monitores mostram só o wallpaper. Limites em
   [`docs/decisions.md`](docs/decisions.md) (D20);
 * um **btop flutuante sob demanda** (`SUPER+M`);
 * a **ilustração** do arttime (arte + frase original, sem relógio), com menu,

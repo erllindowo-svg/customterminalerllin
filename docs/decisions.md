@@ -342,15 +342,19 @@ Ver `THIRD_PARTY.md`.
   aparece ao vivo, mas o teclado e o mouse continuam só com o bloqueio.
   * `bin/soviet-lock-clone` copia o plugin `omarchy.lock` **do Omarchy instalado**, aplica
     `soviet-lock.patch` e o habilita pelo mecanismo oficial de clone (`clonedFrom`). PAM,
-    digital, apagar a tela e recuperação de queda continuam sendo o código do Omarchy; o patch
-    troca só 2 linhas do `Service.qml` (cor da superfície e texto do erro) e acrescenta a ida à
-    central, a volta ao workspace anterior e a aparência.
+    digital e recuperação de queda continuam sendo o código do Omarchy; o patch troca só 2
+    linhas do `Service.qml` (cor da superfície e texto do erro) e acrescenta a ida à central, a
+    volta ao workspace anterior, a aparência e um `return` em `runBlank()`: o nativo apaga a
+    tela 5 s depois de bloquear; aqui ela fica acesa no pedido de senha.
   * O pedido é desenhado por cima do painel `soviet-ops-shell`, opaco: o que estiver no
     terminal fica escondido e continua rodando (nada é encerrado).
 * **Fail-safe**:
   * transparência só com o workspace da central ativo na tela e sem workspace especial; em
-    qualquer dúvida vale o fundo borrado original (segundo monitor, troca de workspace,
-    estado ainda desconhecido);
+    qualquer dúvida vale o fundo borrado original (troca de workspace, estado ainda
+    desconhecido);
+  * monitor sem a central, com a central comprovadamente em outro: só o wallpaper, sem
+    desfoque nem pedido de senha. O campo fica com opacidade 0, não invisível, para o
+    teclado seguir funcionando se o foco cair nessa tela;
   * notificações passariam por baixo da transparência (códigos de verificação furam até o
     não-perturbe), então a coluna delas fica coberta enquanto houver toast;
   * patch que não aplica ou clone que não responde: `soviet-lock-clone` volta ao bloqueio

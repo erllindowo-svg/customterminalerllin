@@ -25,7 +25,11 @@ if grep -qE 'PamContext|passwordPam|fingerprintPam|respond|pendingPassword|sessi
 else pass "Service.qml: nenhuma linha de PAM ou de sessão foi alterada"; fi
 n=$(grep -c '^<' <<< "$ch")
 (( n == 2 )) && pass "Service.qml: só 2 linhas originais trocadas (cor da superfície e texto do erro)" || fail "linhas trocadas no Service.qml" "$n: $ch"
+check "a tela fica acesa com a sessão bloqueada" awk '/function runBlank/ { getline; getline; achou = ($1 == "return") } END { exit !achou }' "$TMP/p/Service.qml"
 check "PAM continua no serviço original" grep -q 'config: "omarchy-lock-password"' "$TMP/p/Service.qml"
+check "outro monitor só com o wallpaper, sem perder o teclado" grep -q 'opacity: root.wallpaperOnly ? 0 : 1' "$TMP/p/LockView.qml"
+check "wallpaper sem desfoque no outro monitor" grep -q 'visible: !sovietScreen.transparent && !root.wallpaperOnly' "$TMP/p/LockView.qml"
+if grep -qP '[\x{0400}-\x{04FF}]' "$TMP/p/LockView.qml" "$TMP/p/Service.qml"; then fail "texto em russo no bloqueio"; else pass "textos do bloqueio em inglês"; fi
 check "transparência exige central visível e sem workspace especial" grep -q 'property bool transparent: onCentral && noSpecial' "$TMP/p/SovietScreen.qml"
 check "superfície fora da central segue opaca (fundo original)" grep -q 'central.transparent ? "transparent" : Commons.Color.background' "$TMP/p/Service.qml"
 check "notificações cobertas enquanto transparente" grep -q 'visible: sovietScreen.transparent && root.visibleToasts > 0' "$TMP/p/LockView.qml"

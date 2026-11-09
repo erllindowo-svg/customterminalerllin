@@ -6,8 +6,9 @@ import Quickshell.Hyprland
 //
 // A transparência só liga quando esta tela está comprovadamente mostrando a central
 // (workspace da central ativo e nenhum workspace especial aberto por cima). Em
-// qualquer dúvida (estado ainda desconhecido, outro workspace, segundo monitor), vale
-// o fundo borrado original do Omarchy: errar aqui só muda a aparência.
+// qualquer dúvida (estado ainda desconhecido, outro workspace), vale o fundo borrado
+// original do Omarchy: errar aqui só muda a aparência. Se a central está em outro
+// monitor, esta tela mostra só o wallpaper, sem desfoque e sem o pedido de senha.
 QtObject {
   id: central
 
@@ -24,6 +25,19 @@ QtObject {
   readonly property bool noSpecial: !!monitorInfo && !!monitorInfo.specialWorkspace
     && monitorInfo.specialWorkspace.name === ""
   readonly property bool transparent: onCentral && noSpecial
+
+  // Só vale quando outro monitor comprovadamente tem a central: é lá que a senha
+  // aparece. Sem isso, esta tela mantém o campo, para nunca faltar onde digitar.
+  readonly property bool wallpaperOnly: {
+    if (!monitor || onCentral) return false
+    var monitors = Hyprland.monitors.values
+    for (var i = 0; i < monitors.length; i++) {
+      var other = monitors[i]
+      if (other !== monitor && other.activeWorkspace && other.activeWorkspace.id === centralWorkspace)
+        return true
+    }
+    return false
+  }
 
   // O painel de terminal da central: o pedido de senha é desenhado por cima dele
   // (e, sendo opaco, esconde o que estiver no terminal).
