@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Name=Intercom
+Comment=Intercom
+Exec=omarchy-launch-webapp "https://app.intercom.com"
+Terminal=false
+Type=Application
+Icon=intercom
+StartupNotify=true
+StartupWMClass=chrome-app.intercom.com__-Default

@@ -39,15 +39,20 @@ while read -r _ pkg req _; do
 done < <(sed -n '/^DEPS=/,/)$/p' lib/compat.sh | sed -E 's/^(DEPS=\()?[[:space:]]*"//; s/"[[:space:])]*$//')
 [[ -z $faltam ]] && pass "toda dependência declarada em lib/compat.sh está na P0" || fail "fora da P0" "$faltam"
 grep -qx spotify <(pacotes 'pacman|yay' '0') && pass "Spotify na P0 (a barra é o player)" || fail "Spotify fora da P0"
-declare -A MAPA=([foot]=foot [chromium]=chromium [org.gnome.Nautilus]=nautilus [cursor]=cursor-bin [obsidian]=obsidian [firefox]=firefox [osu-lazer]=osu-lazer-bin)
+declare -A MAPA=([foot]=foot [chromium]=chromium [org.gnome.Nautilus]=nautilus [cursor]=cursor-bin [obsidian]=obsidian [firefox]=firefox [osu-lazer]=osu-lazer-bin [slack]=slack-desktop [bruno]=bruno-bin [stably-orca]=stably-orca-bin [postman]=postman-bin)
 source <(grep -E '^FAVORITES=' config/terminal-soviet.conf)
 faltam=""
 for fav in $FAVORITES; do
   id=${fav%%:*}; pkg=${MAPA[$id]:-}
+  [[ -f apps/webapps/$id.desktop ]] && continue
   [[ -n $pkg ]] || { faltam+=" $id(sem-mapa)"; continue; }
   grep -qx "$pkg" <(pacotes 'pacman|yay' '0|1|2|3') || faltam+=" $pkg"
 done
 [[ -z $faltam ]] && pass "todo app fixado na barra está na lista" || fail "fixados fora da lista" "$faltam"
+source <(grep -E '^WORK_APPS=' config/terminal-soviet.conf)
+faltam=""
+for id in $WORK_APPS; do grep -qE "(^| )$id:" <<< "$FAVORITES" || faltam+=" $id"; done
+[[ -z $faltam ]] && pass "ferramentas de trabalho estão entre os fixados iniciais" || fail "WORK_APPS fora de FAVORITES" "$faltam"
 grep -q steam <(pacotes 'pacman' '2') && pass "Steam presente para o botão de jogo da barra" || fail "Steam ausente"
 
 section "Instalável num sistema limpo"
@@ -110,6 +115,7 @@ env HOME="$TMP/w" XDG_DATA_HOME="$TMP/w/.local/share" PATH="$TMP/bin:$PATH" apps
 [[ $rc == 0 && -x $TMP/w/.local/bin/firefox-webapp-zoom ]] && pass "webapps instalados" || fail "webapps" "rc=$rc"
 grep -q "Exec=$TMP/w/.local/bin/firefox-webapp-zoom" "$TMP/w/.local/share/applications/Zoom.desktop" && pass "caminho do HOME da máquina nova" || fail "HOME no .desktop"
 if grep -rq __HOME__ "$TMP/w/.local/share/applications"; then fail "marcador sobrou"; else pass "sem marcador sobrando"; fi
+grep -q '^StartupWMClass=chrome-app.clickup.com__-Default$' "$TMP/w/.local/share/applications/ClickUp.desktop" && pass "ClickUp com a classe da janela" || fail "classe do ClickUp"
 
 section "Transposição"
 out=$(./bootstrap.sh --dry-run 2>&1); rc=$?

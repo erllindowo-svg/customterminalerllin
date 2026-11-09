@@ -57,7 +57,7 @@ validate_conf() {
   [[ $LIMINE_TIMEOUT =~ ^[0-9]{1,3}$ ]] || die "LIMINE_TIMEOUT: segundos (0-999)"
   local f
   for f in $FAVORITES; do
-    [[ $f =~ ^[A-Za-z0-9._-]+:[a-z0-9._,!-]+$ ]] || die "FAVORITES: item inválido '$f' (desktop-id:classe1,classe2)"
+    [[ $f =~ ^[A-Za-z0-9._-]+:[a-z0-9_.,!-]+$ ]] || die "FAVORITES: item inválido '$f' (desktop-id:classe1,classe2)"
   done
   for f in $WORK_APPS; do
     [[ $f =~ ^[A-Za-z0-9._-]+$ ]] || die "WORK_APPS: item inválido '$f' (desktop-id)"
