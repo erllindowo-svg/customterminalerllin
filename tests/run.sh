@@ -13,6 +13,7 @@ run() { echo "### $*" | tee -a "$OUT"; "$@" 2>&1 | sed 's/\x1b\[[0-9;]*m//g' | t
 run tests/static.sh
 run tests/sandbox.sh
 run tests/limine.sh
+run tests/lock.sh
 case ${1:-} in
   --live) run tests/live.sh ;;
   --disruptive) run tests/live.sh --disruptive ;;

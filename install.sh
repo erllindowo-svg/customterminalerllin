@@ -66,6 +66,7 @@ BLOCK_BEGIN='-- >>> terminal-soviet (gerenciado por install.sh; não editar) >>>
 BLOCK_END='-- <<< terminal-soviet <<<'
 BLOCK_BODY='require("hypr.terminal_soviet")'
 BAR_ID="erllan.sem-barra"
+LOCK_ID="erllan.soviet-lock"   # plugin de bloqueio (clone de omarchy.lock)
 TS=$(date +%Y%m%d-%H%M%S)
 BACKUP_DIR="$STATE/backups/$TS"
 STAGE=$(mktemp -d "${TMPDIR:-/tmp}/terminal-soviet-stage.XXXXXX")
@@ -232,14 +233,20 @@ plan_block() {
   PLAN+=("$act"$'\t'block$'\t'".config/hypr/hyprland.lua"$'\t'"require(\"hypr.terminal_soviet\")")
 }
 
+lock_enabled() {  # o plugin de bloqueio está habilitado e o omarchy.lock desativado?
+  jq -e --arg id "$LOCK_ID" '
+    (.plugins // [] | any(.[]; (.id // .) == $id)) and ((.disabledPlugins // []) | index("omarchy.lock") != null)' \
+    "$HOME/.config/omarchy/shell.json" >/dev/null 2>&1
+}
+
 plan_shelljson() {
   local id pos
   id=$(jq -r '.bar.id // "omarchy.bar"' "$HOME/.config/omarchy/shell.json")
   pos=$(jq -r '.bar.position // "top"' "$HOME/.config/omarchy/shell.json")
-  if [[ $id == "$BAR_ID" && $pos == top ]]; then
-    PLAN+=("OK"$'\t'shelljson$'\t'".config/omarchy/shell.json"$'\t'"bar.id=$BAR_ID, bar.position=top")
+  if [[ $id == "$BAR_ID" && $pos == top ]] && lock_enabled; then
+    PLAN+=("OK"$'\t'shelljson$'\t'".config/omarchy/shell.json"$'\t'"bar.id=$BAR_ID, bar.position=top, bloqueio=$LOCK_ID")
   else
-    PLAN+=("ALTERAR"$'\t'shelljson$'\t'".config/omarchy/shell.json"$'\t'"bar.id $id→$BAR_ID, bar.position $pos→top (omarchy bar use/position)")
+    PLAN+=("ALTERAR"$'\t'shelljson$'\t'".config/omarchy/shell.json"$'\t'"bar.id $id→$BAR_ID, bar.position $pos→top (omarchy bar use/position); bloqueio omarchy.lock→$LOCK_ID (omarchy plugin enable)")
   fi
 }
 
@@ -327,7 +334,8 @@ apply_plan() {
 apply_shelljson() {
   local f="$HOME/.config/omarchy/shell.json"
   backup .config/omarchy/shell.json
-  [[ -f $SHELLJSON_PREV ]] || jq -c '{id: (.bar.id // null), position: (.bar.position // null)}' "$f" > "$SHELLJSON_PREV"
+  [[ -f $SHELLJSON_PREV ]] || jq -c --arg id "$LOCK_ID" '{id: (.bar.id // null), position: (.bar.position // null),
+    lock_ours: ((.plugins // [] | any(.[]; (.id // .) == $id)) | not)}' "$f" > "$SHELLJSON_PREV"
   if live_session; then
     # Mecanismo suportado: omarchy-bar valida que o plugin de barra existe e
     # pede ao shell em execução para recarregar (IPC).
@@ -339,6 +347,38 @@ apply_shelljson() {
     # nenhum IPC, para não tocar no shell de outra sessão.
     [[ -f $HOME/.config/omarchy/plugins/$BAR_ID/manifest.json ]] || die "plugin de barra $BAR_ID não instalado"
     set_shelljson "$BAR_ID" top
+  fi
+  enable_lock
+}
+
+# Bloqueio no terminal: habilitar o clone desativa omarchy.lock (mecanismo do
+# Omarchy; o plugin já foi copiado antes, na etapa de arquivos).
+enable_lock() {
+  lock_enabled && return 0
+  [[ -f $HOME/.config/omarchy/plugins/$LOCK_ID/manifest.json ]] || die "plugin de bloqueio $LOCK_ID não instalado"
+  if live_session; then
+    omarchy-shell shell rescanPlugins >/dev/null 2>&1 || true
+    omarchy plugin enable "$LOCK_ID" >/dev/null || die "omarchy plugin enable $LOCK_ID falhou; shell.json original em $STATE/${M_BAK[.config/omarchy/shell.json]}"
+  else
+    local f="$HOME/.config/omarchy/shell.json" tmp; tmp=$(mktemp)
+    jq --arg id "$LOCK_ID" '
+      .plugins = ((.plugins // []) | if any(.[]; (.id // .) == $id) then . else . + [{id: $id}] end)
+      | .disabledPlugins = (((.disabledPlugins // []) + ["omarchy.lock"]) | unique)
+      | .cloneSourceRestores = (((.cloneSourceRestores // []) + [$id]) | unique)' "$f" > "$tmp" && mv "$tmp" "$f"
+  fi
+}
+
+disable_lock() {
+  if live_session; then
+    omarchy plugin disable "$LOCK_ID" >/dev/null || true
+  else
+    local f="$HOME/.config/omarchy/shell.json" tmp; tmp=$(mktemp)
+    jq --arg id "$LOCK_ID" '
+      .plugins = ((.plugins // []) | map(select((.id // .) != $id)))
+      | .disabledPlugins = ((.disabledPlugins // []) - ["omarchy.lock"])
+      | .cloneSourceRestores = ((.cloneSourceRestores // []) - [$id])
+      | if (.disabledPlugins | length) == 0 then del(.disabledPlugins) else . end
+      | if (.cloneSourceRestores | length) == 0 then del(.cloneSourceRestores) else . end' "$f" > "$tmp" && mv "$tmp" "$f"
   fi
 }
 
@@ -477,7 +517,7 @@ cmd_status() {
       file) if [[ ! -e $HOME/$rel ]]; then st=AUSENTE; elif [[ $(sha "$HOME/$rel") == "${M_SHA[$rel]}" ]]; then st=ok; else st=EDITADO; fi ;;
       link) [[ $(readlink "$HOME/$rel" 2>/dev/null) == "${M_SHA[$rel]}" ]] && st=ok || st=ALTERADO ;;
       block) grep -qxF -e "$BLOCK_BEGIN" "$HYPR_MAIN" && st=ok || st=AUSENTE ;;
-      shelljson) [[ $(jq -r '.bar.id // empty' "$HOME/.config/omarchy/shell.json") == "$BAR_ID" ]] && st=ok || st=ALTERADO ;;
+      shelljson) [[ $(jq -r '.bar.id // empty' "$HOME/.config/omarchy/shell.json") == "$BAR_ID" ]] && lock_enabled && st=ok || st=ALTERADO ;;
     esac
     (( ++n )); [[ $st == ok ]] || { (( ++bad )); printf '  %-9s %s\n' "$st" "~/$rel"; }
   done
@@ -516,6 +556,9 @@ cmd_uninstall() {
     systemctl --user stop soviet-bar-sync.service noctalia.service 2>/dev/null || true
     pkill -u "$USER" -f -- 'foot .*--app-id=soviet-(arte|inspect)( |$)' 2>/dev/null || true
   fi
+  # O plugin de bloqueio é desabilitado ANTES de seus arquivos saírem (o shell
+  # precisa conhecê-lo para restaurar o omarchy.lock).
+  [[ $(jq -r '.lock_ours // false' "$SHELLJSON_PREV" 2>/dev/null) == true ]] && disable_lock
   for a in "${actions[@]}"; do
     IFS=$'\t' read -r k kind r <<< "$a"
     case "$kind:$k" in
@@ -554,9 +597,9 @@ cmd_uninstall() {
   rm -f "$HOME/.config/noctalia/90-posicao-barra.toml"
   # Diretórios do projeto que ficaram vazios.
   local d
-  for d in .local/share/terminal-soviet/arte .local/share/terminal-soviet .config/terminal-soviet \
+  for d in .local/share/terminal-soviet/arte .local/share/terminal-soviet/lock .local/share/terminal-soviet .config/terminal-soviet \
            .local/share/noctalia/plugins/tarefas .local/share/noctalia/plugins/audio .local/share/noctalia/plugins/barra .local/share/noctalia/plugins/grupos \
-           .local/share/noctalia/plugins/spotify-media .config/omarchy/plugins/erllan.sem-barra \
+           .local/share/noctalia/plugins/spotify-media .config/omarchy/plugins/erllan.sem-barra .config/omarchy/plugins/erllan.soviet-lock \
            .config/noctalia/palettes .config/noctalia; do
     [[ -d $HOME/$d ]] && find "$HOME/$d" -depth -type d -empty -delete 2>/dev/null || true
   done
