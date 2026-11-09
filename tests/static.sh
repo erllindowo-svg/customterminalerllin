@@ -11,11 +11,12 @@ TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
 
 section "Sintaxe dos scripts"
 for f in install.sh lib/*.sh bin/soviet-* scripts/*.sh migrate/*.sh tests/*.sh \
-         noctalia/plugins/*/*.sh share/terminal-soviet/arte/artprint-shim; do
+         noctalia/plugins/*/*.sh share/terminal-soviet/arte/artprint-shim omarchy/hooks/post-update.d/* \
+         apps/*.sh apps/webapps/firefox-webapp-* bootstrap.sh; do
   check "bash -n $f" bash -n "$f"
 done
 check "perl -c cores-tema.pl" perl -c share/terminal-soviet/arte/cores-tema.pl
-for f in scripts/*.py share/terminal-soviet/lock/*.py tests/*.py; do
+for f in scripts/*.py; do
   check "python (sintaxe) $f" python3 -I -c "import ast, sys; ast.parse(open(sys.argv[1]).read())" "$f"
 done
 if command -v shellcheck >/dev/null; then

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Name=Google Contacts
+Exec=firefox --new-window https://contacts.google.com/
+Terminal=false
+Type=Application
+Icon=google-contacts
+StartupNotify=true

@@ -294,16 +294,12 @@ migrate/phase1-inline.sh             # remove só esses trechos (com backup)
 ./install.sh --force                 # substitui pelas versões do repositório (com backup)
 ```
 
-## Bloqueio no terminal (verificação ao vivo)
+## Bloqueio com a central ao fundo (verificação ao vivo)
 
-Depois de `./install.sh`, em uma máquina onde isso possa ser testado (D20):
+Depois de instalar (D20):
 
 1. `omarchy plugin list` mostra `erllan.soviet-lock` habilitado e `omarchy.lock` desativado.
-2. Abra algo no terminal da central (por exemplo `sleep 600` ou `claude`) e rode
-   `soviet-lock`: o foot do pedido deve cobrir o painel de terminal; os demais painéis
-   seguem visíveis; atalhos (`SUPER+...`) e cliques em outros painéis não têm efeito.
-3. Senha errada → `Desculpe, tente novamente.`; certa → volta ao workspace e à janela
-   de antes, e o programa do terminal continua de onde estava.
-4. Teste também: ocioso (`idle.lock`), `SUPER+CTRL+L`, e fechar a tampa/suspender.
-5. Antes de confiar nele, tenha outro terminal virtual à mão (`Ctrl+Alt+F3`) para
-   `pkill -f 'soviet-lock _supervisor'` caso algo dê errado.
+2. `SOVIET_TEST_PASSWORD='...' tests/lock-live.sh` bloqueia e desbloqueia a sessão de verdade.
+   Ele digita no teclado virtual: rode numa sessão que possa ficar bloqueada por um minuto.
+   `SOVIET_TEST_CRASH=1` inclui derrubar o shell com a sessão travada.
+3. Para voltar ao bloqueio original: `~/.local/bin/soviet-lock-clone remove`.

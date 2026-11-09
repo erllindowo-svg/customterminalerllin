@@ -24,8 +24,7 @@ shell do Omarchy: usa só os pontos de extensão do usuário (`~/.config`,
                        │    └ soviet-bar-sync ── socat (socket2) → noctalia msg bar-hide|bar-show estacao        │
                        │                                                                                         │
  shell do Omarchy      │  quickshell (omarchy-launch-shell): notificações, OSD, polkit, papel de parede, menus.   │
-   shell.json          │    Barra = plugin nulo erllan.sem-barra (bar.id). Lock = plugin erllan.soviet-lock       │
-                       │    (clone de omarchy.lock) → soviet-lock: foot sobre o terminal da central + submap (D20)│
+   shell.json          │    Barra = plugin nulo erllan.sem-barra. Lock = clone gerado de omarchy.lock (D20).      │
                        └─────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 

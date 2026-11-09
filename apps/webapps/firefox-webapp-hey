@@ -1,0 +1,5 @@
+#!/bin/bash
+# Abre o HEY no Firefox e traduz links mailto:
+url="$1"; web_url="https://app.hey.com"
+[[ $url =~ ^mailto: ]] && web_url="https://app.hey.com/messages/new?to=${url#mailto:}"
+exec firefox --new-window "$web_url"

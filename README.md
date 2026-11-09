@@ -10,11 +10,10 @@ Configuração pessoal de desktop para o **Omarchy 4** (Hyprland em Lua):
   (btop, captura, luz noturna, cafeína, perfil de energia, jogo), clima e relógio;
 * a **central no lugar da tela de descanso**: ocioso pelo tempo da tela de
   descanso do Omarchy, você volta para o workspace 1;
-* o **bloqueio no terminal**: ocioso pelo tempo do bloqueio do Omarchy (ou
-  `SUPER+CTRL+L`), a tela de bloqueio passa a ser a própria central, com o pedido
-  de senha (`[sudo] senha de ...:`) dentro do painel de terminal. O que estava
-  rodando nesse terminal (claude, vim...) não é tocado e volta intacto. Veja os
-  limites em [`docs/decisions.md`](docs/decisions.md) (D20);
+* o **bloqueio do Omarchy com a central ao fundo**: mesmo bloqueio nativo
+  (`ext-session-lock`, PAM), sem a imagem borrada: a central segue viva atrás e a senha
+  é pedida no painel de terminal, em russo. Limites em
+  [`docs/decisions.md`](docs/decisions.md) (D20);
 * um **btop flutuante sob demanda** (`SUPER+M`);
 * a **ilustração** do arttime (arte + frase original, sem relógio), com menu,
   arttime interativo e dois modos de cor (`SUPER+ALT+A`).
@@ -22,11 +21,32 @@ Configuração pessoal de desktop para o **Omarchy 4** (Hyprland em Lua):
 Repositório público, de uso pessoal, para levar essa configuração a novos
 computadores. Não é uma distribuição genérica: só o Omarchy 4 é suportado.
 
-## Instalação rápida
+## Instalação numa máquina nova
+
+Num Omarchy recém-instalado e logado, um comando só:
 
 ```bash
-git clone https://github.com/erllindowo-svg/customterminalerllin.git ~/www/customterminalerllin   # qualquer diretório serve
-cd ~/www/customterminalerllin
+git clone https://github.com/erllindowo-svg/customterminalerllin ~/www/customterminalerllin
+~/www/customterminalerllin/bootstrap.sh      # --dry-run para só ver o plano
+```
+
+Ele instala os apps essenciais, o projeto, os papéis de parede e o tema, e depois os demais
+apps por prioridade ([`apps/lista.sh`](apps/lista.sh)). Um app que falha não para os outros:
+tudo é resumido no final, com os passos que exigem você (login na Steam, por exemplo).
+
+| Prioridade | O que é |
+|---|---|
+| P0 | sem isto o sistema ou o projeto quebra (Noctalia, Spotify, dependências) |
+| P1 | sem isto o trabalho para (Orca, Bruno, Postman, Firefox, editores, CLIs) |
+| P2 | necessário para viver no computador (Obsidian, Steam, ditado, webapps) |
+| P3 | subutilizado: nunca aberto ou de uso ocasional |
+| P4 | já vem no Omarchy: só com `--base` |
+
+Para instalar por partes: `apps/instalar-apps.sh --ate 1`, `--so 2`, `--listar`, `--dry-run`.
+
+### Só o projeto, sem os apps
+
+```bash
 ./install.sh check        # compatibilidade, dependências, atalhos e plano — não altera nada
 ./install.sh --dry-run    # plano de instalação
 ./install.sh              # instala (idempotente), baixa arttime/omarchy-overview fixados e ativa
@@ -62,6 +82,7 @@ git pull && ./install.sh --dry-run && ./install.sh   # atualizar
 ./install.sh uninstall --dry-run                     # o que seria desfeito
 ./install.sh uninstall                               # desfaz e restaura os originais
 tests/run.sh [--live|--disruptive]                   # testes
+TS_APPS_INVENTARIO=1 tests/apps.sh                   # confere se esta máquina está toda na lista
 ```
 
 Recuperação e backups das fases anteriores: [`docs/backup-restore.md`](docs/backup-restore.md).

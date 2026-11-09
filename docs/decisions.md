@@ -207,8 +207,8 @@ Ver `THIRD_PARTY.md`.
 * **Escolha**: desligar a tela de descanso pelo flag suportado do Omarchy
   (`toggles/screensaver-off`) e usar o idle do próprio Noctalia
   (`[idle.behavior.central]`, `ext_idle_notifier_v1`, respeita inibidores) para
-  rodar `soviet-ops` no mesmo tempo, sem esmaecer antes. O bloqueio passou a ser
-  o da central (D20). O instalador só religa a tela de descanso no uninstall se foi ele
+  rodar `soviet-ops` no mesmo tempo, sem esmaecer antes. O bloqueio é o do Omarchy
+  com a central ao fundo (D20). O instalador só religa a tela de descanso no uninstall se foi ele
   que a desligou (`install/screensaver-off.nosso`).
 * **Limite**: o tempo é lido do `shell.json` na instalação; mudou lá, rode
   `./install.sh` de novo.
@@ -328,48 +328,55 @@ Ver `THIRD_PARTY.md`.
 * **Fora**: reaplicação automática (hook do pacman ou unit path) só proposta em
   `docs/boot-theme.md`; `interface_resolution` não é forçado.
 
-## D20. Bloqueio de sessão no terminal da central
+## D20. Bloqueio nativo com a central ao fundo
 
-* **Pedido**: a tela de bloqueio ser o terminal do workspace 1, com a senha pedida
-  no terminalzinho (como o `[sudo] senha` de uma instalação de pacote), sem perder o
-  que estiver rodando nele (ex.: `claude`).
-* **Como o Omarchy 4.5 bloqueia**: o plugin `omarchy.lock` usa `ext-session-lock`, em
-  que o compositor esconde todas as janelas e mostra só as superfícies do bloqueador.
-  Por isso o terminal real não pode aparecer ali. Todos os caminhos de bloqueio
-  (`omarchy-system-lock`: atalho, menu e ocioso; `omarchy-system-sleep-lock`, antes de
-  suspender) passam pelo alvo IPC `lock` do shell.
-* **Escolha** (decisão do usuário, mesmo avisado do limite): abrir mão do
-  `ext-session-lock` e bloquear com o terminal de verdade.
-  * Plugin `erllan.soviet-lock` com `clonedFrom: omarchy.lock` (mecanismo oficial do
-    Omarchy: ao habilitar, o shell desativa o original em `disabledPlugins` e o
-    restaura ao desabilitar). Atende o mesmo alvo `lock` (`lock`, `isLocked`,
-    `status` com `secure`), então ocioso, atalho, menu e suspensão continuam
-    funcionando sem mexer em comandos do Omarchy.
-  * `bin/soviet-lock`: um supervisor vai ao workspace da central, abre um foot
-    `soviet-lock` flutuante **exatamente sobre o painel `soviet-ops-shell`** e só então
-    entra no submap `soviet_lock`. O terminal de baixo não é encerrado nem resetado:
-    por isso o caso do `claude` aberto não exige nada, e ao desbloquear tudo volta
-    como estava (workspace e janela anteriores inclusive).
-  * `share/terminal-soviet/lock/prompt.py`: pedido de senha sem eco; valida no PAM pelo
-    serviço do próprio Omarchy (`omarchy-lock-password`, com `pam_faillock`), via
-    `ctypes`. Só o sucesso cria o testemunho que libera; qualquer outra saída (erro,
-    sinal, janela morta) mantém o bloqueio e o supervisor reabre o pedido.
-* **O que protege**: submap vazio (nenhum atalho age), `stay_focused` + `pin` na janela
-  do pedido (clique nos outros painéis não rouba o teclado), supervisor que reabre.
-  Se o foot nem abrir 3 vezes seguidas **antes** de o bloqueio ficar seguro, ele desiste e
-  avisa (o `omarchy-system-sleep-lock` também avisa) em vez de prender a sessão num submap
-  sem terminal. Posicionar sobre o painel é estética: se falhar, o pedido vai a tela cheia.
-* **Limites assumidos** (é mais fraco que o `ext-session-lock`, e isso é de propósito):
-  * as janelas continuam existindo por baixo (só ficam sem foco e sem atalhos); um
-    travamento do Hyprland encerra a sessão (como no bloqueio nativo), mas o `kill` do
-    supervisor ou do foot por quem já tem o usuário libera;
-  * só o monitor principal é coberto: um segundo monitor segue utilizável;
-  * notificações do shell aparecem por cima; a impressão digital não é usada;
-  * `Ctrl+Alt+F<n>` (outro VT) continua possível: pede senha de login.
-* **Não testado ao vivo** (decisão de não mexer na máquina em uso):
-  `tests/lock.sh` cobre PAM, o pedido em pty e o supervisor com `hyprctl`/`foot`
-  simulados; falta, em outra máquina, ver o submap vazio, o `stay_focused`, o
-  posicionamento sobre o painel e o IPC `lock` com o shell real (roteiro em
-  `docs/installation-omarchy.md`, "Bloqueio no terminal").
-* **Fora**: pré-visualização do bloqueio; bloqueio por impressão digital;
-  cobertura de vários monitores.
+* **Pedido**: a tela de bloqueio ser a central (workspace 1), com a senha pedida no
+  terminal, sem perder a segurança do bloqueio do Omarchy.
+* **Tentativa descartada** (PR #2, revertido): abrir mão do `ext-session-lock` e pedir a
+  senha num foot real, com submap vazio e foco preso. Era um risco de segurança (as janelas
+  seguiam acessíveis) e não funcionou bem. A regra que ficou: **quem protege a sessão é o
+  compositor**; nada de bloqueio de mentira.
+* **Como funciona**: `misc:session_lock_xray` faz o Hyprland desenhar os workspaces por baixo
+  de um `ext-session-lock` de verdade. Com a superfície do bloqueio transparente, a central
+  aparece ao vivo, mas o teclado e o mouse continuam só com o bloqueio.
+  * `bin/soviet-lock-clone` copia o plugin `omarchy.lock` **do Omarchy instalado**, aplica
+    `soviet-lock.patch` e o habilita pelo mecanismo oficial de clone (`clonedFrom`). PAM,
+    digital, apagar a tela e recuperação de queda continuam sendo o código do Omarchy; o patch
+    troca só 2 linhas do `Service.qml` (cor da superfície e texto do erro) e acrescenta a ida à
+    central, a volta ao workspace anterior e a aparência.
+  * O pedido é desenhado por cima do painel `soviet-ops-shell`, opaco: o que estiver no
+    terminal fica escondido e continua rodando (nada é encerrado).
+* **Fail-safe**:
+  * transparência só com o workspace da central ativo na tela e sem workspace especial; em
+    qualquer dúvida vale o fundo borrado original (segundo monitor, troca de workspace,
+    estado ainda desconhecido);
+  * notificações passariam por baixo da transparência (códigos de verificação furam até o
+    não-perturbe), então a coluna delas fica coberta enquanto houver toast;
+  * patch que não aplica ou clone que não responde: `soviet-lock-clone` volta ao bloqueio
+    nativo e avisa. O hook `post-update.d/terminal-soviet-lock` refaz o clone a cada
+    atualização do Omarchy, levando junto as correções dele;
+  * sem o painel de terminal (ou pequeno demais), o pedido fica no retângulo centralizado.
+    Painéis não são recompostos com a sessão travada: o foco por comando não vale ali e o
+    `soviet-ops` deixaria a grade errada.
+* **Reinício do shell**: serviços de autenticação não recarregam a quente; `apply` usa
+  `omarchy restart shell`, que se recusa a rodar com a sessão bloqueada.
+* **Limites**: o que está na central fica visível enquanto bloqueado (a lista de processos do
+  btop, por exemplo). O toast pode aparecer por até 150 ms antes de a cobertura entrar.
+* **Testes**: `tests/lock.sh` (gerador, em HOME isolado) e `tests/lock-live.sh` (bloqueios
+  reais; senha por `SOVIET_TEST_PASSWORD`, com queda do shell em `SOVIET_TEST_CRASH=1`).
+
+## D21. Transposição: apps como comandos e bootstrap
+
+* **Contexto**: as integrações se apoiam em apps (Spotify na barra, Steam no botão de jogo,
+  fixados), mas o instalador só verificava dependências. Num PC novo sobravam horas de
+  "o que eu tinha instalado mesmo?".
+* **Escolha**: `apps/lista.sh` é a fonte: uma linha por app, que é o próprio comando de
+  instalação, com o motivo da prioridade. `bootstrap.sh` faz P0 → `install.sh` → tema → resto.
+* **Prioridade por evidência**: `pacman -Qqe`, janelas abertas, fixados na barra e a última
+  modificação da pasta de dados de cada app. O atime dos binários não serve (a atualização
+  do sistema zera). As dependências vêm sozinhas, por isso só os pacotes explícitos entram.
+* **Fora da lista de propósito**: drivers e kernel (o instalador do Omarchy escolhe pelo
+  hardware), configurações pessoais e o que exige login.
+* **Testes**: `tests/apps.sh` resolve todos os pacotes contra um banco vazio do pacman (como
+  num sistema novo), confere o AUR e roda a instalação com comandos simulados.
+  `TS_APPS_INVENTARIO=1` compara com o `pacman -Qqe` da máquina.

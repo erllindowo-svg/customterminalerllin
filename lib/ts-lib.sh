@@ -213,6 +213,7 @@ payload_map() {
   emit() { printf '%s\t%s\n' "$1" "${2%.in}"; }
   for f in "$r"/bin/soviet-*; do emit "bin/${f##*/}" ".local/bin/${f##*/}"; done
   for f in "$r"/share/terminal-soviet/arte/* "$r"/share/terminal-soviet/lock/*; do emit "${f#"$r"/}" ".local/${f#"$r"/}"; done
+  emit omarchy/hooks/post-update.d/terminal-soviet-lock .config/omarchy/hooks/post-update.d/terminal-soviet-lock
   emit hypr/terminal_soviet.lua.in .config/hypr/terminal_soviet.lua
   while IFS= read -r rel; do emit "noctalia/config/$rel" ".config/noctalia/$rel"; done \
     < <(cd "$r/noctalia/config" && find . -type f | sed 's|^\./||' | sort)

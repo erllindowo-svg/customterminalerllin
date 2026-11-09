@@ -65,10 +65,10 @@ check "módulo Hyprland gerado" test -f "$A/.config/hypr/terminal_soviet.lua"
 [[ $(grep -c 'require("hypr.terminal_soviet")' "$A/.config/hypr/hyprland.lua") == 1 ]] \
   && pass "hyprland.lua com exatamente 1 bloco do projeto" || fail "bloco do hyprland.lua"
 check "shell.json: bar.id = erllan.sem-barra" test "$(jq -r .bar.id "$A/.config/omarchy/shell.json")" = erllan.sem-barra
-check "shell.json: plugin de bloqueio habilitado" jq -e '.plugins | any(.[]; .id == "erllan.soviet-lock")' "$A/.config/omarchy/shell.json"
-check "shell.json: omarchy.lock desativado (clone assume o alvo lock)" jq -e '.disabledPlugins | index("omarchy.lock") != null' "$A/.config/omarchy/shell.json"
-check "plugin de bloqueio e prompt.py instalados" bash -c "test -f '$A/.config/omarchy/plugins/erllan.soviet-lock/Service.qml' && test -f '$A/.local/share/terminal-soviet/lock/prompt.py' && test -x '$A/.local/bin/soviet-lock'"
-check "módulo Hyprland tem o submap e a regra do pedido de senha" bash -c "grep -q 'hl.define_submap(\"soviet_lock\"' '$A/.config/hypr/terminal_soviet.lua' && grep -q 'soviet-lock' '$A/.config/hypr/terminal_soviet.lua'"
+check "bloqueio da central: clone gerado na instalação" test -f "$A/.config/omarchy/plugins/erllan.soviet-lock/SovietScreen.qml"
+check "bloqueio da central: clone ligado e nativo desligado" jq -e '(.plugins | any(.[]; .id == "erllan.soviet-lock")) and (.disabledPlugins | index("omarchy.lock") != null)' "$A/.config/omarchy/shell.json"
+check "hook pós-atualização instalado" test -f "$A/.config/omarchy/hooks/post-update.d/terminal-soviet-lock"
+check "gerador instalado" test -x "$A/.local/bin/soviet-lock-clone"
 check "serviços habilitados (links em graphical-session.target.wants)" \
   test -L "$A/.config/systemd/user/graphical-session.target.wants/soviet-bar-sync.service"
 check "noctalia config validate (instalado)" noctalia config validate "$A/.config/noctalia"

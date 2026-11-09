@@ -10,7 +10,12 @@ como dependência (pacote ou git fixado), nunca versionado.
 ```
 customterminalerllin/
 ├── README.md  THIRD_PARTY.md  .gitignore
+├── bootstrap.sh                    Omarchy recém-instalado → ambiente completo, em um comando
 ├── install.sh                      instalador (check | install | status | uninstall)
+├── apps/                           os apps desta máquina, como comandos de instalação
+│   ├── lista.sh                    uma linha por app, de P0 (quebra tudo) a P4 (já vem no Omarchy)
+│   ├── instalar-apps.sh            executa a lista por prioridade (--ate, --so, --dry-run...)
+│   ├── webapps.sh, webapps/        webapps que abrem no Firefox
 ├── config/terminal-soviet.conf     preferências pessoais
 ├── lib/
 │   ├── ts-lib.sh                   configuração, marcadores, renderização, tabela de destinos
@@ -24,14 +29,16 @@ customterminalerllin/
 │   ├── soviet-bar-sync             visibilidade da barra por workspace (eventos)
 │   ├── soviet-bar-pos              borda da barra (grava e gera 90-posicao-barra.toml)
 │   ├── soviet-atalhos              atalhos ativos por app/comando (config Lua avaliada isolada × hyprctl)
-│   ├── soviet-lock                 bloqueio de sessão: pedido de senha sobre o terminal da central (supervisor)
+│   ├── soviet-lock-clone           gera o clone de omarchy.lock (build | check | uptodate | apply | remove)
 │   ├── soviet-grupos               classifica os apps instalados em grupos (tabela | classificar)
 │   └── soviet-icones               caminhos de ícones para os painéis (fora do orçamento de CPU do Luau)
 ├── share/terminal-soviet/arte/     → ~/.local/share/terminal-soviet/arte
 │   ├── cores-tema.pl               "Tema do terminal": reescreve cores SGR para a rampa fósforo
 │   └── artprint-shim               bin/artprint da árvore temporária do arttime interativo
-├── share/terminal-soviet/lock/     → ~/.local/share/terminal-soviet/lock
-│   └── prompt.py                   pedido de senha no estilo sudo; valida no PAM (omarchy-lock-password)
+├── share/terminal-soviet/lock/     → ~/.local/share/terminal-soviet/lock (bloqueio, D20)
+│   ├── soviet-lock.patch           patch sobre o plugin omarchy.lock instalado
+│   ├── SovietScreen.qml            por tela: pode ficar transparente? onde está o painel?
+│   └── SovietWorkflow.qml          vai à central ao bloquear, volta ao desbloquear
 ├── hypr/terminal_soviet.lua.in     → ~/.config/hypr/terminal_soviet.lua (autostart, regras, atalhos)
 ├── noctalia/
 │   ├── config/                     → ~/.config/noctalia
