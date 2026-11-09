@@ -66,6 +66,7 @@ BLOCK_BEGIN='-- >>> terminal-soviet (gerenciado por install.sh; não editar) >>>
 BLOCK_END='-- <<< terminal-soviet <<<'
 BLOCK_BODY='require("hypr.terminal_soviet")'
 BAR_ID="erllan.sem-barra"
+LOCK_ID="erllan.soviet-lock"   # clone gerado de omarchy.lock (bin/soviet-lock-clone)
 TS=$(date +%Y%m%d-%H%M%S)
 BACKUP_DIR="$STATE/backups/$TS"
 STAGE=$(mktemp -d "${TMPDIR:-/tmp}/terminal-soviet-stage.XXXXXX")
@@ -244,6 +245,23 @@ plan_shelljson() {
   fi
 }
 
+# Bloqueio da central: clone do bloqueio nativo, gerado do Omarchy instalado.
+lock_clone() {
+  TS_CONF="$ROOT/config/terminal-soviet.conf" TS_LOCK_LIVE=$(live_session && echo 1 || echo 0) \
+    "$ROOT/bin/soviet-lock-clone" "$@"
+}
+
+plan_lockclone() {
+  local rel=".config/omarchy/plugins/$LOCK_ID"
+  if ! lock_clone check; then
+    PLAN+=("NATIVO"$'\t'lockclone$'\t'"$rel"$'\t'"o patch não aplica nesta versão do Omarchy: segue o bloqueio original")
+  elif lock_clone uptodate; then
+    PLAN+=("OK"$'\t'lockclone$'\t'"$rel"$'\t'"bloqueio nativo com o fundo da central")
+  else
+    PLAN+=("ATIVAR"$'\t'lockclone$'\t'"$rel"$'\t'"clone de omarchy.lock com o fundo da central; reinicia o shell do Omarchy")
+  fi
+}
+
 plan_externals() {
   (( NO_EXTERNALS )) && return 0
   if [[ -x $HOME/.local/bin/arttime && $(git -C "$HOME/.local/src/arttime" rev-parse HEAD 2>/dev/null) == "$ARTTIME_COMMIT" ]]; then
@@ -265,7 +283,7 @@ print_plan() {
     case $act in
       OK) (( ++n_ok )); continue ;;
       CONFLITO) (( ++CONFLICTS )); printf '  %s%-9s%s %-9s ~/%s\n' "$TS_RED" "$act" "$TS_RST" "$kind" "$rel" ;;
-      *) printf '  %-9s %-9s ~/%s%s\n' "$act" "$kind" "$rel" "$( [[ $kind =~ ^(block|shelljson|external|link)$ ]] && printf '  %s(%s)%s' "$TS_DIM" "$extra" "$TS_RST")" ;;
+      *) printf '  %-9s %-9s ~/%s%s\n' "$act" "$kind" "$rel" "$( [[ $kind =~ ^(block|shelljson|lockclone|external|link)$ ]] && printf '  %s(%s)%s' "$TS_DIM" "$extra" "$TS_RST")" ;;
     esac
   done
   info "  ($n_ok itens já no estado desejado)"
@@ -277,7 +295,7 @@ apply_plan() {
   for line in "${PLAN[@]}"; do
     IFS=$'\t' read -r act kind rel extra <<< "$line"
     case "$kind:$act" in
-      file:OK) ;;
+      file:OK) M_SHA[$rel]=$(sha "$HOME/$rel") ;;   # o conteúdo é o desejado: vale esta soma
       file:ADOTAR) M_KIND[$rel]=file M_SHA[$rel]=$(sha "$HOME/$rel") ;;
       file:CRIAR|file:ATUALIZAR|file:CONFLITO)
         if [[ $act == CONFLITO ]]; then
@@ -320,6 +338,14 @@ apply_plan() {
         M_KIND[$rel]=block; [[ -n ${M_SHA[$rel]:-} ]] || M_SHA[$rel]=nosep ;;
       shelljson:OK) M_KIND[$rel]=shelljson M_SHA[$rel]=-; [[ -n ${M_BAK[$rel]:-} ]] || M_BAK[$rel]=- ;;
       shelljson:ALTERAR) apply_shelljson; M_KIND[$rel]=shelljson M_SHA[$rel]=- ;;
+      lockclone:OK) M_KIND[$rel]=lockclone M_SHA[$rel]=- M_BAK[$rel]=- ;;
+      lockclone:ATIVAR)
+        backup .config/omarchy/shell.json
+        if lock_clone apply; then M_KIND[$rel]=lockclone M_SHA[$rel]=- M_BAK[$rel]=-
+        else warn "bloqueio da central não ativado: segue o bloqueio original do Omarchy"; unset "M_KIND[$rel]" "M_SHA[$rel]" "M_BAK[$rel]"; fi ;;
+      lockclone:NATIVO)
+        lock_clone remove; unset "M_KIND[$rel]" "M_SHA[$rel]" "M_BAK[$rel]"
+        warn "$extra" ;;
       external:*) ;;   # depois do manifesto
     esac
   done
@@ -436,7 +462,7 @@ cmd_install() {
   preflight
   read_manifest
   info "== Plano"
-  plan_files; plan_links; plan_block; plan_shelljson; plan_externals
+  plan_files; plan_links; plan_block; plan_shelljson; plan_lockclone; plan_externals
   print_plan
   plan_screensaver
   plan_theme_rename
@@ -462,7 +488,7 @@ cmd_check() {
   preflight
   read_manifest
   info "== Plano (simulação)"
-  plan_files; plan_links; plan_block; plan_shelljson; plan_externals
+  plan_files; plan_links; plan_block; plan_shelljson; plan_lockclone; plan_externals
   print_plan
   DRY=$saved
   (( CONFLICTS )) && { warn "$CONFLICTS conflito(s): ./install.sh pararia (ou use --force, com backup)"; return 3; }
@@ -479,6 +505,7 @@ cmd_status() {
       link) [[ $(readlink "$HOME/$rel" 2>/dev/null) == "${M_SHA[$rel]}" ]] && st=ok || st=ALTERADO ;;
       block) grep -qxF -e "$BLOCK_BEGIN" "$HYPR_MAIN" && st=ok || st=AUSENTE ;;
       shelljson) [[ $(jq -r '.bar.id // empty' "$HOME/.config/omarchy/shell.json") == "$BAR_ID" ]] && st=ok || st=ALTERADO ;;
+      lockclone) lock_clone uptodate && st=ok || st=ALTERADO ;;
     esac
     (( ++n )); [[ $st == ok ]] || { (( ++bad )); printf '  %-9s %s\n' "$st" "~/$rel"; }
   done
@@ -504,7 +531,7 @@ cmd_uninstall() {
     # Bloco e shell.json: desfaz só o que o projeto mudou (edições posteriores
     # do usuário nesses arquivos são preservadas; o backup completo fica em $STATE).
     if [[ $kind == block ]]; then actions+=("REMOVER"$'\t'"$kind"$'\t'"$rel")
-    elif [[ $kind == shelljson ]]; then actions+=("REVERTER"$'\t'"$kind"$'\t'"$rel")
+    elif [[ $kind == shelljson || $kind == lockclone ]]; then actions+=("REVERTER"$'\t'"$kind"$'\t'"$rel")
     elif [[ ${M_BAK[$rel]:-} != - && -n ${M_BAK[$rel]:-} ]]; then actions+=("RESTAURAR"$'\t'"$kind"$'\t'"$rel")
     else actions+=("REMOVER"$'\t'"$kind"$'\t'"$rel")
     fi
@@ -533,6 +560,7 @@ cmd_uninstall() {
             for (i = 1; i <= NR; i++) if (i < s || i > t) print line[i]
           }' "$HYPR_MAIN" > "$tmp" && cat "$tmp" > "$HYPR_MAIN"
         rm -f "$tmp" ;;
+      lockclone:*) lock_clone remove ;;
       shelljson:*)
         local prev_id prev_pos
         prev_id=$(jq -r '.id // empty' "$SHELLJSON_PREV" 2>/dev/null || true)
@@ -555,7 +583,7 @@ cmd_uninstall() {
   rm -f "$HOME/.config/noctalia/90-posicao-barra.toml"
   # Diretórios do projeto que ficaram vazios.
   local d
-  for d in .local/share/terminal-soviet/arte .local/share/terminal-soviet .config/terminal-soviet \
+  for d in .local/share/terminal-soviet/arte .local/share/terminal-soviet/lock .local/share/terminal-soviet .config/terminal-soviet .config/omarchy/hooks/post-update.d .config/omarchy/hooks \
            .local/share/noctalia/plugins/tarefas .local/share/noctalia/plugins/audio .local/share/noctalia/plugins/barra .local/share/noctalia/plugins/grupos \
            .local/share/noctalia/plugins/spotify-media .config/omarchy/plugins/erllan.sem-barra \
            .config/noctalia/palettes .config/noctalia; do

@@ -207,8 +207,8 @@ Ver `THIRD_PARTY.md`.
 * **Escolha**: desligar a tela de descanso pelo flag suportado do Omarchy
   (`toggles/screensaver-off`) e usar o idle do próprio Noctalia
   (`[idle.behavior.central]`, `ext_idle_notifier_v1`, respeita inibidores) para
-  rodar `soviet-ops` no mesmo tempo, sem esmaecer antes. O bloqueio segue com o
-  Omarchy. O instalador só religa a tela de descanso no uninstall se foi ele
+  rodar `soviet-ops` no mesmo tempo, sem esmaecer antes. O bloqueio é o do Omarchy
+  com a central ao fundo (D20). O instalador só religa a tela de descanso no uninstall se foi ele
   que a desligou (`install/screensaver-off.nosso`).
 * **Limite**: o tempo é lido do `shell.json` na instalação; mudou lá, rode
   `./install.sh` de novo.
@@ -327,3 +327,40 @@ Ver `THIRD_PARTY.md`.
   fonte CP866 própria; o menu fica em CP437.
 * **Fora**: reaplicação automática (hook do pacman ou unit path) só proposta em
   `docs/boot-theme.md`; `interface_resolution` não é forçado.
+
+## D20. Bloqueio nativo com a central ao fundo
+
+* **Pedido**: a tela de bloqueio ser a central (workspace 1), com a senha pedida no
+  terminal, sem perder a segurança do bloqueio do Omarchy.
+* **Tentativa descartada** (PR #2, revertido): abrir mão do `ext-session-lock` e pedir a
+  senha num foot real, com submap vazio e foco preso. Era um risco de segurança (as janelas
+  seguiam acessíveis) e não funcionou bem. A regra que ficou: **quem protege a sessão é o
+  compositor**; nada de bloqueio de mentira.
+* **Como funciona**: `misc:session_lock_xray` faz o Hyprland desenhar os workspaces por baixo
+  de um `ext-session-lock` de verdade. Com a superfície do bloqueio transparente, a central
+  aparece ao vivo, mas o teclado e o mouse continuam só com o bloqueio.
+  * `bin/soviet-lock-clone` copia o plugin `omarchy.lock` **do Omarchy instalado**, aplica
+    `soviet-lock.patch` e o habilita pelo mecanismo oficial de clone (`clonedFrom`). PAM,
+    digital, apagar a tela e recuperação de queda continuam sendo o código do Omarchy; o patch
+    troca só 2 linhas do `Service.qml` (cor da superfície e texto do erro) e acrescenta a ida à
+    central, a volta ao workspace anterior e a aparência.
+  * O pedido é desenhado por cima do painel `soviet-ops-shell`, opaco: o que estiver no
+    terminal fica escondido e continua rodando (nada é encerrado).
+* **Fail-safe**:
+  * transparência só com o workspace da central ativo na tela e sem workspace especial; em
+    qualquer dúvida vale o fundo borrado original (segundo monitor, troca de workspace,
+    estado ainda desconhecido);
+  * notificações passariam por baixo da transparência (códigos de verificação furam até o
+    não-perturbe), então a coluna delas fica coberta enquanto houver toast;
+  * patch que não aplica ou clone que não responde: `soviet-lock-clone` volta ao bloqueio
+    nativo e avisa. O hook `post-update.d/terminal-soviet-lock` refaz o clone a cada
+    atualização do Omarchy, levando junto as correções dele;
+  * sem o painel de terminal (ou pequeno demais), o pedido fica no retângulo centralizado.
+    Painéis não são recompostos com a sessão travada: o foco por comando não vale ali e o
+    `soviet-ops` deixaria a grade errada.
+* **Reinício do shell**: serviços de autenticação não recarregam a quente; `apply` usa
+  `omarchy restart shell`, que se recusa a rodar com a sessão bloqueada.
+* **Limites**: o que está na central fica visível enquanto bloqueado (a lista de processos do
+  btop, por exemplo). O toast pode aparecer por até 150 ms antes de a cobertura entrar.
+* **Testes**: `tests/lock.sh` (gerador, em HOME isolado) e `tests/lock-live.sh` (bloqueios
+  reais; senha por `SOVIET_TEST_PASSWORD`, com queda do shell em `SOVIET_TEST_CRASH=1`).

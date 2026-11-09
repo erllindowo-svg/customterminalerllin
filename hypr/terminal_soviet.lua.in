@@ -40,6 +40,12 @@ o.window("^soviet-arte$", {
   opacity = "1 1",
 })
 
+-- ---------------------------------------------------------------- bloqueio
+-- O bloqueio continua sendo o ext-session-lock do Omarchy; isto só deixa o compositor
+-- desenhar os workspaces por baixo. A superfície do bloqueio é opaca (fundo borrado
+-- original) exceto quando a tela mostra a central (ver bin/soviet-lock-clone).
+hl.config({ misc = { session_lock_xray = true } })
+
 -- ---------------------------------------------------------------- atalhos
 -- O Omarchy 4.5 usa SUPER + M para "Minimize window to the dock"; esta tecla é nossa.
 hl.unbind("@KEY_INSPECT@")

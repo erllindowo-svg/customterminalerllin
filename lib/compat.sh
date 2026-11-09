@@ -112,6 +112,8 @@ check_integration() {
         "grep -q 'workspace-layouts' '$OMARCHY_PATH/default/hypr/workspace-layouts.lua' 2>/dev/null"
   _need "shell Omarchy com barra selecionável (bar.id + plugin kind \"bar\")" \
         "grep -q 'bar.id' '$OMARCHY_PATH/shell/services/PluginRegistry.qml' 2>/dev/null && grep -q 'cmd_use()' '$OMARCHY_PATH/bin/omarchy-bar' 2>/dev/null"
+  if "$ROOT/bin/soviet-lock-clone" check; then ok "bloqueio nativo adaptável (patch aplica em $OMARCHY_PATH/shell/plugins/lock)"
+  else warn "o patch do bloqueio não aplica nesta versão do Omarchy: fica o bloqueio original"; fi
   _need "~/.config/omarchy/shell.json existe (versão 1)" \
         "[[ \$(jq -r '.version // empty' '$HOME/.config/omarchy/shell.json' 2>/dev/null) == 1 ]]" \
         "rode o Omarchy uma vez para criá-lo"

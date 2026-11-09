@@ -1,0 +1,179 @@
+#!/bin/bash
+# Terminal Soviético — bloqueio de sessão da central, gerado a partir do nativo.
+#
+# O bloqueio continua sendo o do Omarchy (ext-session-lock, PAM, digital, recuperação
+# de travamento): este script copia o plugin omarchy.lock DO OMARCHY INSTALADO, aplica
+# um patch pequeno (share/terminal-soviet/lock/soviet-lock.patch) e o habilita pelo
+# mecanismo oficial de clone (omarchy.clonedFrom), que desativa o original.
+# O patch só mexe na aparência e no fluxo: fundo transparente quando a tela mostra a
+# central (com misc:session_lock_xray), pedido sobre o painel de terminal, textos em
+# russo, ida à central ao bloquear e volta ao desbloquear.
+#
+# Se o patch não aplicar (Omarchy mudou esses arquivos) ou o clone não responder, o
+# bloqueio volta ao nativo e o usuário é avisado: nunca fica sem bloqueio.
+#
+# Uso: soviet-lock-clone build <dir>   gera o plugin em <dir> (falha se o patch não aplica)
+#      soviet-lock-clone check         só confere se o patch aplica
+#      soviet-lock-clone uptodate      0 se o instalado é o que seria gerado agora, e está ativo
+#      soviet-lock-clone apply         gera, instala e habilita; em falha, volta ao nativo
+#      soviet-lock-clone remove        desabilita, apaga e restaura o nativo
+set -uo pipefail
+
+TS_CONF="${TS_CONF:-${XDG_CONFIG_HOME:-$HOME/.config}/terminal-soviet/terminal-soviet.conf}"
+# shellcheck source=/dev/null
+[[ -r $TS_CONF ]] && source "$TS_CONF"
+WS="${HIDDEN_WORKSPACE:-1}"
+OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
+SELF_DIR=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)
+LOCK_SHARE="${TS_LOCK_SHARE:-$SELF_DIR/../share/terminal-soviet/lock}"
+UPSTREAM="$OMARCHY_PATH/shell/plugins/lock"
+ID=erllan.soviet-lock
+DEST="$HOME/.config/omarchy/plugins/$ID"
+SHELL_JSON="$HOME/.config/omarchy/shell.json"
+
+log() { logger -t soviet-lock-clone -- "$*" 2>/dev/null; printf '%s\n' "$*" >&2; }
+
+# Sessão gráfica de verdade? (--no-activate/testes passam TS_LOCK_LIVE=0)
+live() {
+  [[ ${TS_LOCK_LIVE:-1} == 1 && -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]] && command -v omarchy-shell >/dev/null
+}
+
+build() {  # build <dir>
+  local out=$1 work f
+  [[ -f $UPSTREAM/Service.qml && -f $UPSTREAM/LockView.qml && -f $UPSTREAM/manifest.json ]] || {
+    log "bloqueio nativo não encontrado em $UPSTREAM"; return 1; }
+  work=$(mktemp -d) || return 1
+  # shellcheck disable=SC2064
+  trap "rm -rf '$work'" RETURN
+  cp -aL "$UPSTREAM/." "$work/" || return 1
+  chmod -R u+w "$work"
+  if ! (cd "$work" && git init -q . && git apply --whitespace=nowarn "$LOCK_SHARE/soviet-lock.patch") 2>/dev/null; then
+    log "o patch do bloqueio não aplica nesta versão do Omarchy"
+    return 1
+  fi
+  rm -rf "$work/.git"
+  for f in SovietScreen.qml SovietWorkflow.qml; do
+    sed "s/@HIDDEN_WORKSPACE@/$WS/g" "$LOCK_SHARE/$f" > "$work/$f" || return 1
+  done
+  jq --arg id "$ID" '
+      .id = $id
+      | .name = "Bloqueio da central (Terminal Soviético)"
+      | .omarchy = ((.omarchy // {}) + {clonedFrom: "omarchy.lock"})' \
+    "$UPSTREAM/manifest.json" > "$work/manifest.json" || return 1
+  mkdir -p "$out" && cp -a "$work/." "$out/"
+}
+
+enabled() {  # o clone está ligado e o nativo desligado no shell.json?
+  jq -e --arg id "$ID" '
+    (.plugins // [] | any(.[]; (.id // .) == $id)) and ((.disabledPlugins // []) | index("omarchy.lock") != null)' \
+    "$SHELL_JSON" >/dev/null 2>&1
+}
+
+locked_now() { live && [[ $(omarchy-shell lock isLocked 2>/dev/null) == true ]]; }
+
+json_enable() {
+  local tmp; tmp=$(mktemp)
+  jq --arg id "$ID" '
+    .plugins = ((.plugins // []) | if any(.[]; (.id // .) == $id) then . else . + [{id: $id}] end)
+    | .disabledPlugins = (((.disabledPlugins // []) + ["omarchy.lock"]) | unique)
+    | .cloneSourceRestores = (((.cloneSourceRestores // []) + [$id]) | unique)' "$SHELL_JSON" > "$tmp" && mv "$tmp" "$SHELL_JSON"
+}
+
+json_disable() {
+  local tmp; tmp=$(mktemp)
+  jq --arg id "$ID" '
+    (if has("plugins") then .plugins |= map(select((.id // .) != $id)) else . end)
+    | (if has("disabledPlugins") then .disabledPlugins -= ["omarchy.lock"] else . end)
+    | (if has("cloneSourceRestores") then .cloneSourceRestores -= [$id] else . end)
+    | (if (.disabledPlugins // []) == [] then del(.disabledPlugins) else . end)
+    | (if (.cloneSourceRestores // []) == [] then del(.cloneSourceRestores) else . end)' "$SHELL_JSON" > "$tmp" && mv "$tmp" "$SHELL_JSON"
+}
+
+# Quem atende o alvo `lock` é o clone (e não uma cópia antiga), com PAM configurado?
+responde() {
+  local i out
+  for (( i = 0; i < 80; i++ )); do
+    out=$(OMARCHY_SHELL_IPC_TIMEOUT=1s omarchy-shell lock status 2>/dev/null)
+    jq -e '.passwordPam == true and .engine == "soviet-clone"' <<< "$out" >/dev/null 2>&1 && return 0
+    sleep 0.25
+  done
+  return 1
+}
+
+# Serviços de autenticação não recarregam a quente (de propósito): o clone só vale
+# depois de reiniciar o shell, o que o próprio comando recusa com a sessão bloqueada.
+reiniciar_shell() { timeout 30 omarchy restart shell >/dev/null 2>&1; }
+
+remove() {
+  local havia=0
+  [[ -d $DEST ]] && havia=1
+  if live; then
+    omarchy plugin disable "$ID" >/dev/null 2>&1 || true
+  fi
+  [[ -f $SHELL_JSON ]] && enabled_or_listed && json_disable
+  rm -rf "$DEST"
+  if live; then
+    omarchy-shell shell rescanPlugins >/dev/null 2>&1
+    (( havia )) && reiniciar_shell
+  fi
+  return 0
+}
+
+enabled_or_listed() {
+  jq -e --arg id "$ID" '(.plugins // [] | any(.[]; (.id // .) == $id)) or ((.cloneSourceRestores // []) | index($id) != null)' \
+    "$SHELL_JSON" >/dev/null 2>&1
+}
+
+voltar_ao_nativo() {  # voltar_ao_nativo <motivo>
+  log "bloqueio volta ao nativo do Omarchy: $1"
+  remove
+  live && notify-send -u critical "Terminal Soviético: bloqueio nativo" \
+    "O bloqueio da central foi desligado ($1). A sessão segue protegida pelo bloqueio original do Omarchy." 2>/dev/null
+  return 1
+}
+
+gerado_igual() {  # gerado_igual <dir>: DEST idêntico ao que acabou de ser gerado?
+  [[ -d $DEST ]] && diff -r -q "$1" "$DEST" >/dev/null 2>&1
+}
+
+cmd_apply() {
+  local tmp rc=0
+  if locked_now; then log "sessão bloqueada: nada a fazer agora"; return 0; fi
+  tmp=$(mktemp -d); mkdir -p "$tmp/p"
+  # shellcheck disable=SC2064
+  trap "rm -rf '$tmp'" RETURN
+  build "$tmp/p" || { voltar_ao_nativo "o patch não aplica nesta versão do Omarchy"; return 1; }
+  if gerado_igual "$tmp/p" && enabled; then
+    return 0
+  fi
+  mkdir -p "$(dirname "$DEST")"; rm -rf "$DEST"; cp -a "$tmp/p" "$DEST"
+  if live; then
+    omarchy-shell shell rescanPlugins >/dev/null 2>&1
+    sleep 0.3
+    enabled || omarchy plugin enable "$ID" >/dev/null 2>&1 || { voltar_ao_nativo "omarchy plugin enable falhou"; return 1; }
+    reiniciar_shell
+    responde || { voltar_ao_nativo "o clone não respondeu ao shell"; return 1; }
+  else
+    json_enable
+  fi
+  return $rc
+}
+
+cmd_check() {
+  local tmp rc; tmp=$(mktemp -d); build "$tmp/p" 2>/dev/null; rc=$?; rm -rf "$tmp"; return $rc
+}
+
+cmd_uptodate() {
+  local tmp rc=1; tmp=$(mktemp -d)
+  if build "$tmp/p" 2>/dev/null && gerado_igual "$tmp/p" && enabled; then rc=0; fi
+  rm -rf "$tmp"; return $rc
+}
+
+case "${1:-}" in
+  build) [[ -n ${2:-} ]] || { echo "uso: soviet-lock-clone build <dir>" >&2; exit 2; }; build "$2" ;;
+  check) cmd_check ;;
+  uptodate) cmd_uptodate ;;
+  apply) cmd_apply ;;
+  remove) remove ;;
+  *) echo "uso: soviet-lock-clone build <dir> | check | uptodate | apply | remove" >&2; exit 2 ;;
+esac

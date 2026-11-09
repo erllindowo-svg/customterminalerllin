@@ -1,0 +1,6 @@
+#!/bin/bash
+# Terminal Soviético — depois de atualizar o Omarchy, refaz o bloqueio da central a
+# partir do bloqueio nativo recém-atualizado (correções de segurança entram junto).
+# Se o patch não aplicar mais, o bloqueio volta ao original do Omarchy, com aviso.
+[[ -x $HOME/.local/bin/soviet-lock-clone ]] && "$HOME/.local/bin/soviet-lock-clone" apply
+exit 0

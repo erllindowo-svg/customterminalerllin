@@ -9,7 +9,11 @@ Configuração pessoal de desktop para o **Omarchy 4** (Hyprland em Lua):
   Windows, ícones reais; fixar/desafixar pelo clique direito), ações rápidas
   (btop, captura, luz noturna, cafeína, perfil de energia, jogo), clima e relógio;
 * a **central no lugar da tela de descanso**: ocioso pelo tempo da tela de
-  descanso do Omarchy, você volta para o workspace 1 (o bloqueio continua com o Omarchy);
+  descanso do Omarchy, você volta para o workspace 1;
+* o **bloqueio do Omarchy com a central ao fundo**: mesmo bloqueio nativo
+  (`ext-session-lock`, PAM), sem a imagem borrada: a central segue viva atrás e a senha
+  é pedida no painel de terminal, em russo. Limites em
+  [`docs/decisions.md`](docs/decisions.md) (D20);
 * um **btop flutuante sob demanda** (`SUPER+M`);
 * a **ilustração** do arttime (arte + frase original, sem relógio), com menu,
   arttime interativo e dois modos de cor (`SUPER+ALT+A`).

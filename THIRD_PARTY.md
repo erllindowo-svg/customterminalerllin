@@ -33,3 +33,9 @@ Todo o restante (scripts `soviet-*`, `install.sh`, `lib/`, plugins
 * `omarchy/themes/erllinsapin/icons.theme` só **nomeia** o tema de ícones
   `Yaru-olive-dark`; `neovim.lua` só **nomeia** o plugin `everforest-nvim`.
 * A fonte `JetBrainsMono Nerd Font` vem do Omarchy.
+
+## Omarchy (bloqueio de sessão)
+
+`share/terminal-soviet/lock/soviet-lock.patch` contém trechos do plugin de bloqueio do
+Omarchy (`shell/plugins/lock`, licença MIT, <https://github.com/basecamp/omarchy>). O plugin
+em si não é versionado aqui: é copiado do Omarchy instalado em cada máquina.

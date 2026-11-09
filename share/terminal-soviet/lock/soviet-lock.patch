@@ -1,0 +1,292 @@
+diff --git i/LockView.qml w/LockView.qml
+index 9f4aa69..ad22be0 100644
+--- i/LockView.qml
++++ w/LockView.qml
+@@ -7,6 +7,14 @@ import qs.Ui
+ Item {
+   id: root
+ 
++  property var surfaceScreen: null
++  readonly property alias central: sovietScreen
++  readonly property bool terminalMode: sovietScreen.terminalMode
++  readonly property int terminalFontSize: 13
++  readonly property int terminalLine: Math.round(terminalFontSize * 1.45)
++  readonly property int terminalPadX: 10
++  readonly property int terminalPadY: 8
++  readonly property int terminalPromptY: terminalPadY + terminalLine * 3
+   property string backgroundPath: ""
+   property string videoPosterPath: ""
+   property int backgroundVersion: 0
+@@ -20,10 +28,10 @@ Item {
+   property string passwordText: ""
+   property bool syncingPasswordText: false
+ 
+-  readonly property string placeholderText: Commons.I18n.t("lock.enterPassword")
++  readonly property string placeholderText: terminalMode ? "" : "ВВЕДИТЕ ПАРОЛЬ"
+   readonly property int fieldWidth: 381
+   readonly property int fieldHeight: 67
+-  readonly property int outlineThickness: 3
++  readonly property int outlineThickness: terminalMode ? 0 : 3
+   readonly property int fieldFontSize: Math.round(Style.font.heading * 1.125)
+   readonly property int passwordDotFontSize: Math.round(Style.font.heading * 1.33)
+   readonly property int passwordDotLetterSpacing: Math.round(Style.font.heading * 0.19)
+@@ -92,6 +100,11 @@ Item {
+     if (inputEnabled) Qt.callLater(forcePasswordFocus)
+   }
+ 
++  SovietScreen {
++    id: sovietScreen
++    screen: root.surfaceScreen
++  }
++
+   // Measures the masked password at full size; passwordDotScale compares this
+   // against the field width to decide how far the dots must shrink to fit.
+   TextMetrics {
+@@ -102,15 +115,34 @@ Item {
+     text: "●".repeat(passwordInput.text.length)
+   }
+ 
++  // A transparência deixaria ver as notificações (códigos de verificação furam até
++  // o não-perturbe). Enquanto houver toast, a coluna delas fica coberta.
++  property int visibleToasts: 0
++  Timer {
++    interval: 150
++    repeat: true
++    running: sovietScreen.transparent
++    triggeredOnStart: true
++    onTriggered: {
++      try {
++        var handler = Commons.IpcRegistry.handlerFor("notifications")
++        root.visibleToasts = handler ? Number(handler.count()) : 0
++      } catch (error) {
++        root.visibleToasts = 1
++      }
++    }
++  }
++
+   Rectangle {
+     anchors.fill: parent
+-    color: Commons.Color.background
++    color: sovietScreen.transparent ? "transparent" : Commons.Color.background
+ 
+     BackgroundMedia {
+       id: wallpaper
+       objectName: "lockWallpaper"
+       anchors.fill: parent
+-      path: root.loadBackground ? (root.video ? root.videoPosterPath : root.backgroundPath) : ""
++      visible: !sovietScreen.transparent
++      path: root.loadBackground && !sovietScreen.transparent ? (root.video ? root.videoPosterPath : root.backgroundPath) : ""
+       version: root.backgroundVersion
+       // Decode only once sized, at the lock's own size: an unsized first
+       // request decoded the file at its native resolution, then again once
+@@ -123,6 +155,7 @@ Item {
+ 
+     MultiEffect {
+       anchors.fill: wallpaper
++      visible: !sovietScreen.transparent
+       source: wallpaper
+       autoPaddingEnabled: false
+       blurEnabled: root.loadBackground && wallpaper.ready
+@@ -141,41 +174,81 @@ Item {
+ 
+     BorderSurface {
+       id: inputField
+-      width: root.fieldWidth
+-      height: root.fieldHeight
+-      anchors.centerIn: parent
+-      color: Commons.Color.lock.background
++      width: root.terminalMode ? sovietScreen.panelWidth : root.fieldWidth
++      height: root.terminalMode ? sovietScreen.panelHeight : root.fieldHeight
++      x: root.terminalMode ? sovietScreen.panelX : Math.round((parent.width - width) / 2)
++      y: root.terminalMode ? sovietScreen.panelY : Math.round((parent.height - height) / 2)
++      color: sovietScreen.transparent ? Commons.Color.background : Commons.Color.lock.background
+       borderSpec: root.inputBorderSpec
+-      radius: Style.cornerRadius
++      radius: root.terminalMode ? 0 : Style.cornerRadius
+       clip: true
+ 
++      // No painel da central o pedido imita o terminal: mesmo lugar, mesma fonte.
++      Column {
++        visible: root.terminalMode
++        x: root.terminalPadX
++        y: root.terminalPadY
++        Text {
++          textFormat: Text.PlainText
++          height: root.terminalLine
++          text: "СТАНЦИЯ // ДОСТУП ЗАКРЫТ"
++          color: Commons.Color.lock.text
++          font.family: Style.font.family
++          font.pixelSize: root.terminalFontSize
++          font.bold: true
++        }
++        Text {
++          textFormat: Text.PlainText
++          height: root.terminalLine
++          text: "СЕАНС ЗАБЛОКИРОВАН · " + sovietScreen.lockedAt + " · " + sovietScreen.userName
++          color: Commons.Color.lock.placeholder
++          font.family: Style.font.family
++          font.pixelSize: root.terminalFontSize
++        }
++      }
++
++      Text {
++        id: terminalPrompt
++        visible: root.terminalMode
++        textFormat: Text.PlainText
++        x: root.terminalPadX
++        y: root.terminalPromptY
++        height: root.terminalLine
++        verticalAlignment: Text.AlignVCenter
++        text: "ПАРОЛЬ ► "
++        color: Commons.Color.lock.text
++        font.family: Style.font.family
++        font.pixelSize: root.terminalFontSize
++        font.bold: true
++      }
++
+       TextInput {
+         id: passwordInput
+         anchors.fill: parent
+-        anchors.topMargin: inputField.borderTop
++        anchors.topMargin: root.terminalMode ? root.terminalPromptY : inputField.borderTop
+         // Reserve the fingerprint icon's width on both sides so the centered
+         // dots stay symmetric and never slide under the icon as they grow.
+         anchors.rightMargin: inputField.borderRight + 18 + root.fingerprintReserve
+-        anchors.bottomMargin: inputField.borderBottom
+-        anchors.leftMargin: inputField.borderLeft + 18 + root.fingerprintReserve
++        anchors.bottomMargin: root.terminalMode ? inputField.height - root.terminalPromptY - root.terminalLine : inputField.borderBottom
++        anchors.leftMargin: root.terminalMode ? root.terminalPadX + terminalPrompt.implicitWidth : inputField.borderLeft + 18 + root.fingerprintReserve
+         verticalAlignment: TextInput.AlignVCenter
+-        horizontalAlignment: TextInput.AlignHCenter
++        horizontalAlignment: root.terminalMode ? TextInput.AlignLeft : TextInput.AlignHCenter
+         activeFocusOnPress: true
+         clip: true
+         enabled: root.inputEnabled && !root.authenticatingPassword
+         readOnly: root.authenticatingPassword
+         echoMode: TextInput.Password
+-        passwordCharacter: "\u25CF"
++        passwordCharacter: root.terminalMode ? "\u25A0" : "\u25CF"
+         passwordMaskDelay: 0
+         color: Commons.Color.lock.text
+         selectionColor: Commons.Color.lock.selection
+         selectedTextColor: Commons.Color.lock.text
+         font.family: Style.font.family
+-        font.pixelSize: text.length > 0 ? Math.max(1, Math.floor(root.passwordDotFontSize * root.passwordDotScale)) : root.fieldFontSize
+-        font.letterSpacing: text.length > 0 ? root.passwordDotLetterSpacing * root.passwordDotScale : 0
+-        cursorVisible: activeFocus && root.showPasswordCursor && text.length > 0
++        font.pixelSize: root.terminalMode ? root.terminalFontSize : (text.length > 0 ? Math.max(1, Math.floor(root.passwordDotFontSize * root.passwordDotScale)) : root.fieldFontSize)
++        font.letterSpacing: root.terminalMode ? 0 : (text.length > 0 ? root.passwordDotLetterSpacing * root.passwordDotScale : 0)
++        cursorVisible: activeFocus && root.showPasswordCursor && (root.terminalMode || text.length > 0)
+         cursorDelegate: Rectangle {
+-          width: 2
++          width: root.terminalMode ? 8 : 2
+           color: Commons.Color.lock.text
+           visible: passwordInput.cursorVisible
+         }
+@@ -210,13 +283,13 @@ Item {
+       Text {
+         textFormat: Text.PlainText
+         anchors.fill: passwordInput
+-        text: root.authenticatingPassword ? Commons.I18n.t("lock.checking") : (root.failureMessage.length > 0 ? root.failureMessage : root.placeholderText)
++        text: root.authenticatingPassword ? "ПРОВЕРКА…" : (root.failureMessage.length > 0 ? root.failureMessage : root.placeholderText)
+         visible: passwordInput.text.length === 0
+         color: root.authenticatingPassword ? Commons.Color.lock.text : (root.failureMessage.length > 0 ? Commons.Color.lock.textError : Commons.Color.lock.placeholder)
+         font.family: Style.font.family
+-        font.pixelSize: root.fieldFontSize
++        font.pixelSize: root.terminalMode ? root.terminalFontSize : root.fieldFontSize
+         font.italic: !root.authenticatingPassword && root.failureMessage.length > 0
+-        horizontalAlignment: Text.AlignHCenter
++        horizontalAlignment: root.terminalMode ? Text.AlignLeft : Text.AlignHCenter
+         verticalAlignment: Text.AlignVCenter
+         elide: Text.ElideRight
+       }
+@@ -243,6 +316,21 @@ Item {
+       }
+     }
+ 
++    Rectangle {
++      visible: sovietScreen.transparent && root.visibleToasts > 0
++      anchors { top: parent.top; bottom: parent.bottom; right: parent.right }
++      width: 420
++      color: Commons.Color.background
++      Text {
++        textFormat: Text.PlainText
++        anchors.centerIn: parent
++        text: "УВЕДОМЛЕНИЕ СКРЫТО"
++        color: Commons.Color.lock.placeholder
++        font.family: Style.font.family
++        font.pixelSize: root.terminalFontSize
++      }
++    }
++
+     // The crossed-out icon has no meaning to a user who has never seen it — it
+     // is not intuitive that it signals a broken reader — so the words carry the
+     // explanation and the icon only reinforces it.
+diff --git i/Service.qml w/Service.qml
+index a02708e..766da39 100644
+--- i/Service.qml
++++ w/Service.qml
+@@ -222,6 +222,7 @@ Item {
+ 
+     resetAuthenticationState()
+     lockRequested = true
++    sovietWorkflow.prepare()
+     armBlankTimer()
+     logEvent("lock-requested")
+     queueSessionLock()
+@@ -244,6 +245,7 @@ Item {
+     resetAuthenticationState()
+     idleBlankTimer.stop()
+     sessionLock.locked = false
++    sovietWorkflow.restore()
+     logEvent("unlocked")
+     runWake()
+   }
+@@ -382,7 +384,7 @@ Item {
+     enteredPassword = ""
+     pendingPassword = ""
+     failedAttempts += 1
+-    failureMessage = I18n.t("lock.authenticationFailed").arg(I18n.formatNumber(failedAttempts))
++    failureMessage = "НЕВЕРНЫЙ ПАРОЛЬ · ПОПЫТКА " + failedAttempts
+     runWake()
+   }
+ 
+@@ -463,6 +465,8 @@ Item {
+     }
+   }
+ 
++  SovietWorkflow { id: sovietWorkflow }
++
+   WlSessionLock {
+     id: sessionLock
+ 
+@@ -503,11 +507,12 @@ Item {
+       Binding { target: lockSurface.contentItem; property: "LayoutMirroring.enabled"; value: Commons.I18n.rightToLeft }
+       Binding { target: lockSurface.contentItem; property: "LayoutMirroring.childrenInherit"; value: true }
+ 
+-      color: Commons.Color.background
++      color: lockView.central.transparent ? "transparent" : Commons.Color.background
+ 
+       LockView {
+         id: lockView
+         anchors.fill: parent
++        surfaceScreen: lockSurface.screen
+         backgroundPath: root.backgroundPath
+         videoPosterPath: root.videoPosterPath
+         backgroundVersion: root.backgroundVersion
+@@ -544,6 +549,7 @@ Item {
+ 
+     LockView {
+       anchors.fill: parent
++      surfaceScreen: previewWindow.screen
+       backgroundPath: root.backgroundPath
+       videoPosterPath: root.videoPosterPath
+       backgroundVersion: root.backgroundVersion
+@@ -894,6 +900,7 @@ Item {
+         pending: root.pendingSessionLock,
+         sessionLocked: sessionLock.locked,
+         secure: sessionLock.secure,
++        engine: "soviet-clone",
+         realScreens: root.realScreenCount(),
+         passwordPam: root.passwordPamConfigured,
+         fingerprint: root.fingerprintConfigured,
