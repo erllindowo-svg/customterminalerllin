@@ -105,8 +105,9 @@ section "Painéis sob demanda (janelas reais)"
 if (( DISRUPT )); then
   count() { hyprctl clients -j | jq --arg c "$1" '[.[] | select(.class == $c)] | length'; }
   procs() { ps -C "$1" -o args= | grep -c -- "$2"; }   # só o executável pedido (o foot repete a linha do btop)
-  soviet-inspect; for _ in {1..40}; do [[ $(count soviet-inspect) == 1 ]] && break; sleep 0.1; done
-  soviet-inspect & soviet-inspect & wait   # acionamentos repetidos durante a abertura
+  # Acionamentos repetidos DURANTE a abertura: só o primeiro abre, os outros saem pela trava.
+  soviet-inspect & soviet-inspect & soviet-inspect & wait
+  for _ in {1..40}; do [[ $(count soviet-inspect) == 1 ]] && break; sleep 0.1; done
   sleep 0.5
   [[ $(count soviet-inspect) == 1 && $(procs btop 'soviet-inspect') == 1 ]] \
     && pass "btop: abre 1 janela e 1 processo (acionamentos repetidos não duplicam)" || fail "btop duplicado" "$(count soviet-inspect)"
