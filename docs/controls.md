@@ -24,7 +24,7 @@ A tela de descanso do Omarchy fica desligada (flag
 `omarchy-toggle-screensaver`). No tempo dela (`idle.screensaver` em
 `~/.config/omarchy/shell.json`, 150 s por padrão, lido na instalação), o idle do
 Noctalia roda `soviet-ops`: vai ao workspace da central e reabre os painéis que
-faltarem. O bloqueio (`idle.lock`, `SUPER+CTRL+L`, menu, antes de suspender) é o da central: ver D20. A cafeína da barra e
+faltarem. O bloqueio (`idle.lock`) continua com o Omarchy. A cafeína da barra e
 vídeos em tela cheia (inibidores de idle) impedem a troca. Mudou o tempo no
 `shell.json`? Rode `./install.sh`.
 

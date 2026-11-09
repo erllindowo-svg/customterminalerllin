@@ -40,25 +40,6 @@ o.window("^soviet-arte$", {
   opacity = "1 1",
 })
 
--- ---------------------------------------------------------------- bloqueio
--- Bloqueio de sessão no terminal da central (bin/soviet-lock). O pedido de senha
--- é um foot `soviet-lock` posto sobre o painel de terminal do workspace
--- @HIDDEN_WORKSPACE@: flutuante, fixo (visível em qualquer workspace) e com
--- stay_focused, para que cliques nos outros painéis não roubem o teclado.
-o.window("^soviet-lock$", {
-  float = true,
-  pin = true,
-  stay_focused = true,
-  no_anim = true,
-  no_shadow = true,
-  tag = "-default-opacity",
-  opacity = "1 1",
-})
--- Submap sem nenhum atalho: enquanto bloqueado, o soviet-lock entra nele e nenhum
--- atalho do Omarchy ou do projeto age (as teclas vão só para o pedido de senha).
--- Volta ao normal com hl.dsp.submap("reset") quando o PAM aceita a senha.
-hl.define_submap("soviet_lock", function() end)
-
 -- ---------------------------------------------------------------- atalhos
 o.bind("@KEY_INSPECT@", "Erllinsapin: inspeção (alternar)", soviet_bin .. "soviet-inspect")
 o.bind("@KEY_OPS@", "Erllinsapin: central de operações", soviet_bin .. "soviet-ops")
