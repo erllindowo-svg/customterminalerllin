@@ -111,7 +111,9 @@ check_integration() {
   _need "layouts por workspace (~/.local/state/omarchy/workspace-layouts)" \
         "grep -q 'workspace-layouts' '$OMARCHY_PATH/default/hypr/workspace-layouts.lua' 2>/dev/null"
   _need "shell Omarchy com barra selecionável (bar.id + plugin kind \"bar\")" \
-        "grep -q 'bar.id' '$OMARCHY_PATH/shell/README.md' 2>/dev/null && grep -q 'cmd_use()' '$OMARCHY_PATH/bin/omarchy-bar' 2>/dev/null"
+        "grep -q 'bar.id' '$OMARCHY_PATH/shell/services/PluginRegistry.qml' 2>/dev/null && grep -q 'cmd_use()' '$OMARCHY_PATH/bin/omarchy-bar' 2>/dev/null"
+  _need "bloqueio substituível (plugin com clonedFrom + alvo IPC lock do omarchy.lock)" \
+        "grep -q 'clonedFrom' '$OMARCHY_PATH/shell/services/PluginRegistry.qml' 2>/dev/null && grep -q 'target: \"lock\"' '$OMARCHY_PATH/shell/plugins/lock/Service.qml' 2>/dev/null && [[ -x '$OMARCHY_PATH/bin/omarchy-system-lock' ]]"
   _need "~/.config/omarchy/shell.json existe (versão 1)" \
         "[[ \$(jq -r '.version // empty' '$HOME/.config/omarchy/shell.json' 2>/dev/null) == 1 ]]" \
         "rode o Omarchy uma vez para criá-lo"

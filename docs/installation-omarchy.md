@@ -293,3 +293,17 @@ migrate/phase1-inline.sh             # remove só esses trechos (com backup)
 ./install.sh --dry-run               # o restante aparece como ATUALIZAR/CONFLITO/ADOTAR
 ./install.sh --force                 # substitui pelas versões do repositório (com backup)
 ```
+
+## Bloqueio no terminal (verificação ao vivo)
+
+Depois de `./install.sh`, em uma máquina onde isso possa ser testado (D20):
+
+1. `omarchy plugin list` mostra `erllan.soviet-lock` habilitado e `omarchy.lock` desativado.
+2. Abra algo no terminal da central (por exemplo `sleep 600` ou `claude`) e rode
+   `soviet-lock`: o foot do pedido deve cobrir o painel de terminal; os demais painéis
+   seguem visíveis; atalhos (`SUPER+...`) e cliques em outros painéis não têm efeito.
+3. Senha errada → `Desculpe, tente novamente.`; certa → volta ao workspace e à janela
+   de antes, e o programa do terminal continua de onde estava.
+4. Teste também: ocioso (`idle.lock`), `SUPER+CTRL+L`, e fechar a tampa/suspender.
+5. Antes de confiar nele, tenha outro terminal virtual à mão (`Ctrl+Alt+F3`) para
+   `pkill -f 'soviet-lock _supervisor'` caso algo dê errado.

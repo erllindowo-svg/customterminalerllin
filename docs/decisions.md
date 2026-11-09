@@ -207,8 +207,8 @@ Ver `THIRD_PARTY.md`.
 * **Escolha**: desligar a tela de descanso pelo flag suportado do Omarchy
   (`toggles/screensaver-off`) e usar o idle do próprio Noctalia
   (`[idle.behavior.central]`, `ext_idle_notifier_v1`, respeita inibidores) para
-  rodar `soviet-ops` no mesmo tempo, sem esmaecer antes. O bloqueio segue com o
-  Omarchy. O instalador só religa a tela de descanso no uninstall se foi ele
+  rodar `soviet-ops` no mesmo tempo, sem esmaecer antes. O bloqueio passou a ser
+  o da central (D20). O instalador só religa a tela de descanso no uninstall se foi ele
   que a desligou (`install/screensaver-off.nosso`).
 * **Limite**: o tempo é lido do `shell.json` na instalação; mudou lá, rode
   `./install.sh` de novo.
@@ -327,3 +327,49 @@ Ver `THIRD_PARTY.md`.
   fonte CP866 própria; o menu fica em CP437.
 * **Fora**: reaplicação automática (hook do pacman ou unit path) só proposta em
   `docs/boot-theme.md`; `interface_resolution` não é forçado.
+
+## D20. Bloqueio de sessão no terminal da central
+
+* **Pedido**: a tela de bloqueio ser o terminal do workspace 1, com a senha pedida
+  no terminalzinho (como o `[sudo] senha` de uma instalação de pacote), sem perder o
+  que estiver rodando nele (ex.: `claude`).
+* **Como o Omarchy 4.5 bloqueia**: o plugin `omarchy.lock` usa `ext-session-lock`, em
+  que o compositor esconde todas as janelas e mostra só as superfícies do bloqueador.
+  Por isso o terminal real não pode aparecer ali. Todos os caminhos de bloqueio
+  (`omarchy-system-lock`: atalho, menu e ocioso; `omarchy-system-sleep-lock`, antes de
+  suspender) passam pelo alvo IPC `lock` do shell.
+* **Escolha** (decisão do usuário, mesmo avisado do limite): abrir mão do
+  `ext-session-lock` e bloquear com o terminal de verdade.
+  * Plugin `erllan.soviet-lock` com `clonedFrom: omarchy.lock` (mecanismo oficial do
+    Omarchy: ao habilitar, o shell desativa o original em `disabledPlugins` e o
+    restaura ao desabilitar). Atende o mesmo alvo `lock` (`lock`, `isLocked`,
+    `status` com `secure`), então ocioso, atalho, menu e suspensão continuam
+    funcionando sem mexer em comandos do Omarchy.
+  * `bin/soviet-lock`: um supervisor vai ao workspace da central, abre um foot
+    `soviet-lock` flutuante **exatamente sobre o painel `soviet-ops-shell`** e só então
+    entra no submap `soviet_lock`. O terminal de baixo não é encerrado nem resetado:
+    por isso o caso do `claude` aberto não exige nada, e ao desbloquear tudo volta
+    como estava (workspace e janela anteriores inclusive).
+  * `share/terminal-soviet/lock/prompt.py`: pedido de senha sem eco; valida no PAM pelo
+    serviço do próprio Omarchy (`omarchy-lock-password`, com `pam_faillock`), via
+    `ctypes`. Só o sucesso cria o testemunho que libera; qualquer outra saída (erro,
+    sinal, janela morta) mantém o bloqueio e o supervisor reabre o pedido.
+* **O que protege**: submap vazio (nenhum atalho age), `stay_focused` + `pin` na janela
+  do pedido (clique nos outros painéis não rouba o teclado), supervisor que reabre.
+  Se o foot nem abrir 3 vezes seguidas **antes** de o bloqueio ficar seguro, ele desiste e
+  avisa (o `omarchy-system-sleep-lock` também avisa) em vez de prender a sessão num submap
+  sem terminal. Posicionar sobre o painel é estética: se falhar, o pedido vai a tela cheia.
+* **Limites assumidos** (é mais fraco que o `ext-session-lock`, e isso é de propósito):
+  * as janelas continuam existindo por baixo (só ficam sem foco e sem atalhos); um
+    travamento do Hyprland encerra a sessão (como no bloqueio nativo), mas o `kill` do
+    supervisor ou do foot por quem já tem o usuário libera;
+  * só o monitor principal é coberto: um segundo monitor segue utilizável;
+  * notificações do shell aparecem por cima; a impressão digital não é usada;
+  * `Ctrl+Alt+F<n>` (outro VT) continua possível: pede senha de login.
+* **Não testado ao vivo** (decisão de não mexer na máquina em uso):
+  `tests/lock.sh` cobre PAM, o pedido em pty e o supervisor com `hyprctl`/`foot`
+  simulados; falta, em outra máquina, ver o submap vazio, o `stay_focused`, o
+  posicionamento sobre o painel e o IPC `lock` com o shell real (roteiro em
+  `docs/installation-omarchy.md`, "Bloqueio no terminal").
+* **Fora**: pré-visualização do bloqueio; bloqueio por impressão digital;
+  cobertura de vários monitores.

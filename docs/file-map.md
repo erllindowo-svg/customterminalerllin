@@ -24,11 +24,14 @@ customterminalerllin/
 │   ├── soviet-bar-sync             visibilidade da barra por workspace (eventos)
 │   ├── soviet-bar-pos              borda da barra (grava e gera 90-posicao-barra.toml)
 │   ├── soviet-atalhos              atalhos ativos por app/comando (config Lua avaliada isolada × hyprctl)
+│   ├── soviet-lock                 bloqueio de sessão: pedido de senha sobre o terminal da central (supervisor)
 │   ├── soviet-grupos               classifica os apps instalados em grupos (tabela | classificar)
 │   └── soviet-icones               caminhos de ícones para os painéis (fora do orçamento de CPU do Luau)
 ├── share/terminal-soviet/arte/     → ~/.local/share/terminal-soviet/arte
 │   ├── cores-tema.pl               "Tema do terminal": reescreve cores SGR para a rampa fósforo
 │   └── artprint-shim               bin/artprint da árvore temporária do arttime interativo
+├── share/terminal-soviet/lock/     → ~/.local/share/terminal-soviet/lock
+│   └── prompt.py                   pedido de senha no estilo sudo; valida no PAM (omarchy-lock-password)
 ├── hypr/terminal_soviet.lua.in     → ~/.config/hypr/terminal_soviet.lua (autostart, regras, atalhos)
 ├── noctalia/
 │   ├── config/                     → ~/.config/noctalia

@@ -15,7 +15,7 @@ for f in install.sh lib/*.sh bin/soviet-* scripts/*.sh migrate/*.sh tests/*.sh \
   check "bash -n $f" bash -n "$f"
 done
 check "perl -c cores-tema.pl" perl -c share/terminal-soviet/arte/cores-tema.pl
-for f in scripts/*.py; do
+for f in scripts/*.py share/terminal-soviet/lock/*.py tests/*.py; do
   check "python (sintaxe) $f" python3 -I -c "import ast, sys; ast.parse(open(sys.argv[1]).read())" "$f"
 done
 if command -v shellcheck >/dev/null; then
