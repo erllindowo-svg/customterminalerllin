@@ -4,7 +4,7 @@
 # Compõe o workspace 1 com aplicações reais e interativas (foot):
 #
 #   ┌──────────────────────────────┬──────────────────┐
-#   │ btop          soviet-ops-btop│ fastfetch        │
+#   │ btop          soviet-ops-btop│ ilustração       │
 #   │ (instrumento principal)      │ soviet-ops-fetch │
 #   │                              ├──────────────────┤
 #   ├──────────────────────────────┤ relógio/contexto │
@@ -30,12 +30,14 @@ TS_CONF="${TS_CONF:-${XDG_CONFIG_HOME:-$HOME/.config}/terminal-soviet/terminal-s
 SELF_DIR=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)   # bin/ instalado ou do checkout
 WS="${HIDDEN_WORKSPACE:-1}"
 BTOP_CONF="$HOME/.config/btop/soviet-ops.conf"
+# Cópia usada pelo btop da central, com o título gerado: o arquivo instalado fica intocado.
+BTOP_RUN_CONF="${XDG_RUNTIME_DIR:-/run/user/$UID}/terminal-soviet/soviet-ops.conf"
 LOCK="${XDG_RUNTIME_DIR:-/run/user/$UID}/soviet-ops.lock"
 LOG_TAG=soviet-ops
 
 log() { logger -t "$LOG_TAG" -- "$*" 2>/dev/null; printf '%s\n' "$*" >&2; }
 
-for dep in foot btop fastfetch hyprctl jq uwsm-app; do
+for dep in foot btop hyprctl jq uwsm-app; do
   command -v "$dep" >/dev/null || { log "dependência ausente: $dep"; exit 1; }
 done
 
@@ -69,15 +71,37 @@ open_panel() {  # open_panel <nome>
   case $1 in
     # btop em corpo 8: com cpu+gpu+mem+net+proc ele exige >= 36 linhas.
     btop)  launch soviet-ops-btop  "СТАНЦИЯ // MONITORAMENTO" \
-             --override="font=JetBrainsMono Nerd Font:size=8" btop --config "$BTOP_CONF" ;;
-    # Informações gerais + arte "globe" (D.H., 1991). Corpo 7,5 para caberem
-    # as ~40 linhas (info + globo) na coluna direita. Ver soviet-ops-fetch.
+             --override="font=JetBrainsMono Nerd Font:size=8" btop --config "$BTOP_RUN_CONF" ;;
+    # Ilustração do arttime em todo o painel. Ver soviet-ops-fetch.
     fetch) launch soviet-ops-fetch "СТАНЦИЯ // SISTEMA" \
              --override="font=JetBrainsMono Nerd Font:size=7.5" "$SELF_DIR/soviet-ops-fetch" ;;
     clock) launch soviet-ops-clock "СТАНЦИЯ // HORA E CONTEXTO" "$SELF_DIR/soviet-ops-clock" ;;
     shell) launch soviet-ops-shell "СТАНЦИЯ // TERMINAL" ;;
   esac
 }
+
+# Versão do Omarchy e monitores no título da caixa de CPU do btop. O btop não tem
+# plugins; clock_format é o campo nativo que aceita texto livre, e a hora já está
+# no painel do relógio. Atualiza a cada execução; SIGUSR2 faz o btop reler a config.
+update_btop_header() {
+  local version monitors header conf
+  version=$(omarchy-version 2>/dev/null) || return 0
+  # O btop corta o texto em cerca de 28 colunas: "2×1080p60" ou "1080p+1440p".
+  monitors=$(hyprctl -j monitors | jq -r '
+    map("\(.height)p\(.refreshRate | round)") as $m
+    | if ($m | unique | length) == 1
+      then (if ($m | length) > 1 then "\($m | length)×" else "" end) + $m[0]
+      else map("\(.height)p") | join("+") end')
+  [[ $version =~ ^[0-9.]+ && -n $monitors ]] || return 0
+  header="Omarchy ${BASH_REMATCH[0]} · $monitors"
+  mkdir -p "${BTOP_RUN_CONF%/*}"
+  conf=$(sed "s|^clock_format = .*|clock_format = \"$header\"|" "$BTOP_CONF") || return 0
+  [[ -f $BTOP_RUN_CONF && $conf == "$(<"$BTOP_RUN_CONF")" ]] && return 0
+  printf '%s\n' "$conf" > "$BTOP_RUN_CONF"
+  pkill -USR2 -u "$USER" -xf "btop --config $BTOP_RUN_CONF"
+  return 0
+}
+update_btop_header
 
 panels=(btop fetch clock shell)
 missing=()
@@ -97,8 +121,8 @@ others=$(hyprctl clients -j | jq --argjson ws "$WS" '[.[] | select(.workspace.id
 layout=$(hyprctl activeworkspace -j | jq -r '.tiledLayout // "dwindle"')
 [[ $layout != dwindle ]] && log "workspace $WS usa layout '$layout'; a grade exige dwindle (alterne com o toggle de layout do Omarchy)"
 
-# Proporções da grade: coluna esquerda 62 %, btop 72 % da altura; à direita o
-# painel de sistema (info + globo) fica com 72 % e o relógio com o resto.
+# Proporções da grade: coluna esquerda 62 %, btop 72 % da altura; à direita a
+# ilustração fica com 72 % e o relógio com o resto.
 apply_proportions() {
   local mw mh a
   read -r mw mh < <(hyprctl -j monitors | jq -r '[.[] | select(.focused)][0] | "\((.width / .scale) | floor) \((.height / .scale) | floor)"')

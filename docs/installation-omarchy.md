@@ -27,7 +27,7 @@ Instale os pacotes que o projeto usa (o instalador não instala pacotes; só
 aponta os que faltam):
 
 ```bash
-omarchy pkg add noctalia zsh socat jq fastfetch playerctl fzf git
+omarchy pkg add noctalia zsh socat jq playerctl fzf git
 # opcionais: firefox e osu-lazer (fixados na barra por padrão)
 # opcional, AUR: omarchy pkg aur add osu-lazer-bin
 ```
@@ -113,7 +113,7 @@ completa do Omarchy "de fábrica" antes de aplicar:
 mkdir -p ~/terminal-sovietico-backups
 tar -C ~ -czf ~/terminal-sovietico-backups/omarchy-original-$(date +%Y%m%d-%H%M%S).tar.gz \
     .config/hypr .config/omarchy/shell.json .config/systemd/user .config/noctalia \
-    .config/btop .config/fastfetch 2>/dev/null
+    .config/btop 2>/dev/null
 ```
 
 (`tar` reclama de caminhos inexistentes, como `.config/noctalia` numa máquina

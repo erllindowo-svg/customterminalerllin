@@ -40,7 +40,8 @@ recurso). Se algum faltar, ele para antes de alterar qualquer arquivo:
   adaptador: o instalador para no primeiro ponto de integração.
 * **Noctalia 5.0.1**: `tooltip` em `ui.column` exige `plugin_api` 32 (não
   suportado aqui); `bar-hide <barra> <monitor>` responde "ok" mas não oculta
-  (por isso a barra segue o monitor focado); `hidden_workspaces` do taskbar
+  (funciona no 5.3.0, do qual o `soviet-bar-sync` depende para decidir por
+  monitor); `hidden_workspaces` do taskbar
   ainda não existe (por isso o plugin `erllan/tarefas`). Versões novas do
   Noctalia podem tornar o plugin desnecessário: reavalie antes de aceitar a 6.x.
 * **Shell do Omarchy**: se a interface de plugins `bar` mudar e a barra nula
@@ -61,7 +62,6 @@ faltam com o comando `omarchy pkg add …`.
 | `quickshell` | quickshell 0.3.1-1 | extra | sim (do Omarchy) | notificações, lock, OSD, menus | `pacman -Q quickshell` |
 | `foot` | foot 1.28.0-1 | extra | sim | terminal dos painéis | `foot --version` |
 | `btop` | btop 1.4.7-1 | extra | sim | monitoramento | `btop --version` |
-| `fastfetch` | fastfetch 2.68.1-1 | extra | sim | painel de sistema | `fastfetch --version` |
 | `jq` | jq 1.8.2-1 | extra | sim | JSON do `hyprctl` | `jq --version` |
 | `socat` | socat 1.8.1.3-1 | extra | sim | eventos do socket2 | `socat -V` |
 | `uwsm-app` | uwsm 0.26.7-1 | extra | sim | lançar apps na sessão | `uwsm --version` |

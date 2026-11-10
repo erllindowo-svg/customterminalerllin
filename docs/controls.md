@@ -113,6 +113,9 @@ classificação automática só toca apps nunca vistos.
 * **Esquerda**: apps **abertos** que não estão fixados (fora do workspace da
   central). **Direita**: apps **fixados**, na ordem em que foram fixados; um
   fixado aberto fica só à direita.
+* **Barra horizontal**: só as ferramentas de trabalho (`WORK_APPS` em
+  `config/terminal-soviet.conf`), ao lado da bandeja, desde que estejam fixadas. A
+  bandeja é à parte: nela aparece todo app que registra um ícone lá (como o Slack).
 * Traço **fósforo** = app focado; **oliva** = em execução (traço largo = 2+
   janelas); ícone atenuado sem traço = fixado e fechado.
 * **Clique**: foca a janela mais recente, o que leva ao workspace dela; cliques
@@ -132,9 +135,10 @@ classificação automática só toca apps nunca vistos.
 * Linha de comando: `noctalia msg plugin erllan/tarefas:fonte all <fixar|desafixar|novo|fechar> <app:classe|pin:id>`;
   `… all alternar-fixado` (o mesmo do `KEY_PIN`); `… all mover "pin:<id> fixados:<pos>"` (o mesmo do painel Editar barra).
 
-**Vários monitores**: a regra vale para o workspace do **monitor focado**, em
-todas as barras. No Noctalia 5.0.1, ocultar a barra por monitor não funciona.
-Testado só com um monitor.
+**Vários monitores**: cada barra segue o workspace do **próprio monitor**, sem
+depender do foco ou do mouse: ela só some no monitor que está mostrando a central.
+Verificado com dois monitores no Noctalia 5.3.0; no 5.0.1, ocultar por monitor
+não funcionava.
 
 ## Ilustração (`SUPER+ALT+A`)
 

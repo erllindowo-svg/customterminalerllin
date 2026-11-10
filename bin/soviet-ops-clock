@@ -107,16 +107,20 @@ DIAS=(dom seg ter qua qui sex sáb)
 
 while :; do
   cols=$(tput cols 2>/dev/null || echo 48)
+  altura=$(tput lines 2>/dev/null || echo 24)
   w=$(( cols > 60 ? 60 : cols - 1 ))
-  {
+  # Painel baixo (monitor pequeno): sem as linhas em branco, tudo cabe.
+  b=$'\n'; (( altura < 13 )) && b=""
+  # $(...) tira o último \n: escrever na última linha sem rolar a tela.
+  frame=$({
     printf '\e[H'
     rule "ВРЕМЯ · HORA LOCAL" "$w"
-    echo
+    printf '%s' "$b"
     big_time "$(date +%H:%M)"
-    printf '\n  %s%s%s  %s%s%s\n\n' "$T" "${DIAS[$(date +%w)]} $(date +%d.%m.%Y)" "$N" "$O" "UTC$(date +%:z) · $(date +%S)s" "$N"
+    printf '%s  %s%s%s  %s%s%s\n%s' "$b" "$T" "${DIAS[$(date +%w)]} $(date +%d.%m.%Y)" "$N" "$O" "UTC$(date +%:z) · $(date +%S)s" "$N" "$b"
     rule "$(echo "$place" | tr '[:lower:]' '[:upper:]')" "$w"
     weather_block
-  } | sed 's/$/\x1b[K/'
-  printf '\e[J'
+  } | sed 's/$/\x1b[K/' | head -n "$altura")
+  printf '%s\e[J' "$frame"
   sleep 1
 done

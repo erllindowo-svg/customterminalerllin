@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Name=ClickUp
+Comment=ClickUp
+Exec=omarchy-launch-webapp "https://app.clickup.com"
+Terminal=false
+Type=Application
+Icon=clickup
+StartupNotify=true
+StartupWMClass=chrome-app.clickup.com__-Default

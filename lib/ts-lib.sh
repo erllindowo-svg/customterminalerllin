@@ -16,7 +16,7 @@ die()  { err "$*"; exit 1; }
 
 # ------------------------------------------------------------------ configuração
 CONF_KEYS=(HIDDEN_WORKSPACE COLLAPSE_CLASSES BAR_NAME WEATHER_ADDRESS KEY_INSPECT KEY_OPS
-           KEY_ARTE KEY_PIN FAVORITES GAME_DESKTOP
+           KEY_ARTE KEY_PIN FAVORITES WORK_APPS GAME_DESKTOP
            LIMINE_THEME LIMINE_ORIGEM LIMINE_FONTE LIMINE_RESOLUCAO LIMINE_TITULO LIMINE_TIMEOUT)
 
 # Lê VAR="valor" sem executar o arquivo (só chaves conhecidas).
@@ -57,7 +57,10 @@ validate_conf() {
   [[ $LIMINE_TIMEOUT =~ ^[0-9]{1,3}$ ]] || die "LIMINE_TIMEOUT: segundos (0-999)"
   local f
   for f in $FAVORITES; do
-    [[ $f =~ ^[A-Za-z0-9._-]+:[a-z0-9._,!-]+$ ]] || die "FAVORITES: item inválido '$f' (desktop-id:classe1,classe2)"
+    [[ $f =~ ^[A-Za-z0-9._-]+:[a-z0-9_.,!-]+$ ]] || die "FAVORITES: item inválido '$f' (desktop-id:classe1,classe2)"
+  done
+  for f in $WORK_APPS; do
+    [[ $f =~ ^[A-Za-z0-9._-]+$ ]] || die "WORK_APPS: item inválido '$f' (desktop-id)"
   done
 }
 
@@ -82,9 +85,9 @@ compute_tokens() {
   T_IDLE_CENTRAL=$(jq -r '.idle.screensaver // 150 | numbers' "$HOME/.config/omarchy/shell.json" 2>/dev/null || true)
   [[ $T_IDLE_CENTRAL =~ ^[0-9]+$ && $T_IDLE_CENTRAL -gt 0 ]] || T_IDLE_CENTRAL=150
 
-  # Seção da direita: utilidades (sem ícones de apps na horizontal; na vertical,
+  # Seção da direita: ferramentas de trabalho e utilidades (na vertical,
   # bin/soviet-bar-pos refaz as seções e põe abertos/fixados).
-  T_BAR_END='["tray", "notificacoes", "audio", "weather", "clock", "control-center"]'
+  T_BAR_END='["trabalho", "tray", "notificacoes", "audio", "weather", "clock", "control-center"]'
 
   # Centro: ações (grupo "acoes"); o botão do jogo só entra se o .desktop existir.
   # O símbolo de música (erllan/spotify-media:bar, abre o player) fecha o grupo.
@@ -108,6 +111,10 @@ compute_tokens() {
     pins+="  { id = \"$id\", classes = { ${list%, } } },"$'\n'
   done
   T_PINNED_LUA=${pins%$'\n'}
+
+  local work=""
+  for f in $WORK_APPS; do work+="\"$f\", "; done
+  T_WORK_LUA=${work%, }
 
   # Atalhos nos tooltips dos widgets nativos ("Luz noturna — SUPER + CTRL + N"),
   # lidos dos binds ativos por bin/soviet-atalhos. Ficam fixos no TOML: mudar um
@@ -189,7 +196,7 @@ render() {
     TS_ACOES_MEMBERS="$T_ACOES_MEMBERS" TS_WEATHER_ADDRESS="$WEATHER_ADDRESS" \
     TS_GAME_DESKTOP="$GAME_DESKTOP" TS_GAME_NAME="$T_GAME_NAME" TS_GAME_ICON="$T_GAME_ICON" \
     TS_KEY_INSPECT="$KEY_INSPECT" TS_KEY_OPS="$KEY_OPS" TS_KEY_ARTE="$KEY_ARTE" TS_KEY_PIN="$KEY_PIN" \
-    TS_HIDDEN_WORKSPACE="$HIDDEN_WORKSPACE" TS_PINNED_LUA="$T_PINNED_LUA" \
+    TS_HIDDEN_WORKSPACE="$HIDDEN_WORKSPACE" TS_PINNED_LUA="$T_PINNED_LUA" TS_WORK_LUA="$T_WORK_LUA" \
     TS_BAR_THICKNESS="$T_BAR_THICKNESS" TS_ITEM="$T_ITEM" TS_ICON="$T_ICON" TS_GAP="$T_GAP" \
     TS_CAPSULE_THICKNESS="$T_CAPSULE_THICKNESS" TS_IDLE_CENTRAL="$T_IDLE_CENTRAL" \
     TS_AT_MENU="$T_AT_MENU" TS_AT_CAPTURA="$T_AT_CAPTURA" TS_AT_GRAVAR="$T_AT_GRAVAR" \
@@ -226,7 +233,6 @@ payload_map() {
   emit omarchy/workspace-layouts/central.lua.in ".local/state/omarchy/workspace-layouts/$HIDDEN_WORKSPACE.lua"
   for f in "$r"/systemd/*.service; do emit "systemd/${f##*/}" ".config/systemd/user/${f##*/}"; done
   for f in "$r"/btop/*.conf; do emit "btop/${f##*/}" ".config/btop/${f##*/}"; done
-  for f in "$r"/fastfetch/*; do emit "fastfetch/${f##*/}" ".config/fastfetch/${f##*/}"; done
   emit config/terminal-soviet.conf .config/terminal-soviet/terminal-soviet.conf
 }
 

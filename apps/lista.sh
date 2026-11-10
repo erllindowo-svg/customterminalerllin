@@ -20,7 +20,6 @@ p0 "Hyprland: o compositor"                                  $PAC hyprland
 p0 "Noctalia: a barra e o control center do projeto"         $PAC noctalia
 p0 "foot: os quatro painéis da central"                      $PAC foot
 p0 "btop: painel de monitoramento e inspeção (SUPER+M)"      $PAC btop
-p0 "fastfetch: painel de sistema da central"                 $PAC fastfetch
 p0 "jq: lê o JSON do hyprctl em todos os scripts"            $PAC jq
 p0 "socat: eventos do Hyprland para a barra sumir na central" $PAC socat
 p0 "uwsm: lança os painéis na sessão"                        $PAC uwsm
@@ -40,6 +39,7 @@ p0 "Spotify: a barra é o player (erllan/spotify-media)"      $PAC spotify
 p1 "Orca: IDE de agentes, em uso diário no trabalho"         $AUR stably-orca-bin
 p1 "Bruno: cliente de API do trabalho"                       $AUR bruno-bin
 p1 "Postman: cliente de API do trabalho"                     $AUR postman-bin
+p1 "Slack: comunicação do trabalho"                          $PAC slack-desktop
 p1 "Firefox: navegador principal; os webapps abrem nele"     $PAC firefox
 p1 "Cursor: editor"                                          $PAC cursor-bin
 p1 "VS Code: editor"                                         $PAC visual-studio-code-bin
@@ -60,7 +60,7 @@ p2 "Voxtype: ditado por voz (SUPER+CTRL+X)"                  $PAC voxtype-bin
 p2 "Steam: jogos; o botão de jogo da barra abre o Deadlock"  $PAC steam
 p2 "osu!: jogo (fixado na barra)"                            $AUR osu-lazer-bin
 p2 "osu-mime: abre mapas do osu!"                            $AUR osu-mime
-p2 "Webapps no Firefox (WhatsApp, HEY, Zoom, YouTube, X...)" apps/webapps.sh
+p2 "Webapps: Firefox (WhatsApp, HEY, Zoom...) e Chromium (ClickUp, Intercom)" apps/webapps.sh
 
 # ---------------------------------------------------------------- P3: subutilizados
 p3 "Kdenlive: vídeo; nunca aberto nesta máquina"             $PAC kdenlive

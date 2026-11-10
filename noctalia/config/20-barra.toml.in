@@ -19,10 +19,11 @@
 # Grupos (esquerda -> direita):
 #   CONTEXTO      alça · menu ☭ · workspaces · overview
 #   AÇÕES         inspeção (btop) · grupos · captura · luz noturna · cafeína · perfil de energia · jogo · música   (centro)
-#   UTILIDADES    bandeja · notificações · áudio · clima RJ · relógio · control center
+#   UTILIDADES    ferramentas de trabalho · bandeja · notificações · áudio · clima RJ · relógio · control center
 #
-# Sem ícones de aplicativos na horizontal. Na vertical, o bin/soviet-bar-pos põe os
-# abertos (em cima) e os fixados (embaixo) do plugin erllan/tarefas.
+# Na horizontal, só as ferramentas de trabalho (WORK_APPS), ao lado da bandeja. Na
+# vertical, o bin/soviet-bar-pos põe os abertos (em cima) e os fixados (embaixo) do
+# plugin erllan/tarefas.
 #
 # Sem separadores: a seção `end` só tem o espaço entre o fim do centro e a borda e
 # corta à esquerda o que exceder (a capa do Spotify aparecia "comprimida" por isso).
@@ -139,6 +140,9 @@ type = "erllan/tarefas:abertos"
 
 [widget.fixados]
 type = "erllan/tarefas:fixados"
+
+[widget.trabalho]
+type = "erllan/tarefas:trabalho"
 
 [widget.active_window]
 type = "active_window"

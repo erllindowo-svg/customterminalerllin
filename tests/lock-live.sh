@@ -33,7 +33,7 @@ tela() { grim "$TMP/$1.png"; }
 # Média e desvio padrão de um recorte em pixels físicos: "média desvio" (0 a 1).
 stat() { magick "$TMP/$1.png" -crop "$2" +repage -format '%[fx:mean] %[fx:standard_deviation]' info:; }
 maior() { awk -v a="$1" -v b="$2" 'BEGIN { exit !(a > b) }'; }
-# A tela apaga 5 s depois da última tecla: acende e confirma antes de capturar.
+# Garante a tela acesa antes de capturar (o bloqueio não a apaga, mas o DPMS manual pode).
 acordar() {
   local i
   wtype -k Shift_L
@@ -108,9 +108,9 @@ soltar || fail "desbloqueio após system-lock"
 omarchy-system-sleep-lock 6000; rc=$?
 [[ $rc == 0 ]] && is '.secure == true' && pass "omarchy-system-sleep-lock confirma seguro antes de suspender" || fail "sleep-lock" "rc=$rc $(st)"
 sleep 6.5
-[[ $(hyprctl monitors -j | jq '.[0].dpmsStatus') == false ]] && pass "apaga a tela sozinho, como o nativo" || fail "tela não apagou"
+[[ $(hyprctl monitors -j | jq '.[0].dpmsStatus') == true ]] && pass "a tela segue acesa no pedido de senha" || fail "tela apagou"
 soltar; rc=$?
-[[ $rc == 0 && $(hyprctl monitors -j | jq '.[0].dpmsStatus') == true ]] && pass "digitar acende a tela e desbloqueia" || fail "acordar" "rc=$rc"
+[[ $rc == 0 && $(hyprctl monitors -j | jq '.[0].dpmsStatus') == true ]] && pass "digitar a senha desbloqueia com a tela acesa" || fail "desbloquear" "rc=$rc"
 
 section "Painel de terminal ausente: retângulo centralizado, sem mexer em janelas"
 P=$(hyprctl clients -j | jq -r '[.[] | select(.class == "soviet-ops-shell")][0].pid')
