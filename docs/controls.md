@@ -114,8 +114,12 @@ classificação automática só toca apps nunca vistos.
   central). **Direita**: apps **fixados**, na ordem em que foram fixados; um
   fixado aberto fica só à direita.
 * **Barra horizontal**: só as ferramentas de trabalho (`WORK_APPS` em
-  `config/terminal-soviet.conf`), ao lado da bandeja, desde que estejam fixadas. A
-  bandeja é à parte: nela aparece todo app que registra um ícone lá (como o Slack).
+  `config/terminal-soviet.conf`), desde que estejam fixadas. Elas ficam entre duas
+  bandejas: à esquerda, só o ícone do Slack na bandeja (com o aviso de não lidas);
+  à direita, o resto da bandeja (Superwhisper e qualquer app que registre um ícone
+  lá). A bandeja do Noctalia não tem ordem nem "mostrar só X": a da esquerda
+  esconde os outros apps conhecidos (`hidden` de `[widget.bandeja_slack]`), e um app
+  novo aparece nas duas até entrar nessa lista.
 * Traço **fósforo** = app focado; **oliva** = em execução (traço largo = 2+
   janelas); ícone atenuado sem traço = fixado e fechado.
 * **Clique**: foca a janela mais recente, o que leva ao workspace dela; cliques

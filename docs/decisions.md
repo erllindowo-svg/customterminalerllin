@@ -192,7 +192,7 @@ Ver `THIRD_PARTY.md`.
   de 26 conta como horizontal, e uma linha larga se perpetua. Os plugins leem a
   posição efetiva com `noctalia.getSetting("bar.<BAR_NAME>.position")` (API 26).
   Na horizontal, sem ícones de apps e sem player: a música é só um símbolo no
-  fim da cápsula das ações, que abre o painel do player. Na vertical (810 px
+  fim das ações, que abre o painel do player. Na vertical (810 px
   lógicos de altura), o `soviet-bar-pos` refaz as seções: ações no centro exato,
   abertos em cima e fixados embaixo e, para a seção de baixo caber nos ~315 px
   que sobram, sem clima (fica no control center) e espaço de 4 entre widgets.

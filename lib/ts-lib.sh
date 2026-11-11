@@ -85,12 +85,12 @@ compute_tokens() {
   T_IDLE_CENTRAL=$(jq -r '.idle.screensaver // 150 | numbers' "$HOME/.config/omarchy/shell.json" 2>/dev/null || true)
   [[ $T_IDLE_CENTRAL =~ ^[0-9]+$ && $T_IDLE_CENTRAL -gt 0 ]] || T_IDLE_CENTRAL=150
 
-  # Seção da direita: ferramentas de trabalho e utilidades (na vertical,
-  # bin/soviet-bar-pos refaz as seções e põe abertos/fixados).
-  T_BAR_END='["trabalho", "tray", "notificacoes", "audio", "weather", "clock", "control-center"]'
+  # Seção da direita: Slack da bandeja, ferramentas de trabalho e utilidades (na
+  # vertical, bin/soviet-bar-pos refaz as seções e põe abertos/fixados).
+  T_BAR_END='["bandeja_slack", "trabalho", "tray", "notificacoes", "audio", "weather", "clock", "control-center"]'
 
-  # Centro: ações (grupo "acoes"); o botão do jogo só entra se o .desktop existir.
-  # O símbolo de música (erllan/spotify-media:bar, abre o player) fecha o grupo.
+  # Centro: ações, direto na barra; o botão do jogo só entra se o .desktop existir.
+  # O símbolo de música (erllan/spotify-media:bar, abre o player) fecha a lista.
   T_ACOES_MEMBERS='["inspecao", "grupos", "captura", "luz_noturna", "cafeina", "energia"'
   T_GAME_NAME="" T_GAME_ICON=""
   local desk

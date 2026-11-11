@@ -19,11 +19,13 @@
 # Grupos (esquerda -> direita):
 #   CONTEXTO      alça · menu ☭ · workspaces · overview
 #   AÇÕES         inspeção (btop) · grupos · captura · luz noturna · cafeína · perfil de energia · jogo · música   (centro)
-#   UTILIDADES    ferramentas de trabalho · bandeja · notificações · áudio · clima RJ · relógio · control center
+#   UTILIDADES    Slack (bandeja) · ferramentas de trabalho · bandeja · notificações · áudio · clima RJ · relógio · control center
 #
-# Na horizontal, só as ferramentas de trabalho (WORK_APPS), ao lado da bandeja. Na
-# vertical, o bin/soviet-bar-pos põe os abertos (em cima) e os fixados (embaixo) do
-# plugin erllan/tarefas.
+# As ações ficam direto na barra, sem cápsula (moldura e fundo próprios) em volta.
+#
+# Na horizontal, só as ferramentas de trabalho (WORK_APPS), entre o ícone do Slack na
+# bandeja e o resto da bandeja. Na vertical, o bin/soviet-bar-pos põe os abertos (em
+# cima) e os fixados (embaixo) do plugin erllan/tarefas.
 #
 # Sem separadores: a seção `end` só tem o espaço entre o fim do centro e a borda e
 # corta à esquerda o que exceder (a capa do Spotify aparecia "comprimida" por isso).
@@ -57,22 +59,13 @@ font_weight = 500
 color = "on_surface"
 icon_color = "secondary"
 
-# Na vertical, bin/soviet-bar-pos refaz as três seções (com os apps, sem clima):
-# mantenha as listas em sincronia.
+# Na vertical, bin/soviet-bar-pos refaz as seções das pontas (com os apps, sem clima)
+# e herda o centro: mantenha as listas em sincronia.
+# Centro: as ações, sem cápsula. O que é do Omarchy (captura, hyprsunset, idle)
+# chama o Omarchy (ver 00-coexistencia-omarchy.toml).
 start   = ["alca", "menu", "workspaces", "overview"]
-center  = ["group:acoes"]
+center  = @ACOES_MEMBERS@
 end     = @BAR_END@
-
-# Ações: moldura fina, sem preenchimento chamativo. O que é do Omarchy (captura,
-# hyprsunset, idle) chama o Omarchy (ver 00-coexistencia-omarchy.toml).
-[[bar.@BAR_NAME@.capsule_group]]
-id = "acoes"
-members = @ACOES_MEMBERS@
-fill = "surface_variant"
-border = "outline"
-radius = 0
-padding = @GAP@
-widget_spacing = @GAP@
 
 # Clique direito na zona vazia: posição da barra (mini-tela com arrasto; plugin
 # erllan/barra). A borda escolhida vai para 90-posicao-barra.toml (soviet-bar-pos),
@@ -240,8 +233,19 @@ middle = "none"
 
 # ---------------------------------------------------------------- UTILIDADES
 
+# Duas bandejas, porque a do Noctalia não tem ordem (ordena pelo id do item) nem
+# "mostrar só X": o Slack fica à esquerda das ferramentas de trabalho, com o ícone
+# dele (aviso de não lidas e menu do Slack), e o resto fica à direita delas.
+# `hidden` compara o nome exato (id, processo, título...), sem curinga. A da
+# esquerda esconde os outros apps conhecidos; um app novo que puser ícone na
+# bandeja aparece nas duas até entrar na lista dela.
+[widget.bandeja_slack]
+type = "tray"
+hidden = ["superwhisper", "spotify", "steam"]
+
 [widget.tray]
 type = "tray"
+hidden = ["slack"]
 
 # O daemon de notificações é o do shell Omarchy (ver 00-coexistencia-omarchy.toml).
 [widget.notificacoes]
@@ -260,7 +264,7 @@ middle = "exec omarchy-shell notifications dismissAll"
 type = "erllan/audio:bar"
 
 # Música (fork local de azokyen/spotify-media): na barra, só o símbolo de música, no
-# fim da cápsula das ações; o clique abre o painel do player (capa, controles,
+# fim das ações; o clique abre o painel do player (capa, controles,
 # progresso, busca). O widget é também o serviço que lê o Spotify e guarda a última
 # faixa, por isso fica na barra. Substitui o widget "media".
 [widget.spotify]
