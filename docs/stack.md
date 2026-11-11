@@ -30,6 +30,7 @@ recurso). Se algum faltar, ele para antes de alterar qualquer arquivo:
 | Barra selecionável do shell (`bar.id`, plugin `kind: "bar"`) | barra nula `erllan.sem-barra` | `bar.id` em `$OMARCHY_PATH/shell/README.md` e `cmd_use` em `omarchy-bar` |
 | `~/.config/omarchy/shell.json` versão 1 | `bar.id`/`bar.position` | `jq .version` |
 | Noctalia com IPC | `noctalia msg bar-hide/bar-show`, painéis | `noctalia --help` lista `msg` |
+| Noctalia 5.3.0 ou mais novo (`plugin_api` 34) | realce do mouse por ícone no `erllan/tarefas` (`hover_highlight = false` nos widgets) | `noctalia --version` ≥ 5.3.0 |
 
 ### Diferenças conhecidas entre versões
 
@@ -44,6 +45,10 @@ recurso). Se algum faltar, ele para antes de alterar qualquer arquivo:
   monitor); `hidden_workspaces` do taskbar
   ainda não existe (por isso o plugin `erllan/tarefas`). Versões novas do
   Noctalia podem tornar o plugin desnecessário: reavalie antes de aceitar a 6.x.
+* **Noctalia 5.3.0**: aceita `plugin_api` de 3 a 34. O `erllan/tarefas` declara
+  34 para desligar o realce da barra nos widgets de apps (`hover_highlight =
+  false`): o realce da barra acende o widget inteiro, com todos os ícones; cada
+  ícone faz o próprio. Antes do 5.3.0 o plugin não carrega, e o instalador para.
 * **Shell do Omarchy**: se a interface de plugins `bar` mudar e a barra nula
   falhar, o shell volta sozinho para `omarchy.bar` (comportamento documentado),
   e passam a existir duas barras. É visível e não quebra a sessão.

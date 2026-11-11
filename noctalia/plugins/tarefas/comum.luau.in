@@ -8,6 +8,10 @@
 --   traço fósforo (primary)   = aplicativo da janela focada
 --   traço oliva (secondary)   = aplicativo em execução (traço largo: 2+ janelas)
 --   sem traço, ícone atenuado = fixado e fechado
+-- Mouse em cima: realce só do ícone sob o ponteiro, na cor e intensidade do realce
+-- da barra (HOVER_FILL). O realce da barra acenderia o widget inteiro, todos os
+-- ícones juntos; por isso ele fica desligado nestes widgets (hover_highlight =
+-- false em plugin.toml).
 -- Clique esquerdo: em execução -> foca a janela mais recente (cliques seguidos
 -- alternam entre as janelas do app; o foco leva ao workspace dela); fechado ->
 -- abre pelo .desktop (uwsm-app).
@@ -22,6 +26,10 @@ local ITEM, ICON = @ITEM@, @ICON@
 -- vertical, o traço fica em pé, do lado da borda da tela (vão igual do outro lado).
 local MARK_H = 2
 local PAD = math.floor((ITEM - ICON) / 2) - MARK_H
+-- Realce do mouse = o da bandeja: cor do texto (`color` da barra) a 10 %
+-- (kWidgetHoverFillAlpha do Noctalia), cantos de meia altura (pílula).
+local HOVER_FILL = "on_surface/0.1"
+local HOVER_RADIUS = math.floor(ITEM / 2)
 
 local M = {}
 
@@ -109,9 +117,9 @@ function M.widget(group, bar)
       if vertical and naEsquerda then filhos = { traco, node, vao } end
       table.insert(items, (vertical and ui.row or ui.column)({
         key = key, gap = PAD, align = "center", justify = "center",
-        width = ITEM, height = ITEM,
+        width = ITEM, height = ITEM, radius = HOVER_RADIUS,
         -- Transparente explícito: o reconciliador mantém props ausentes de um render ao outro.
-        fill = (piscando == key) and "primary/0.35" or "#00000000",
+        fill = (piscando == key) and "primary/0.35" or (hovered == key) and HOVER_FILL or "#00000000",
         opacity = (#a.windows == 0 and piscando ~= key) and 0.55 or 1.0,
         onClick = function() activate(key) end,
         onHover = function(state)
@@ -122,6 +130,7 @@ function M.widget(group, bar)
           if hovered ~= antes then
             noctalia.state.set("hover-" .. group, hovered or "")
             tooltip(hovered and find(hovered))
+            render()
           end
         end,
       }, filhos))

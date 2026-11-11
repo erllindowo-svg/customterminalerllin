@@ -118,6 +118,10 @@ check_integration() {
         "rode o Omarchy uma vez para criá-lo"
   _need "Noctalia com IPC (noctalia msg) e plugins Luau" \
         "noctalia --help 2>&1 | grep -q 'msg'"
+  # plugin_api 34 (hover_highlight por widget, erllan/tarefas) só existe a partir do 5.3.0.
+  _need "Noctalia 5.3.0 ou mais novo (plugin_api 34 do erllan/tarefas)" \
+        "printf '%s\n' 5.3.0 \"\$(component_version noctalia)\" | sort -VC" \
+        "sem isso o plugin de apps da barra não carrega"
   return $bad
 }
 

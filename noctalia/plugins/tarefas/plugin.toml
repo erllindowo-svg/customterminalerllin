@@ -5,7 +5,7 @@
 id = "erllan/tarefas"
 name = "Tarefas"
 version = "2.0.0"
-plugin_api = 26   # noctalia.getSetting (posição da barra)
+plugin_api = 34   # 26: noctalia.getSetting (posição da barra); 34: hover_highlight por widget
 author = "erllan"
 license = "MIT"
 dependencies = ["hyprctl", "socat", "jq", "uwsm-app"]
@@ -16,18 +16,23 @@ description = "Apps abertos (esquerda) e fixados (direita), exceto o workspace d
 id = "fonte"
 entry = "fonte.luau"
 
+# Widgets com vários ícones: sem o realce da barra (acenderia todos juntos); cada
+# ícone faz o próprio realce (comum.luau).
 [[widget]]
 id = "abertos"
 entry = "abertos.luau"
+hover_highlight = false
 
 [[widget]]
 id = "fixados"
 entry = "fixados.luau"
+hover_highlight = false
 
 # Só as ferramentas de trabalho (WORK_APPS), na barra horizontal.
 [[widget]]
 id = "trabalho"
 entry = "trabalho.luau"
+hover_highlight = false
 
 [[panel]]
 id = "menu"
