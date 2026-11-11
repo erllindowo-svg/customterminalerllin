@@ -1,7 +1,7 @@
 #!/bin/bash
 # Terminal Soviético — webapps que abrem no Firefox em vez do navegador padrão do Omarchy.
 # Sobrescreve os .desktop que o Omarchy cria (eles abririam no Chromium) e instala os
-# dois lançadores que tratam links mailto:/zoommtg:. ClickUp e Intercom seguem o padrão
+# dois lançadores que tratam links mailto:/zoommtg:. ClickUp, Intercom e GitHub seguem o padrão
 # do Omarchy (Chromium --app), com StartupWMClass para a barra achar a janela aberta.
 set -euo pipefail
 DIR=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)/webapps
@@ -21,6 +21,8 @@ baixar_icone() {  # baixar_icone <nome> <url>
 }
 baixar_icone clickup "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/clickup.png"
 baixar_icone intercom "https://www.google.com/s2/favicons?domain=intercom.com&sz=256"
+# Versão clara do logo: a preta some na barra escura.
+baixar_icone github "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/github-light.png"
 command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache "${ICONS%/256x256/apps}" >/dev/null 2>&1 || true
 
 command -v xdg-mime >/dev/null && xdg-mime default HEY.desktop x-scheme-handler/mailto

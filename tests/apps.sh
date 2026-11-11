@@ -116,6 +116,7 @@ env HOME="$TMP/w" XDG_DATA_HOME="$TMP/w/.local/share" PATH="$TMP/bin:$PATH" apps
 grep -q "Exec=$TMP/w/.local/bin/firefox-webapp-zoom" "$TMP/w/.local/share/applications/Zoom.desktop" && pass "caminho do HOME da máquina nova" || fail "HOME no .desktop"
 if grep -rq __HOME__ "$TMP/w/.local/share/applications"; then fail "marcador sobrou"; else pass "sem marcador sobrando"; fi
 grep -q '^StartupWMClass=chrome-app.clickup.com__-Default$' "$TMP/w/.local/share/applications/ClickUp.desktop" && pass "ClickUp com a classe da janela" || fail "classe do ClickUp"
+grep -q '^StartupWMClass=chrome-github.com__-Default$' "$TMP/w/.local/share/applications/GitHub.desktop" && pass "GitHub com a classe da janela" || fail "classe do GitHub"
 
 section "Transposição"
 out=$(./bootstrap.sh --dry-run 2>&1); rc=$?
