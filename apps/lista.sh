@@ -60,7 +60,7 @@ p2 "Voxtype: ditado por voz (SUPER+CTRL+X)"                  $PAC voxtype-bin
 p2 "Steam: jogos; o botão de jogo da barra abre o Deadlock"  $PAC steam
 p2 "osu!: jogo (fixado na barra)"                            $AUR osu-lazer-bin
 p2 "osu-mime: abre mapas do osu!"                            $AUR osu-mime
-p2 "Webapps: Firefox (WhatsApp, HEY, Zoom...) e Chromium (ClickUp, Intercom, GitHub)" apps/webapps.sh
+p2 "Webapps: Firefox (WhatsApp, HEY, Zoom...) e Chromium (ClickUp, Intercom, GitHub, Gmail)" apps/webapps.sh
 
 # ---------------------------------------------------------------- P3: subutilizados
 p3 "Kdenlive: vídeo; nunca aberto nesta máquina"             $PAC kdenlive

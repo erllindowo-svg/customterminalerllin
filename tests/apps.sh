@@ -117,6 +117,7 @@ grep -q "Exec=$TMP/w/.local/bin/firefox-webapp-zoom" "$TMP/w/.local/share/applic
 if grep -rq __HOME__ "$TMP/w/.local/share/applications"; then fail "marcador sobrou"; else pass "sem marcador sobrando"; fi
 grep -q '^StartupWMClass=chrome-app.clickup.com__-Default$' "$TMP/w/.local/share/applications/ClickUp.desktop" && pass "ClickUp com a classe da janela" || fail "classe do ClickUp"
 grep -q '^StartupWMClass=chrome-github.com__-Default$' "$TMP/w/.local/share/applications/GitHub.desktop" && pass "GitHub com a classe da janela" || fail "classe do GitHub"
+grep -q '^StartupWMClass=chrome-mail.google.com__-Default$' "$TMP/w/.local/share/applications/Gmail.desktop" && pass "Gmail com a classe da janela" || fail "classe do Gmail"
 
 section "Transposição"
 out=$(./bootstrap.sh --dry-run 2>&1); rc=$?

@@ -57,7 +57,7 @@ my @AJUSTE = (
   [ 'Desenvolvimento',    'nome', qr/^(Neovim|Vim|Emacs)$/i,                'editor de código' ],
   [ 'Sistema',            'nome', qr/^(Disks|Disk Usage)$/i,                'disco' ],
   [ 'Mídia',              'nome', qr/YouTube|Spotify|Photos/i,              'mídia' ],
-  [ 'Internet',           'nome', qr/WhatsApp|Discord|Messages|Zoom|HEY|^X$|Telegram|Signal/i, 'comunicação' ],
+  [ 'Internet',           'nome', qr/WhatsApp|Discord|Messages|Zoom|HEY|Gmail|^X$|Telegram|Signal/i, 'comunicação' ],
   [ 'Escritório e notas', 'nome', qr/Basecamp|Contacts|Calendar|Obsidian|Docs|Notion/i, 'organização' ],
   [ 'Desenvolvimento',    'nome', qr/Claude|ChatGPT|GitHub|Docker|Cursor|Code/i, 'desenvolvimento' ],
   [ 'Utilitários',        'nome', qr/Maps/i,                                'utilitário' ],
