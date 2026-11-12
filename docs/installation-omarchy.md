@@ -166,7 +166,7 @@ Visual e controles (detalhes em `docs/controls.md`):
 | Workspace 1 | 4 painéis (btop, sistema + ilustração, relógio/clima, shell); **sem barra** |
 | Workspace 2 | barra no topo: favoritos com ícones reais, CPU/RAM/(GPU)/NET, clima, relógio |
 | Workspace com Firefox | barra visível (só oculta se a classe estiver em `COLLAPSE_CLASSES`) |
-| `SUPER+M` | btop flutuante no workspace atual; de novo, fecha |
+| `SUPER+M` | Spotify como segundo scratchpad (mostra/esconde `special:musica`) |
 | `SUPER+ALT+A` | menu da ilustração; `Enter` abre o arttime; `c` → Cores da ilustração |
 | `SUPER+CTRL+M` | recompõe a central |
 | Cores | `c` → `2` deixa a arte com as cores originais, `c` → `1` volta ao tema; vale também no painel |

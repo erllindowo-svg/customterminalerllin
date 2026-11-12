@@ -14,7 +14,7 @@ Configuração pessoal de desktop para o **Omarchy 4** (Hyprland em Lua):
   (`ext-session-lock`, PAM), sem a imagem borrada: a central segue viva atrás e a senha
   é pedida no painel de terminal; os outros monitores mostram só o wallpaper. Limites em
   [`docs/decisions.md`](docs/decisions.md) (D20);
-* um **btop flutuante sob demanda** (`SUPER+M`);
+* o **Spotify como segundo scratchpad** (`SUPER+M`) e um **btop flutuante sob demanda** (botão da barra);
 * a **ilustração** do arttime (arte + frase original, sem relógio), com menu,
   arttime interativo e dois modos de cor (`SUPER+ALT+A`).
 
@@ -60,7 +60,7 @@ Passo a passo, pré-requisitos e migração desta máquina:
 
 | Atalho | Ação |
 |---|---|
-| `SUPER+M` | btop flutuante no workspace atual (abre/fecha) |
+| `SUPER+M` | Spotify como segundo scratchpad: mostra/esconde `special:musica` (abre o app se estiver fechado) |
 | `SUPER+ALT+A` | ilustração: Cores da ilustração, sortear, arttime interativo |
 | `SUPER+CTRL+M` | recompor a central do workspace 1 |
 | `SUPER+SHIFT+SPACE` | mostrar/ocultar a barra manualmente |

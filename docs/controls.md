@@ -8,7 +8,8 @@ pertencem ao projeto, na sessão atual.
 
 | Atalho (padrão) | Ação | Comportamento |
 |---|---|---|
-| `SUPER+M` (`KEY_INSPECT`) | painel btop sob demanda | Abre flutuante, centralizado, no **workspace atual**. Se já estiver aberto aqui, fecha; se estiver em outro workspace, traz para cá. Acionamentos repetidos durante a abertura são ignorados (trava). Fechar encerra o btop (sem órfãos). |
+| `SUPER+M` (`KEY_MUSICA`) | Spotify como segundo scratchpad | Mostra/esconde o workspace especial `musica` no monitor atual, como o `SUPER+S` faz com o scratchpad. Se a janela do Spotify estiver fora dele, volta para lá; com o Spotify fechado, abre o app e mostra quando a janela aparecer. É o mesmo workspace do "Mostrar o app" do player da barra. |
+| sem atalho (`KEY_INSPECT=""`) | painel btop sob demanda | Pelo botão de batimento da barra (ou defina `KEY_INSPECT`). Abre flutuante, centralizado, no **workspace atual**. Se já estiver aberto aqui, fecha; se estiver em outro workspace, traz para cá. Acionamentos repetidos durante a abertura são ignorados (trava). Fechar encerra o btop (sem órfãos). |
 | `SUPER+ALT+A` (`KEY_ARTE`) | ilustração: menu + arttime | Abre a janela flutuante `soviet-arte` no workspace atual; a mesma tecla fecha. Não troca de workspace nem toca na central. |
 | `SUPER+CTRL+M` (`KEY_OPS`) | recompor a central | Vai ao workspace da central e reabre **só** os painéis que faltam. |
 | `SUPER+ALT+P` (`KEY_PIN`) | fixar/desafixar na barra | Com o mouse sobre um ícone da barra, alterna aquele app; sem ícone sob o mouse, o app da janela em foco. O ícone pisca. |
@@ -78,7 +79,7 @@ O ícone mostra a saída ativa: **fone** ou **alto-falante** (riscado e vermelho
 
 | Ícone | Clique | Clique direito |
 |---|---|---|
-| batimento | btop flutuante (= `SUPER+M`) | — |
+| batimento | btop flutuante (`soviet-inspect`) | — |
 | captura | `omarchy-capture-screenshot` | gravar/parar (`omarchy-capture-screenrecording`) |
 | lua | luz noturna (`omarchy-toggle-nightlight`, hyprsunset) | — |
 | café | cafeína: manter acordado (`omarchy-toggle-idle`) | — |

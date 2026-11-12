@@ -12,7 +12,7 @@ shell do Omarchy: usa só os pontos de extensão do usuário (`~/.config`,
    terminal_soviet.lua │               ── bloco terminal-soviet → require("hypr.terminal_soviet")               │
                        │                     ├ o.exec_on_start  soviet-ops --login       (central no WS 1)         │
                        │                     ├ o.window         regras soviet-ops-*, soviet-inspect, soviet-arte   │
-                       │                     └ o.bind           SUPER+M, SUPER+CTRL+M, SUPER+ALT+A, painéis        │
+                       │                     └ o.bind           SUPER+M (música), SUPER+CTRL+M, SUPER+ALT+A, …     │
                        │                                                                                         │
  systemd --user        │  graphical-session.target                                                               │
    noctalia.service ───┤    ├ noctalia ─────────── barra "estacao" + control center + clima (sysmon desligado)│
@@ -37,7 +37,8 @@ shell do Omarchy: usa só os pontos de extensão do usuário (`~/.config`,
 | `erllan/tarefas` | plugin Luau do Noctalia | permanente (dentro do noctalia) | apps abertos (esq.) e fixados (dir.) fora do WS da central, com o ícone real; fixar/desafixar pelo clique direito. Um service com um `socat` no socket2 lê `hyprctl clients` só em eventos de janela/foco/workspace (1 leitura de segurança a cada 30 s) e alimenta os dois widgets |
 | `erllan.sem-barra` | plugin QML do shell Omarchy | permanente (dentro do quickshell) | "barra nula" selecionada por `bar.id`: tira a barra do Omarchy e mantém o resto do shell |
 | central (`soviet-ops`) | 4 janelas foot no WS 1 | da sessão | `btop` (soviet-ops-btop), **ilustração** (soviet-ops-fetch), relógio/clima (soviet-ops-clock), shell (soviet-ops-shell) |
-| `soviet-inspect` | janela foot flutuante | sob demanda | btop detalhado (`SUPER+M`); abre no workspace atual, fecha com a mesma tecla |
+| `soviet-inspect` | janela foot flutuante | sob demanda | btop detalhado (botão da barra; `KEY_INSPECT` opcional); abre no workspace atual, fecha com o mesmo botão |
+| `soviet-musica` | — (alterna `special:musica`) | sob demanda | Spotify como segundo scratchpad (`SUPER+M`); abre o app se estiver fechado |
 | `soviet-arte` | CLI + janela foot flutuante | sob demanda | ilustração: seleção por sessão, desenho, modos de cores, menu e arttime interativo (`SUPER+ALT+A`) |
 
 ## Fluxo de inicialização (login)

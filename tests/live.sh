@@ -25,7 +25,8 @@ key_of() { echo "${1##*+ }"; }
 
 section "Hyprland"
 [[ -z $(hyprctl configerrors | sed '/^$/d') ]] && pass "hyprctl configerrors vazio" || fail "erros de configuração do Hyprland"
-for k in KEY_INSPECT KEY_OPS KEY_ARTE KEY_PIN; do
+for k in KEY_INSPECT KEY_MUSICA KEY_OPS KEY_ARTE KEY_PIN; do
+  [[ -z ${!k} ]] && { pass "$k vazio: sem atalho"; continue; }
   d=$(hyprctl binds -j | jq -r --argjson m "$(mask_of "${!k}")" --arg key "$(key_of "${!k}")" \
       '[.[] | select(.modmask == $m and .key == $key)] | map(.description) | join("|")')
   [[ $d == Erllinsapin:* && $d != *"|"* ]] && pass "$k (${!k}) ligado uma vez: $d" || fail "$k (${!k})" "binds: '$d'"

@@ -61,6 +61,7 @@ done
 check "noctalia plugins lint (manifestos e settings dos plugins gerados)" \
   bash -c "noctalia plugins lint '$TMP'/out/.local/share/noctalia/plugins/* | grep -q '0 errors'"
 check "atalhos do módulo vêm da configuração" grep -q 'o.bind("SUPER + ALT + A"' "$TMP/out/.config/hypr/terminal_soviet.lua"
+check "atalho de música vem da configuração (KEY_MUSICA)" grep -q 'o.bind("SUPER + M", "Erllinsapin: música' "$TMP/out/.config/hypr/terminal_soviet.lua"
 check "atalho de fixar vem da configuração (KEY_PIN)" grep -q 'o.bind("SUPER + ALT + P"' "$TMP/out/.config/hypr/terminal_soviet.lua"
 
 section "Caminhos e conteúdo sensível"

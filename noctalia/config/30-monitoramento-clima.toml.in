@@ -1,7 +1,7 @@
 # Terminal Soviético — monitoramento (desligado) e clima
 
 # Sysmon do Noctalia desligado: a barra não tem mais sensores (o btop da inspeção,
-# SUPER+M, mostra CPU/RAM/GPU/rede). Efeito colateral: a aba "System" do control
+# no botão da barra, mostra CPU/RAM/GPU/rede). Efeito colateral: a aba "System" do control
 # center some. Para religar, enabled = true (com os limiares de cpu_usage_* etc.).
 [system.monitor]
 enabled = false

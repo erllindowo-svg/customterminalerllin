@@ -15,8 +15,8 @@ err()  { printf '%s✗%s %s\n' "$TS_RED" "$TS_RST" "$*" >&2; }
 die()  { err "$*"; exit 1; }
 
 # ------------------------------------------------------------------ configuração
-CONF_KEYS=(HIDDEN_WORKSPACE COLLAPSE_CLASSES BAR_NAME WEATHER_ADDRESS KEY_INSPECT KEY_OPS
-           KEY_ARTE KEY_PIN FAVORITES WORK_APPS GAME_DESKTOP
+CONF_KEYS=(HIDDEN_WORKSPACE COLLAPSE_CLASSES BAR_NAME WEATHER_ADDRESS KEY_INSPECT KEY_MUSICA
+           KEY_OPS KEY_ARTE KEY_PIN FAVORITES WORK_APPS GAME_DESKTOP
            LIMINE_THEME LIMINE_ORIGEM LIMINE_FONTE LIMINE_RESOLUCAO LIMINE_TITULO LIMINE_TIMEOUT)
 
 # Lê VAR="valor" sem executar o arquivo (só chaves conhecidas).
@@ -43,7 +43,8 @@ validate_conf() {
   [[ $WEATHER_ADDRESS != *\\* ]] || die "WEATHER_ADDRESS não pode conter \\"
   [[ $GAME_DESKTOP =~ ^[A-Za-z0-9._-]*$ ]] || die "GAME_DESKTOP inválido: $GAME_DESKTOP (desktop-id sem .desktop)"
   local k
-  for k in KEY_INSPECT KEY_OPS KEY_ARTE KEY_PIN; do
+  for k in KEY_INSPECT KEY_MUSICA KEY_OPS KEY_ARTE KEY_PIN; do
+    [[ $k == KEY_INSPECT && -z ${!k} ]] && continue   # opcional: sem atalho, só a barra
     [[ ${!k} =~ ^(SUPER|SHIFT|CTRL|ALT)( \+ (SUPER|SHIFT|CTRL|ALT))*( \+ [A-Z0-9]+)$ ]] \
       || die "$k inválido: '${!k}' (ex.: \"SUPER + ALT + A\")"
   done
@@ -129,6 +130,7 @@ compute_tokens() {
   T_AT_CAFEINA=$(atalho_de "$at" "omarchy-toggle-idle")
   T_AT_NOTIF=$(atalho_de "$at" "omarchy-shell notifications showHistory")
   T_AT_SILENCIO=$(atalho_de "$at" "omarchy-toggle-notification-silencing")
+  T_AT_INSPECT=${KEY_INSPECT:+ — $KEY_INSPECT}   # KEY_INSPECT vazio: sem atalho
 }
 
 # atalho_de <json do soviet-atalhos> <comando>: " — TECLAS" do primeiro atalho do
@@ -195,13 +197,13 @@ render() {
     TS_HOME="$T_HOME" TS_BIN="$T_BIN" TS_BAR_NAME="$BAR_NAME" TS_BAR_END="$T_BAR_END" \
     TS_ACOES_MEMBERS="$T_ACOES_MEMBERS" TS_WEATHER_ADDRESS="$WEATHER_ADDRESS" \
     TS_GAME_DESKTOP="$GAME_DESKTOP" TS_GAME_NAME="$T_GAME_NAME" TS_GAME_ICON="$T_GAME_ICON" \
-    TS_KEY_INSPECT="$KEY_INSPECT" TS_KEY_OPS="$KEY_OPS" TS_KEY_ARTE="$KEY_ARTE" TS_KEY_PIN="$KEY_PIN" \
+    TS_KEY_INSPECT="$KEY_INSPECT" TS_KEY_MUSICA="$KEY_MUSICA" TS_KEY_OPS="$KEY_OPS" TS_KEY_ARTE="$KEY_ARTE" TS_KEY_PIN="$KEY_PIN" \
     TS_HIDDEN_WORKSPACE="$HIDDEN_WORKSPACE" TS_PINNED_LUA="$T_PINNED_LUA" TS_WORK_LUA="$T_WORK_LUA" \
     TS_BAR_THICKNESS="$T_BAR_THICKNESS" TS_ITEM="$T_ITEM" TS_ICON="$T_ICON" TS_GAP="$T_GAP" \
     TS_CAPSULE_THICKNESS="$T_CAPSULE_THICKNESS" TS_IDLE_CENTRAL="$T_IDLE_CENTRAL" \
     TS_AT_MENU="$T_AT_MENU" TS_AT_CAPTURA="$T_AT_CAPTURA" TS_AT_GRAVAR="$T_AT_GRAVAR" \
     TS_AT_NOTURNA="$T_AT_NOTURNA" TS_AT_CAFEINA="$T_AT_CAFEINA" TS_AT_NOTIF="$T_AT_NOTIF" \
-    TS_AT_SILENCIO="$T_AT_SILENCIO" \
+    TS_AT_SILENCIO="$T_AT_SILENCIO" TS_AT_INSPECT="$T_AT_INSPECT" \
     perl -pe 's/@([A-Z_]+)@/exists $ENV{"TS_$1"} ? $ENV{"TS_$1"} : "\@$1\@"/ge' "$src" > "$dst"
     if grep -qE '@[A-Z][A-Z_]+@' "$dst"; then
       die "marcador sem valor em $src: $(grep -oE '@[A-Z][A-Z_]+@' "$dst" | sort -u | tr '\n' ' ')"

@@ -167,11 +167,11 @@ left = "panel-toggle control-center weather"
 # ---------------------------------------------------------------- AÇÕES
 # Sem sensores na barra (CPU/RAM/GPU/NET): o btop da inspeção mostra tudo isso.
 
-# Mesmo mecanismo do atalho SUPER+M: ~/.local/bin/soviet-inspect (abre/fecha).
+# Mesmo mecanismo do atalho KEY_INSPECT (se houver): ~/.local/bin/soviet-inspect (abre/fecha).
 [widget.inspecao]
 type = "custom_button"
 glyph = "activity-heartbeat"
-tooltip = "Inspeção: btop flutuante — @KEY_INSPECT@"
+tooltip = "Inspeção: btop flutuante@AT_INSPECT@"
 icon_color = "primary"
 [widget.inspecao.actions]
 left = "exec @BIN@/soviet-inspect"
